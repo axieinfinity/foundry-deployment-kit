@@ -3,7 +3,13 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/Vectorized/solady
+[submodule "lib/rns-contracts"]
+	path = lib/rns-contracts
+	url = https://github.com/axieinfinity/rns-contracts
+[submodule "lib/contract-template"]
+	path = lib/contract-template
+	url = https://github.com/axieinfinity/contract-template

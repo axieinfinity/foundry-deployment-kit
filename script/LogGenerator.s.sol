@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Vm} from "forge-std/Vm.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
-import {console2} from "forge-std/console2.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import {GeneralConfig} from "./GeneralConfig.s.sol";
-import {JSONParserLib} from "solady/src/utils/JSONParserLib.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Vm } from "forge-std/Vm.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { console2 } from "forge-std/console2.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { GeneralConfig } from "./GeneralConfig.s.sol";
+import { JSONParserLib } from "solady/utils/JSONParserLib.sol";
 
 contract LogGenerator {
+  using Strings for *;
   using StdStyle for *;
   using stdJson for string;
   using JSONParserLib for *;
@@ -29,6 +31,14 @@ contract LogGenerator {
     bytes memory args,
     uint256 nonce
   ) external {
+    console2.log(
+      string.concat(fileName, " deployed at: ", contractAddr.toHexString()).green(),
+      string.concat("(nonce: ", nonce.toString(), ")")
+    );
+    if (!_config.getRuntimeConfig().log) {
+      console2.log("Skipping artifact generation for:", fileName.yellow());
+      return;
+    }
     // skip writing artifact if network is localhost
     // if (_network == Network.LocalHost) return;
     string memory dirPath = _config.getDeploymentDirectory(_config.getCurrentNetwork());
@@ -69,7 +79,5 @@ contract LogGenerator {
     json = json.serialize("metadata", item.at('"rawMetadata"').value());
 
     json.write(filePath);
-
-    console2.log(string.concat(fileName, " deployed at:").green(), contractAddr.green());
   }
 }
