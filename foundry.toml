@@ -1,0 +1,16 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+solc = '0.8.21'
+extra_output = ["devdoc", "userdoc", "storagelayout"]
+evm_version = 'istanbul'
+use_literal_content = true
+fs_permissions = [{ access = "read-write", path = "./" }]
+
+[fmt]
+line_length = 120
+tab_width = 2

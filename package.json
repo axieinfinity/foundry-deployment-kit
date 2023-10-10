@@ -1,0 +1,23 @@
+{
+  "name": "foundry-deployment-kit",
+  "version": "1.0.0",
+  "description": "Deployment kit for Foundry",
+  "author": "Axie Infinity Engineering <engineering@axieinfinity.com>",
+  "license": "MIT",
+  "repository": "https://github.com/axieinfinity/foundry-deployment-kit.git",
+  "files": [
+    "src/**/*.sol"
+  ],
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1"
+  },
+  "lint-staged": {
+    "{src,script,test}/**/*.sol": [
+      "forge fmt"
+    ]
+  },
+  "scripts": {
+    "prepare": "husky install"
+  }
+}
