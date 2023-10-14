@@ -44,7 +44,6 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
             assembly ("memory-safe") {
               mstore(contractName, sub(mload(contractName), mload(suffix)))
             }
-            if (contractName.endsWith("GovernanceAdmin")) contractName = "GovernanceAdmin";
             string memory json = _vm.readFile(path);
             address contractAddr = _vm.parseJsonAddress(json, ".address");
 
@@ -71,7 +70,7 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
   function setAddress(Network network, ContractKey contractKey, address contractAddr) public {
     uint256 chainId = _networkDataMap[network].chainId;
     string memory contractName = _contractNameMap[contractKey];
-    require(chainId != 0 && bytes(contractName).length != 0, "Network or Contract Key not found");
+    require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
     _contractAddrMap[chainId][contractName] = contractAddr;
   }
@@ -82,7 +81,7 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
 
   function getDeploymentDirectory(Network network) public view returns (string memory dirPath) {
     string memory dirName = _networkDataMap[network].deploymentDir;
-    require(bytes(dirName).length != 0, "Deployment dir not found");
+    require(bytes(dirName).length != 0, "GeneralConfig: Deployment dir not found");
     dirPath = string.concat(DEPLOYMENT_ROOT, dirName);
   }
 

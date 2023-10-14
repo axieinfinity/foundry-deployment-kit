@@ -13,6 +13,7 @@ enum ContractKey {
 }
 
 abstract contract ContractConfig {
+  bytes internal _migrationConfig;
   mapping(ContractKey contractIdx => string contractName) internal _contractNameMap;
   mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
 
@@ -51,5 +52,14 @@ abstract contract ContractConfig {
   function getAddressByRawData(uint256 chainId, string memory contractName) public view returns (address payable addr) {
     addr = payable(_contractAddrMap[chainId][contractName]);
     require(addr != address(0), string.concat("address not found: ", contractName));
+  }
+
+  function setMigrationRawConfig(bytes memory config) public {
+    if (_migrationConfig.length != 0) return;
+    _migrationConfig = config;
+  }
+
+  function getMigrationRawConfig() public view returns (bytes memory) {
+    return _migrationConfig;
   }
 }

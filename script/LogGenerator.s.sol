@@ -39,8 +39,6 @@ contract LogGenerator {
       console2.log("Skipping artifact generation for:", fileName.yellow());
       return;
     }
-    // skip writing artifact if network is localhost
-    // if (_network == Network.LocalHost) return;
     string memory dirPath = _config.getDeploymentDirectory(_config.getCurrentNetwork());
     string memory filePath = string.concat(dirPath, fileName, ".json");
 

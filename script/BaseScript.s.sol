@@ -38,6 +38,11 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
     _;
   }
 
+  modifier logFn(string memory fnName) {
+    console2.log("> ", StdStyle.blue(fnName), "...");
+    _;
+  }
+
   function setUp() public virtual {
     // allow diferrent deploy scripts to share same config storage
     // predict general config address

@@ -18,8 +18,8 @@ abstract contract BaseDeploy is BaseScript {
   using StdStyle for string;
 
   bytes public constant EMPTY_ARGS = "";
-  bytes32 constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
   bytes32 constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+  bytes32 constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
   bool internal _alreadySetUp;
   bytes internal _overriddenArgs;
@@ -39,10 +39,18 @@ abstract contract BaseDeploy is BaseScript {
     _alreadySetUp = true;
     super.setUp();
     _logger = new LogGenerator(vm, _config);
+    _setMigrationConfig();
     _injectDependencies();
   }
 
   function _injectDependencies() internal virtual { }
+
+  function _setMigrationConfig() internal {
+    bytes memory rawConfig = _buildMigrationRawConfig();
+    _config.setMigrationRawConfig(rawConfig);
+  }
+
+  function _buildMigrationRawConfig() internal virtual returns (bytes memory);
 
   function _setDependencyDeployScript(ContractKey contractKey, IScript deployScript) internal {
     _deployScript[contractKey] = IDeployScript(address(deployScript));
