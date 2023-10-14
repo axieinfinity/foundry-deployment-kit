@@ -7,3 +7,6 @@
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/Vectorized/solady
+[submodule "lib/rns-contracts"]
+	path = lib/rns-contracts
+	url = https://github.com/axieinfinity/rns-contracts
