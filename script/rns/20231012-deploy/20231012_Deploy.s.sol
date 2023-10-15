@@ -17,7 +17,6 @@ import { RNSDomainPrice, RNSDomainPriceDeploy } from "script/rns/contracts/RNSDo
 import { PublicResolver, PublicResolverDeploy } from "script/rns/contracts/PublicResolverDeploy.s.sol";
 import { RNSReverseRegistrar, RNSReverseRegistrarDeploy } from "script/rns/contracts/RNSReverseRegistrarDeploy.s.sol";
 import { INSDomainPrice, RNSDeploy } from "../RNSDeploy.s.sol";
-import { IntegrationTest } from "./IntegrationTest.s.sol";
 
 contract Migration__202310101_Deploy is RNSDeploy {
   using Strings for *;
@@ -31,7 +30,6 @@ contract Migration__202310101_Deploy is RNSDeploy {
   RNSReverseRegistrar internal _reverseRegistrar;
   RONRegistrarController internal _ronController;
 
-  IntegrationTest internal _tester;
   string[] internal _blacklistedWords;
 
   function run() public trySetUp {
@@ -43,14 +41,12 @@ contract Migration__202310101_Deploy is RNSDeploy {
     _publicResolver = new PublicResolverDeploy().run();
     _ronController = new RONRegistrarControllerDeploy().run();
 
-    _tester = new IntegrationTest();
-
     address admin = _rns.getRoleMember(_rns.DEFAULT_ADMIN_ROLE(), 0);
-    // {
-    //   string memory data = vm.readFile("./script/rns/20231012-deploy/data/data.json");
-    //   _blacklistedWords = vm.parseJsonStringArray(data, ".words");
-    // }
-    // uint256[] memory packedWords = _nameChecker.packBulk(_blacklistedWords);
+    {
+      string memory data = vm.readFile("./script/rns/20231012-deploy/data/data.json");
+      _blacklistedWords = vm.parseJsonStringArray(data, ".words");
+    }
+    uint256[] memory packedWords = _nameChecker.packBulk(_blacklistedWords);
 
     vm.resumeGasMetering();
     vm.startBroadcast(admin);
@@ -68,17 +64,17 @@ contract Migration__202310101_Deploy is RNSDeploy {
     _rns.approve(address(_reverseRegistrar), addrReverseId);
 
     _reverseRegistrar.setDefaultResolver(_publicResolver);
-    //_nameChecker.setForbiddenWords({ packedWords: packedWords, shouldForbid: true });
+    _nameChecker.setForbiddenWords({ packedWords: packedWords, shouldForbid: true });
 
     vm.stopBroadcast();
     vm.pauseGasMetering();
 
-    _tester.validateController(_ronController, address(_publicResolver));
-    // _validateAuction();
-    // _validateDomainPrice();
-    // _validateReverseRegistrar();
-    // _validateNameChecker(blacklistedWords);
-    // _validateRNSUnified(ronId, addrReverseId);
+    _validateAuction();
+    _validateController();
+    _validateDomainPrice();
+    _validateReverseRegistrar();
+    _validateNameChecker();
+    _validateRNSUnified(ronId, addrReverseId);
 
     console2.log(StdStyle.green(unicode"✅ All checks are passed"));
   }
@@ -93,21 +89,21 @@ contract Migration__202310101_Deploy is RNSDeploy {
     bytes32 commitment =
       _ronController.computeCommitment(domain, user.addr, duration, secret, address(_publicResolver), data, true);
 
-    vm.prank(user.addr);
-    _ronController.commit(commitment);
-
     (, uint256 ronPrice) = _ronController.rentPrice(domain, duration);
     console2.log("domain price:", ronPrice);
     vm.deal(user.addr, ronPrice);
 
+    vm.startPrank(user.addr);
+    _ronController.commit(commitment);
     vm.warp(block.timestamp + 1 hours);
-    vm.prank(user.addr);
-    try _ronController.register{ value: ronPrice }(
+    _ronController.register{ value: ronPrice }(
       domain, user.addr, duration, secret, address(_publicResolver), data, true
-    ) { } catch { }
+    );
+    vm.stopPrank();
 
     uint256 expectedId = uint256(string.concat(domain, ".ron").namehash());
     assertEq(_rns.ownerOf(expectedId), user.addr);
+    console2.log(unicode"✅ Controller checks are passed");
   }
 
   function _validateRNSUnified(uint256 ronId, uint256 addrReverseId) internal logFn("validateRNSUnified") {
@@ -203,7 +199,7 @@ contract Migration__202310101_Deploy is RNSDeploy {
     console2.log(unicode"✅ Domain price checks are passed");
   }
 
-  function _validateNameChecker() external logFn("validateNameChecker") {
+  function _validateNameChecker() internal logFn("validateNameChecker") {
     string[] memory blacklistedWords = _blacklistedWords;
     (uint8 min, uint8 max) = _nameChecker.getWordRange();
     bool valid;
