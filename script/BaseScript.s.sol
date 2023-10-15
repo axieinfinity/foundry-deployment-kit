@@ -15,11 +15,8 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
   using StdStyle for string;
   using LibErrorHandler for bool;
 
-  string public constant TREZOR_PREFIX = "trezor://";
   bytes32 public constant GENERAL_CONFIG_SALT = keccak256(bytes(type(GeneralConfig).name));
 
-  uint256 internal _pk;
-  address internal _sender;
   Network internal _network;
   GeneralConfig internal _config;
 
@@ -68,17 +65,6 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
     RuntimeConfig.Options memory options = _parseRuntimeConfig(command);
     _config.setRuntimeConfig(options);
 
-    if (options.trezor) {
-      string memory str = vm.envString(_config.DEPLOYER_ENV_LABEL());
-      _sender = vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
-      console2.log(StdStyle.blue("Trezor Account:"), _sender);
-    } else {
-      _pk = vm.envUint(_config.getPrivateKeyEnvLabel(_network));
-      _sender = vm.rememberKey(_pk);
-      console2.log(StdStyle.blue(".ENV Account:"), _sender);
-    }
-    vm.label(_sender, "sender");
-
     (bool success, bytes memory returnOrRevertData) = address(this).delegatecall(abi.encodeCall(IDeployScript.run, ()));
     success.handleRevert(returnOrRevertData);
   }
@@ -89,6 +75,7 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
     virtual
     returns (RuntimeConfig.Options memory options)
   {
+    console2.log("command", command);
     if (bytes(command).length != 0) {
       string[] memory args = command.split(" ");
       uint256 length = args.length;
