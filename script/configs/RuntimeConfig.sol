@@ -9,7 +9,7 @@ abstract contract RuntimeConfig {
 
   Options internal _options;
 
-  function setRuntimeConfig(Options memory options) external {
+  function setRuntimeConfig(Options memory options) public virtual {
     _options = options;
   }
 

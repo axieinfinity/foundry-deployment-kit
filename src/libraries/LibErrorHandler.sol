@@ -5,7 +5,7 @@ library LibErrorHandler {
   error ExternalCallFailed();
 
   function handleRevert(bool success, bytes memory returnOrRevertData) internal pure {
-    if (success) {
+    if (!success) {
       if (returnOrRevertData.length != 0) {
         assembly ("memory-safe") {
           revert(add(returnOrRevertData, 0x20), mload(returnOrRevertData))

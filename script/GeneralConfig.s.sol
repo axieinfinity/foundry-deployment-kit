@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { Vm, VmSafe } from "forge-std/Vm.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { ContractKey, ContractConfig } from "./configs/ContractConfig.sol";
@@ -11,13 +13,18 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
   using LibString for string;
 
   /// @dev Trezor deployer address
+  string public constant TREZOR_PREFIX = "trezor://";
   string public constant DEPLOYER_ENV_LABEL = "DEPLOYER";
   string public constant DEPLOYMENT_ROOT = "deployments/";
 
   Vm private immutable _vm;
+  address internal _sender;
 
   constructor(Vm vm) payable {
     _vm = vm;
+
+    // by default we will read private key from .env
+    _sender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
 
     _storeDeploymentData();
   }
@@ -61,6 +68,24 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
         ++i;
       }
     }
+  }
+
+  function setRuntimeConfig(Options memory options) public virtual override {
+    super.setRuntimeConfig(options);
+
+    if (_options.trezor) {
+      string memory str = _vm.envString(DEPLOYER_ENV_LABEL);
+      _sender = _vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
+      console2.log(StdStyle.blue("Trezor Account:"), _sender);
+    } else {
+      _sender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
+      console2.log(StdStyle.blue(".ENV Account:"), _sender);
+    }
+    _vm.label(_sender, "sender");
+  }
+
+  function getSender() public virtual returns (address payable) {
+    return payable(_sender);
   }
 
   function setAddressForCurrentNetwork(ContractKey contractKey, address contractAddr) public {

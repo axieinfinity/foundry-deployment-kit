@@ -86,7 +86,7 @@ abstract contract BaseDeploy is BaseScript {
     vm.label(deployed, contractName);
 
     _config.setAddress(_network, contractKey, deployed);
-    _logger.generateDeploymentArtifact(_sender, deployed, contractName, contractName, args, nonce);
+    _logger.generateDeploymentArtifact(_config.getSender(), deployed, contractName, contractName, args, nonce);
   }
 
   function _upgradeProxy(ContractKey contractKey, bytes memory args) internal returns (address payable proxy) {
@@ -102,7 +102,7 @@ abstract contract BaseDeploy is BaseScript {
     _upgradeRaw(proxyAdmin, proxy, logic, args);
 
     _logger.generateDeploymentArtifact(
-      _sender, logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
+      _config.getSender(), logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
     );
   }
 
@@ -121,7 +121,7 @@ abstract contract BaseDeploy is BaseScript {
     uint256 logicNonce;
     (logic, logicNonce) = _deployRaw(contractFilename, EMPTY_ARGS);
     _logger.generateDeploymentArtifact(
-      _sender, logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
+      _config.getSender(), logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
     );
   }
 
@@ -139,10 +139,15 @@ abstract contract BaseDeploy is BaseScript {
 
     _config.setAddress(_network, contractKey, deployed);
     _logger.generateDeploymentArtifact(
-      _sender, logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
+      _config.getSender(), logic, contractName, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
     );
     _logger.generateDeploymentArtifact(
-      _sender, deployed, "TransparentUpgradeableProxy", string.concat(contractName, "Proxy"), args, proxyNonce
+      _config.getSender(),
+      deployed,
+      "TransparentUpgradeableProxy",
+      string.concat(contractName, "Proxy"),
+      args,
+      proxyNonce
     );
   }
 
@@ -150,11 +155,13 @@ abstract contract BaseDeploy is BaseScript {
     internal
     returns (address payable deployed, uint256 nonce)
   {
-    nonce = vm.getNonce(_sender);
-    address expectedAddr = computeCreateAddress(_sender, nonce);
+    address sender = _config.getSender();
+    assertTrue(sender != address(0), "sender == address(0)");
+    nonce = vm.getNonce(sender);
+    address expectedAddr = computeCreateAddress(sender, nonce);
 
     vm.resumeGasMetering();
-    vm.broadcast(_sender);
+    vm.broadcast(sender);
     deployed = payable(deployCode(filename, args));
     vm.pauseGasMetering();
 
