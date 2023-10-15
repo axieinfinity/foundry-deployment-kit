@@ -10,6 +10,8 @@ extra_output = ["devdoc", "userdoc", "storagelayout"]
 evm_version = 'istanbul'
 use_literal_content = true
 fs_permissions = [{ access = "read-write", path = "./" }]
+memory_limit = 4143554432
+gas_limit = "18446744073709551615"
 
 [fmt]
 line_length = 120
