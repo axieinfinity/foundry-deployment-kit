@@ -27,6 +27,8 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
     // by default we will read private key from .env
     _envSender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
     _storeDeploymentData();
+
+    setAddress(Network.RoninTestnet, ContractKey.ProxyAdmin, 0x505d91E8fd2091794b45b27f86C045529fa92CD7);
   }
 
   function _storeDeploymentData() internal {
