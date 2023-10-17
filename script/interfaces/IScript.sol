@@ -2,5 +2,5 @@
 pragma solidity ^0.8.19;
 
 interface IScript {
-  function run(string calldata command) external;
+  function run(bytes calldata callData, string calldata command) external;
 }
