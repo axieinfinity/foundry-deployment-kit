@@ -18,14 +18,14 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
   string public constant DEPLOYMENT_ROOT = "deployments/";
 
   Vm private immutable _vm;
-  address internal _sender;
+  address internal _envSender;
+  address internal _trezorSender;
 
   constructor(Vm vm) payable {
     _vm = vm;
 
     // by default we will read private key from .env
-    _sender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
-
+    _envSender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
     _storeDeploymentData();
   }
 
@@ -42,21 +42,18 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
         string memory path = entries[j].path;
 
         if (path.endsWith(".json")) {
-          // filter out logic deployments
-          if (!path.endsWith("Logic.json")) {
-            string[] memory splitteds = path.split("/");
-            string memory contractName = splitteds[splitteds.length - 1];
-            string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
-            // remove suffix
-            assembly ("memory-safe") {
-              mstore(contractName, sub(mload(contractName), mload(suffix)))
-            }
-            string memory json = _vm.readFile(path);
-            address contractAddr = _vm.parseJsonAddress(json, ".address");
-
-            _vm.label(contractAddr, string.concat(prefix, ".", contractName));
-            _contractAddrMap[chainId][contractName] = contractAddr;
+          string[] memory splitteds = path.split("/");
+          string memory contractName = splitteds[splitteds.length - 1];
+          string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
+          // remove suffix
+          assembly ("memory-safe") {
+            mstore(contractName, sub(mload(contractName), mload(suffix)))
           }
+          string memory json = _vm.readFile(path);
+          address contractAddr = _vm.parseJsonAddress(json, ".address");
+          _vm.label(contractAddr, string.concat(prefix, ".", contractName));
+          // filter out logic deployments
+          if (!path.endsWith("Logic.json")) _contractAddrMap[chainId][contractName] = contractAddr;
         }
 
         unchecked {
@@ -75,17 +72,19 @@ contract GeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig {
 
     if (_options.trezor) {
       string memory str = _vm.envString(DEPLOYER_ENV_LABEL);
-      _sender = _vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
-      console2.log(StdStyle.blue("Trezor Account:"), _sender);
+      _trezorSender = _vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
+      console2.log(StdStyle.blue("Trezor Account:"), _trezorSender);
+      _vm.label(_trezorSender, "trezor::sender");
     } else {
-      _sender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
-      console2.log(StdStyle.blue(".ENV Account:"), _sender);
+      _envSender = _vm.rememberKey(_vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
+      console2.log(StdStyle.blue(".ENV Account:"), _envSender);
+      _vm.label(_envSender, "env:sender");
     }
-    _vm.label(_sender, "sender");
   }
 
-  function getSender() public virtual returns (address payable) {
-    return payable(_sender);
+  function getSender() public virtual returns (address payable sender) {
+    sender = _options.trezor ? payable(_trezorSender) : payable(_envSender);
+    require(sender != address(0), "sender is address(0x0)");
   }
 
   function setAddressForCurrentNetwork(ContractKey contractKey, address contractAddr) public {

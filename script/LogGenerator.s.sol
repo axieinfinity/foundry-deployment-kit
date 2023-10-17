@@ -74,6 +74,7 @@ contract LogGenerator {
     json.serialize("userdoc", item.at('"userdoc"').value());
     json.serialize("devdoc", item.at('"devdoc"').value());
     json.serialize("abi", item.at('"abi"').value());
+    json.serialize("ast", item.at('"ast"').value());
     json = json.serialize("metadata", item.at('"rawMetadata"').value());
 
     json.write(filePath);

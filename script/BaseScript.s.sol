@@ -61,11 +61,11 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
     _network = _config.getCurrentNetwork();
   }
 
-  function run(string calldata command) public virtual {
+  function run(bytes calldata callData, string calldata command) public virtual {
     RuntimeConfig.Options memory options = _parseRuntimeConfig(command);
     _config.setRuntimeConfig(options);
 
-    (bool success, bytes memory returnOrRevertData) = address(this).delegatecall(abi.encodeCall(IDeployScript.run, ()));
+    (bool success, bytes memory returnOrRevertData) = address(this).delegatecall(callData);
     success.handleRevert(returnOrRevertData);
   }
 
@@ -77,13 +77,13 @@ abstract contract BaseScript is Script, IScript, StdAssertions {
   {
     console2.log("command", command);
     if (bytes(command).length != 0) {
-      string[] memory args = command.split(" ");
+      string[] memory args = command.split("@");
       uint256 length = args.length;
 
       for (uint256 i; i < length;) {
         if (args[i].eq("log")) options.log = true;
         else if (args[i].eq("trezor")) options.trezor = true;
-        else revert(string.concat("Unsupported command: ", args[i]).red());
+        else console2.log(StdStyle.yellow("Unsupported command: "), args[i]);
 
         unchecked {
           ++i;
