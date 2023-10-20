@@ -172,9 +172,11 @@ abstract contract BaseDeploy is BaseScript {
     internal
     returns (address payable)
   {
-    vm.broadcast(address(proxyAdmin));
+    address owner = ProxyAdmin(proxyAdmin).owner();
+    vm.broadcast(owner);
     vm.resumeGasMetering();
-    ProxyAdmin(proxy).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
+    if (args.length == 0) ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
+    else ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
     vm.pauseGasMetering();
 
     return proxy;

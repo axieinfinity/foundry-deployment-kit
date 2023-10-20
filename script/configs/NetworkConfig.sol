@@ -91,7 +91,12 @@ abstract contract NetworkConfig {
   }
 
   function tryCreateFork(string memory chainAlias, uint256 chainId) public returns (uint256) {
-    uint256 currentFork = vm.activeFork();
+    uint256 currentFork;
+    try vm.activeFork() returns (uint256 forkId) {
+      currentFork = forkId;
+    } catch {
+      console2.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
+    }
     if (chainId == block.chainid) {
       console2.log(
         StdStyle.yellow(string.concat("NetworkConfig: ", chainAlias, " is already created and active at forkId:")),
