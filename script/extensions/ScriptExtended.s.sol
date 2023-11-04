@@ -14,7 +14,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   using LibErrorHandler for bool;
 
   bytes public constant EMPTY_ARGS = "";
-  IGeneralConfig public constant config = IGeneralConfig(LibSharedAddress.config);
+  IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
 
   modifier logFn(string memory fnName) {
     console2.log("> ", StdStyle.blue(fnName), "...");
@@ -37,21 +37,21 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   constructor() {
     vm.pauseGasMetering();
-    _deploySharedAddress(address(config), _configByteCode());
+    _deploySharedAddress(address(CONFIG), _configByteCode());
   }
 
   function run(bytes calldata callData, string calldata command) public virtual {
-    config.resolveCommand(command);
+    CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(data);
   }
 
   function network() public view virtual returns (TNetwork) {
-    return config.getCurrentNetwork();
+    return CONFIG.getCurrentNetwork();
   }
 
   function sender() public view virtual returns (address payable) {
-    return config.getSender();
+    return CONFIG.getSender();
   }
 
   function fail() internal override {

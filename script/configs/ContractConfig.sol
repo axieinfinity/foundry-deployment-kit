@@ -10,7 +10,7 @@ import { TContract } from "../types/Types.sol";
 abstract contract ContractConfig is IContractConfig {
   using LibString for string;
 
-  Vm private constant vm = Vm(LibSharedAddress.vm);
+  Vm private constant vm = Vm(LibSharedAddress.VM);
 
   string internal _absolutePath;
   mapping(TContract => string contractName) internal _contractNameMap;

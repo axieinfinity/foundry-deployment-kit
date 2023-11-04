@@ -14,7 +14,7 @@ import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 abstract contract BaseGeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig, WalletConfig {
   using LibString for string;
 
-  Vm private constant vm = Vm(LibSharedAddress.vm);
+  Vm private constant vm = Vm(LibSharedAddress.VM);
 
   constructor(string memory absolutePath, string memory deploymentRoot) ContractConfig(absolutePath, deploymentRoot) {
     // by default we will read private key from .env

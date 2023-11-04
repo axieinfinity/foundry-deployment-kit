@@ -9,7 +9,7 @@ import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
 
 abstract contract NetworkConfig is INetworkConfig {
-  Vm private constant vm = Vm(LibSharedAddress.vm);
+  Vm private constant vm = Vm(LibSharedAddress.VM);
   uint256 private constant NULL_FORK_ID = uint256(keccak256("NULL_FORK_ID"));
 
   string internal _deploymentRoot;

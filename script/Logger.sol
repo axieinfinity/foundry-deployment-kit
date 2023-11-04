@@ -17,8 +17,8 @@ contract Logger is ILogger {
   using LibString for *;
   using JSONParserLib for *;
 
-  Vm internal constant vm = Vm(LibSharedAddress.vm);
-  IGeneralConfig public constant config = IGeneralConfig(LibSharedAddress.config);
+  Vm internal constant vm = Vm(LibSharedAddress.VM);
+  IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
 
   function generateArtifact(
     address deployer,
@@ -32,11 +32,11 @@ contract Logger is ILogger {
       string.concat(fileName, " deployed at: ", contractAddr.toHexString()).green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
-    if (!config.getRuntimeConfig().log) {
+    if (!CONFIG.getRuntimeConfig().log) {
       console2.log("Skipping artifact generation for:", fileName.yellow());
       return;
     }
-    string memory dirPath = config.getDeploymentDirectory(config.getCurrentNetwork());
+    string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
     string memory filePath = string.concat(dirPath, fileName, ".json");
 
     string memory json;
