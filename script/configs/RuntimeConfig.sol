@@ -1,19 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-abstract contract RuntimeConfig {
-  struct Options {
-    bool log;
-    bool trezor;
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { console2 } from "forge-std/console2.sol";
+import { LibString } from "solady/utils/LibString.sol";
+import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
+
+abstract contract RuntimeConfig is IRuntimeConfig {
+  using LibString for string;
+
+  bool internal _resolved;
+  Option internal _option;
+
+  function resolveCommand(string calldata command) external virtual {
+    if (_resolved) return;
+
+    console2.log("command", command);
+    if (bytes(command).length != 0) {
+      string[] memory args = command.split("@");
+      uint256 length = args.length;
+
+      for (uint256 i; i < length;) {
+        if (args[i].eq("log")) _option.log = true;
+        else if (args[i].eq("trezor")) _option.trezor = true;
+        else console2.log(StdStyle.yellow("Unsupported command: "), args[i]);
+
+        unchecked {
+          ++i;
+        }
+      }
+    }
+
+    _resolved = true;
+
+    _handleRuntimeConfig();
   }
 
-  Options internal _options;
-
-  function setRuntimeConfig(Options memory options) public virtual {
-    _options = options;
+  function getRuntimeConfig() public view returns (Option memory option) {
+    option = _option;
   }
 
-  function getRuntimeConfig() public view returns (Options memory options) {
-    options = _options;
-  }
+  function _handleRuntimeConfig() internal virtual;
 }

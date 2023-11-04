@@ -1,51 +1,46 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-enum ContractKey {
-  RNSUnified,
-  ProxyAdmin,
-  RNSAuction,
-  NameChecker,
-  PublicResolver,
-  RNSDomainPrice,
-  RNSReverseRegistrar,
-  RONRegistrarController
-}
+import { Vm, VmSafe } from "forge-std/Vm.sol";
+import { LibString } from "solady/utils/LibString.sol";
+import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
+import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
+import { TContract } from "../types/Types.sol";
 
-abstract contract ContractConfig {
-  bytes internal _migrationConfig;
-  mapping(ContractKey contractIdx => string contractName) internal _contractNameMap;
+abstract contract ContractConfig is IContractConfig {
+  using LibString for string;
+
+  Vm private constant vm = Vm(LibSharedAddress.vm);
+
+  string internal _absolutePath;
+  mapping(TContract => string contractName) internal _contractNameMap;
   mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
 
-  constructor() payable {
-    // setup contract name
-    _contractNameMap[ContractKey.RNSUnified] = "RNSUnified";
-    _contractNameMap[ContractKey.ProxyAdmin] = "ProxyAdmin";
-    _contractNameMap[ContractKey.RNSAuction] = "RNSAuction";
-    _contractNameMap[ContractKey.NameChecker] = "NameChecker";
-    _contractNameMap[ContractKey.PublicResolver] = "PublicResolver";
-    _contractNameMap[ContractKey.RNSDomainPrice] = "RNSDomainPrice";
-    _contractNameMap[ContractKey.RNSReverseRegistrar] = "RNSReverseRegistrar";
-    _contractNameMap[ContractKey.RONRegistrarController] = "RONRegistrarController";
+  constructor(string memory absolutePath, string memory deploymentRoot) {
+    _absolutePath = absolutePath;
+    _storeDeploymentData(deploymentRoot);
   }
 
-  function getContractName(ContractKey contractKey) public view returns (string memory name) {
-    name = _contractNameMap[contractKey];
+  function getContractName(TContract contractType) public view returns (string memory name) {
+    name = _contractNameMap[contractType];
     require(bytes(name).length != 0, "Contract Key not found");
   }
 
-  function getContractFileName(ContractKey contractKey) public view returns (string memory filename) {
-    string memory contractName = getContractName(contractKey);
-    filename = string.concat(contractName, ".sol:", contractName);
+  function getContractAbsolutePath(TContract contractType) public view returns (string memory name) {
+    if (bytes(_absolutePath).length != 0) {
+      name = string.concat(_absolutePath, ".sol:", _contractNameMap[contractType]);
+    } else {
+      name = string.concat(_contractNameMap[contractType], ".sol");
+    }
   }
 
-  function getAddressFromCurrentNetwork(ContractKey contractKey) public view returns (address payable) {
-    string memory contractName = _contractNameMap[contractKey];
-    require(bytes(contractName).length != 0, "Contract Key not found");
+  function getAddressFromCurrentNetwork(TContract contractType) public view returns (address payable) {
+    string memory contractName = _contractNameMap[contractType];
+    require(bytes(contractName).length != 0, "Contract Key found");
     return getAddressByRawData(block.chainid, contractName);
   }
 
-  function getAddressByString(string memory contractName) public view returns (address payable) {
+  function getAddressByString(string calldata contractName) public view returns (address payable) {
     return getAddressByRawData(block.chainid, contractName);
   }
 
@@ -54,12 +49,41 @@ abstract contract ContractConfig {
     require(addr != address(0), string.concat("address not found: ", contractName));
   }
 
-  function setMigrationRawConfig(bytes memory config) public {
-    if (_migrationConfig.length != 0) return;
-    _migrationConfig = config;
-  }
+  function _storeDeploymentData(string memory deploymentRoot) internal {
+    VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
 
-  function getMigrationRawConfig() public view returns (bytes memory) {
-    return _migrationConfig;
+    for (uint256 i; i < deployments.length;) {
+      VmSafe.DirEntry[] memory entries = vm.readDir(deployments[i].path);
+      uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
+      string[] memory s = deployments[i].path.split("/");
+      string memory prefix = s[s.length - 1];
+
+      for (uint256 j; j < entries.length;) {
+        string memory path = entries[j].path;
+
+        if (path.endsWith(".json")) {
+          string[] memory splitteds = path.split("/");
+          string memory contractName = splitteds[splitteds.length - 1];
+          string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
+          // remove suffix
+          assembly ("memory-safe") {
+            mstore(contractName, sub(mload(contractName), mload(suffix)))
+          }
+          string memory json = vm.readFile(path);
+          address contractAddr = vm.parseJsonAddress(json, ".address");
+          vm.label(contractAddr, string.concat(prefix, ".", contractName));
+          // filter out logic deployments
+          if (!path.endsWith("Logic.json")) _contractAddrMap[chainId][contractName] = contractAddr;
+        }
+
+        unchecked {
+          ++j;
+        }
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 }
