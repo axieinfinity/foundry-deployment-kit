@@ -7,9 +7,9 @@ interface INetworkConfig {
   struct NetworkData {
     uint256 forkId;
     uint256 chainId;
-    string privateKeyEnvLabel;
-    string deploymentDir;
     string chainAlias;
+    string deploymentDir;
+    string privateKeyEnvLabel;
   }
 
   function setNetworkInfo(

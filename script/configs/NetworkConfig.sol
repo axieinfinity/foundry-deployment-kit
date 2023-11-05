@@ -30,16 +30,16 @@ abstract contract NetworkConfig is INetworkConfig {
   function setNetworkInfo(
     uint256 chainId,
     TNetwork network,
-    string calldata chainAlias,
-    string calldata deploymentDir,
-    string calldata privateKeyEnvLabel
+    string memory chainAlias,
+    string memory deploymentDir,
+    string memory privateKeyEnvLabel
   ) public {
     _networkMap[chainId] = network;
     _networkDataMap[network] =
-      NetworkData(tryCreateFork(chainAlias, chainId), chainId, privateKeyEnvLabel, deploymentDir, chainAlias);
+      NetworkData(tryCreateFork(chainAlias, chainId), chainId, chainAlias, deploymentDir, privateKeyEnvLabel);
   }
 
-  function tryCreateFork(string calldata chainAlias, uint256 chainId) public returns (uint256) {
+  function tryCreateFork(string memory chainAlias, uint256 chainId) public returns (uint256) {
     if (_isForkModeDisabled) return NULL_FORK_ID;
     uint256 currentFork;
     try vm.activeFork() returns (uint256 forkId) {

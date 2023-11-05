@@ -7,21 +7,29 @@ import { StdStyle } from "forge-std/StdStyle.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
+import { MigrationConfig } from "./configs/MigrationConfig.sol";
 import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
 import { TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-abstract contract BaseGeneralConfig is NetworkConfig, RuntimeConfig, ContractConfig, WalletConfig {
+abstract contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
   using LibString for string;
 
-  Vm private constant vm = Vm(LibSharedAddress.VM);
+  Vm internal constant vm = Vm(LibSharedAddress.VM);
 
-  constructor(string memory absolutePath, string memory deploymentRoot) ContractConfig(absolutePath, deploymentRoot) {
-    // by default we will read private key from .env
-    _envSender = vm.rememberKey(vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
-    console2.log(StdStyle.blue(".ENV Account:"), _envSender);
-    vm.label(_envSender, "env:sender");
+  constructor(string memory absolutePath, string memory deploymentRoot)
+    ContractConfig(absolutePath, deploymentRoot)
+    NetworkConfig(deploymentRoot)
+  {
+    _setUpNetworks();
+    _setUpContracts();
+    _setUpDefaultSender();
+    _storeDeploymentData(deploymentRoot);
   }
+
+  function _setUpNetworks() internal virtual;
+  function _setUpContracts() internal virtual;
+  function _setUpDefaultSender() internal virtual;
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);

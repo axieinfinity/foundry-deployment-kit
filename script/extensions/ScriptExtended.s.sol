@@ -35,8 +35,9 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     vm.stopBroadcast();
   }
 
-  constructor() {
+  function setUp() public virtual {
     vm.pauseGasMetering();
+    vm.label(address(CONFIG), "GeneralConfig");
     _deploySharedAddress(address(CONFIG), _configByteCode());
   }
 
@@ -75,7 +76,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   function _deploySharedAddress(address where, bytes memory bytecode) internal {
-    if (where.code.length != 0) {
+    if (where.code.length == 0) {
       vm.makePersistent(where);
       vm.allowCheatcodes(where);
       deployCodeTo(bytecode, where);

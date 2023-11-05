@@ -23,7 +23,9 @@ abstract contract BaseMigration is ScriptExtended {
   bytes internal _overriddenArgs;
   mapping(TContract contractType => IMigrationScript deployScript) internal _deployScript;
 
-  constructor() {
+  function setUp() public virtual override {
+    super.setUp();
+    vm.label(address(LOGGER), "logger");
     _deploySharedAddress(address(LOGGER), type(Logger).creationCode);
     _setMigrationConfig();
     _injectDependencies();

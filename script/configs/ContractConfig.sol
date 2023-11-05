@@ -12,13 +12,19 @@ abstract contract ContractConfig is IContractConfig {
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
 
-  string internal _absolutePath;
+  string private _absolutePath;
+  string private _deploymentRoot;
   mapping(TContract => string contractName) internal _contractNameMap;
+  mapping(TContract => string absolutePath) internal _contractAbsolutePathMap;
   mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
 
   constructor(string memory absolutePath, string memory deploymentRoot) {
     _absolutePath = absolutePath;
-    _storeDeploymentData(deploymentRoot);
+    _deploymentRoot = deploymentRoot;
+  }
+
+  function setContractAbsolutePathMap(TContract contractType, string memory absolutePath) public {
+    _contractAbsolutePathMap[contractType] = absolutePath;
   }
 
   function getContractName(TContract contractType) public view returns (string memory name) {
@@ -27,8 +33,12 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function getContractAbsolutePath(TContract contractType) public view returns (string memory name) {
-    if (bytes(_absolutePath).length != 0) {
-      name = string.concat(_absolutePath, ".sol:", _contractNameMap[contractType]);
+    if (bytes(_contractAbsolutePathMap[contractType]).length != 0) {
+      name = string.concat(
+        _contractAbsolutePathMap[contractType], _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]
+      );
+    } else if (bytes(_absolutePath).length != 0) {
+      name = string.concat(_absolutePath, _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]);
     } else {
       name = string.concat(_contractNameMap[contractType], ".sol");
     }

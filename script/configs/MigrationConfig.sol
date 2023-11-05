@@ -6,7 +6,7 @@ import { IMigrationConfig } from "../interfaces/configs/IMigrationConfig.sol";
 abstract contract MigrationConfig is IMigrationConfig {
   bytes internal _migrationConfig;
 
-  function setMigrationRawConfig(bytes calldata config) public {
+  function setMigrationRawConfig(bytes memory config) public {
     if (_migrationConfig.length != 0) return;
     _migrationConfig = config;
   }
