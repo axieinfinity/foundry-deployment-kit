@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { Vm } from "forge-std/Vm.sol";
-import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
+import { console2 as console } from "forge-std/console2.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
@@ -12,14 +12,14 @@ import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
 import { TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-abstract contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
+contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
   using LibString for string;
 
   Vm internal constant vm = Vm(LibSharedAddress.VM);
 
   constructor(string memory absolutePath, string memory deploymentRoot)
-    ContractConfig(absolutePath, deploymentRoot)
     NetworkConfig(deploymentRoot)
+    ContractConfig(absolutePath, deploymentRoot)
   {
     _setUpNetworks();
     _setUpContracts();
@@ -27,9 +27,15 @@ abstract contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConf
     _storeDeploymentData(deploymentRoot);
   }
 
-  function _setUpNetworks() internal virtual;
-  function _setUpContracts() internal virtual;
-  function _setUpDefaultSender() internal virtual;
+  function _setUpNetworks() internal virtual { }
+  function _setUpContracts() internal virtual { }
+
+  function _setUpDefaultSender() internal virtual {
+    // by default we will read private key from .env
+    _envSender = vm.rememberKey(vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
+    console.log(StdStyle.blue(".ENV Account:"), _envSender);
+    vm.label(_envSender, "env:sender");
+  }
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
@@ -52,7 +58,7 @@ abstract contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConf
     if (_option.trezor) {
       string memory str = vm.envString(DEPLOYER_ENV_LABEL);
       _trezorSender = vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
-      console2.log(StdStyle.blue("Trezor Account:"), _trezorSender);
+      console.log(StdStyle.blue("Trezor Account:"), _trezorSender);
       vm.label(_trezorSender, "trezor::sender");
     }
   }

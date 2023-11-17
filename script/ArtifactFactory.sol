@@ -2,16 +2,16 @@
 pragma solidity ^0.8.19;
 
 import { Vm } from "forge-std/Vm.sol";
-import { StdStyle } from "forge-std/StdStyle.sol";
-import { console2 } from "forge-std/console2.sol";
 import { stdJson } from "forge-std/StdJson.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { console2 as console } from "forge-std/console2.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { JSONParserLib } from "solady/utils/JSONParserLib.sol";
-import { ILogger } from "./interfaces/ILogger.sol";
+import { IArtifactFactory } from "./interfaces/IArtifactFactory.sol";
 import { IGeneralConfig } from "./interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-contract Logger is ILogger {
+contract ArtifactFactory is IArtifactFactory {
   using stdJson for *;
   using StdStyle for *;
   using LibString for *;
@@ -28,12 +28,12 @@ contract Logger is ILogger {
     bytes calldata args,
     uint256 nonce
   ) external {
-    console2.log(
+    console.log(
       string.concat(fileName, " deployed at: ", contractAddr.toHexString()).green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
     if (!CONFIG.getRuntimeConfig().log) {
-      console2.log("Skipping artifact generation for:", fileName.yellow());
+      console.log("Skipping artifact generation for:", fileName.yellow());
       return;
     }
     string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());

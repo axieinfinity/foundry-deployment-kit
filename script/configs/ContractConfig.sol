@@ -81,7 +81,7 @@ abstract contract ContractConfig is IContractConfig {
           }
           string memory json = vm.readFile(path);
           address contractAddr = vm.parseJsonAddress(json, ".address");
-          vm.label(contractAddr, string.concat(prefix, ".", contractName));
+          vm.label(contractAddr, string.concat(prefix, "::", contractName));
           // filter out logic deployments
           if (!path.endsWith("Logic.json")) _contractAddrMap[chainId][contractName] = contractAddr;
         }

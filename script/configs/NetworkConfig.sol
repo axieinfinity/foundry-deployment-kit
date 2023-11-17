@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { Vm } from "forge-std/Vm.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { console2 } from "forge-std/console2.sol";
+import { console2 as console } from "forge-std/console2.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
@@ -46,20 +46,20 @@ abstract contract NetworkConfig is INetworkConfig {
       currentFork = forkId;
     } catch {
       _isForkModeDisabled = true;
-      console2.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
+      console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
     }
     if (chainId == block.chainid) {
-      console2.log(
+      console.log(
         StdStyle.yellow(string.concat("NetworkConfig: ", chainAlias, " is already created and active at forkId:")),
         currentFork
       );
       return currentFork;
     }
     try vm.createFork(vm.rpcUrl(chainAlias)) returns (uint256 forkId) {
-      console2.log(StdStyle.blue(string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:")), forkId);
+      console.log(StdStyle.blue(string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:")), forkId);
       return forkId;
     } catch {
-      console2.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), vm.rpcUrl(chainAlias));
+      console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), vm.rpcUrl(chainAlias));
       return NULL_FORK_ID;
     }
   }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { console2, Script } from "forge-std/Script.sol";
+import { console, Script } from "forge-std/Script.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
@@ -17,7 +17,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
 
   modifier logFn(string memory fnName) {
-    console2.log("> ", StdStyle.blue(fnName), "...");
+    console.log("> ", StdStyle.blue(fnName), "...");
     _;
   }
 
@@ -38,8 +38,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   function setUp() public virtual {
     vm.pauseGasMetering();
     vm.label(address(CONFIG), "GeneralConfig");
-    _deploySharedAddress(address(CONFIG), _configByteCode());
+    deploySharedAddress(address(CONFIG), _configByteCode());
   }
+
+  function _configByteCode() internal virtual returns (bytes memory);
 
   function run(bytes calldata callData, string calldata command) public virtual {
     CONFIG.resolveCommand(command);
@@ -60,6 +62,14 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     revert("Got failed assertion");
   }
 
+  function deploySharedAddress(address where, bytes memory bytecode) public {
+    if (where.code.length == 0) {
+      vm.makePersistent(where);
+      vm.allowCheatcodes(where);
+      deployCodeTo(bytecode, where);
+    }
+  }
+
   function deployCodeTo(bytes memory creationCode, address where) internal {
     deployCodeTo(EMPTY_ARGS, creationCode, 0, where);
   }
@@ -74,14 +84,4 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     assertTrue(success, "ScriptExtended: Failed to create runtime bytecode.");
     vm.etch(where, runtimeBytecode);
   }
-
-  function _deploySharedAddress(address where, bytes memory bytecode) internal {
-    if (where.code.length == 0) {
-      vm.makePersistent(where);
-      vm.allowCheatcodes(where);
-      deployCodeTo(bytecode, where);
-    }
-  }
-
-  function _configByteCode() internal virtual returns (bytes memory);
 }

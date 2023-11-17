@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { console2 } from "forge-std/console2.sol";
+import { console2 as console } from "forge-std/console2.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 
@@ -11,11 +11,16 @@ abstract contract RuntimeConfig is IRuntimeConfig {
 
   bool internal _resolved;
   Option internal _option;
+  string internal _rawCommand;
+
+  function getCommand() public view virtual returns (string memory) {
+    return _rawCommand;
+  }
 
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
 
-    console2.log("command", command);
+    console.log("command", command);
     if (bytes(command).length != 0) {
       string[] memory args = command.split("@");
       uint256 length = args.length;
@@ -23,7 +28,7 @@ abstract contract RuntimeConfig is IRuntimeConfig {
       for (uint256 i; i < length;) {
         if (args[i].eq("log")) _option.log = true;
         else if (args[i].eq("trezor")) _option.trezor = true;
-        else console2.log(StdStyle.yellow("Unsupported command: "), args[i]);
+        else console.log(StdStyle.yellow("Unsupported command: "), args[i]);
 
         unchecked {
           ++i;
@@ -31,6 +36,7 @@ abstract contract RuntimeConfig is IRuntimeConfig {
       }
     }
 
+    _rawCommand = command;
     _resolved = true;
 
     _handleRuntimeConfig();

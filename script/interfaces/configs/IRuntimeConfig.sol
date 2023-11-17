@@ -7,6 +7,8 @@ interface IRuntimeConfig {
     bool trezor;
   }
 
+  function getCommand() external view returns (string memory);
+
   function resolveCommand(string calldata command) external;
 
   function getRuntimeConfig() external view returns (Option memory options);

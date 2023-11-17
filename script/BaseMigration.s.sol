@@ -6,10 +6,8 @@ import {
   ITransparentUpgradeableProxy,
   TransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {
-  console2, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended
-} from "./extensions/ScriptExtended.s.sol";
-import { ILogger, Logger } from "./Logger.sol";
+import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol";
+import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { TContract } from "./types/Types.sol";
@@ -18,25 +16,31 @@ abstract contract BaseMigration is ScriptExtended {
   using StdStyle for string;
   using LibProxy for address payable;
 
-  ILogger public constant LOGGER = ILogger(LibSharedAddress.LOGGER);
+  IArtifactFactory public constant ARTIFACT_FACTORY = IArtifactFactory(LibSharedAddress.ARTIFACT_FACTORY);
 
   bytes internal _overriddenArgs;
   mapping(TContract contractType => IMigrationScript deployScript) internal _deployScript;
 
   function setUp() public virtual override {
     super.setUp();
-    vm.label(address(LOGGER), "logger");
-    _deploySharedAddress(address(LOGGER), type(Logger).creationCode);
+    vm.label(address(ARTIFACT_FACTORY), "ArtifactFactory");
+    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode);
     _setMigrationConfig();
     _injectDependencies();
   }
+
+  function _injectDependencies() internal virtual { }
+
+  function _defaultArguments() internal virtual returns (bytes memory args) { }
+
+  function _buildMigrationRawConfig() internal virtual returns (bytes memory);
 
   function loadContractOrDeploy(TContract contractType) public returns (address payable contractAddr) {
     string memory contractName = CONFIG.getContractName(contractType);
     try CONFIG.getAddressFromCurrentNetwork(contractType) returns (address payable addr) {
       contractAddr = addr;
     } catch {
-      console2.log(string.concat("Deployment for ", contractName, " not found, try fresh deploy ...").yellow());
+      console.log(string.concat("Deployment for ", contractName, " not found, try fresh deploy ...").yellow());
       contractAddr = _deployScript[contractType].run();
     }
   }
@@ -59,7 +63,7 @@ abstract contract BaseMigration is ScriptExtended {
     vm.label(deployed, contractName);
 
     CONFIG.setAddress(network(), contractType, deployed);
-    LOGGER.generateArtifact(sender(), deployed, contractAbsolutePath, contractName, args, nonce);
+    ARTIFACT_FACTORY.generateArtifact(sender(), deployed, contractAbsolutePath, contractName, args, nonce);
   }
 
   function _deployLogic(TContract contractType) internal returns (address payable logic) {
@@ -70,7 +74,7 @@ abstract contract BaseMigration is ScriptExtended {
     (logic, logicNonce) = _deployRaw(contractAbsolutePath, EMPTY_ARGS);
 
     vm.label(logic, string.concat(contractName, "::Logic"));
-    LOGGER.generateArtifact(
+    ARTIFACT_FACTORY.generateArtifact(
       sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
     );
   }
@@ -87,7 +91,7 @@ abstract contract BaseMigration is ScriptExtended {
 
     vm.label(deployed, string.concat(contractName, "::Proxy"));
     CONFIG.setAddress(network(), contractType, deployed);
-    LOGGER.generateArtifact(
+    ARTIFACT_FACTORY.generateArtifact(
       sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce
     );
   }
@@ -111,21 +115,14 @@ abstract contract BaseMigration is ScriptExtended {
     internal
     broadcastAs(ProxyAdmin(proxyAdmin).owner())
   {
-    if (args.length == 0) ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
-    else ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
+    ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
   }
 
   function _setMigrationConfig() internal {
     CONFIG.setMigrationRawConfig(_buildMigrationRawConfig());
   }
 
-  function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal {
-    _deployScript[contractType] = IMigrationScript(address(deployScript));
+  function _setDependencyDeployScript(TContract contractType, address deployScript) internal {
+    _deployScript[contractType] = IMigrationScript(deployScript);
   }
-
-  function _injectDependencies() internal virtual { }
-
-  function _defaultArguments() internal virtual returns (bytes memory args) { }
-
-  function _buildMigrationRawConfig() internal virtual returns (bytes memory);
 }
