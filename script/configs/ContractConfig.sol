@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Vm, VmSafe } from "forge-std/Vm.sol";
-import { LibString } from "solady/utils/LibString.sol";
+import { Vm, VmSafe } from "lib/forge-std/src/Vm.sol";
+import { LibString } from "lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
@@ -60,6 +60,7 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function _storeDeploymentData(string memory deploymentRoot) internal {
+    if (!vm.exists(deploymentRoot)) return;
     VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
 
     for (uint256 i; i < deployments.length;) {

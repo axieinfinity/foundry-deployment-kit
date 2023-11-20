@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { MessageHashUtils } from "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
 import { LibSig } from "./libraries/LibSig.sol";
-import { Script } from "forge-std/Script.sol";
-import { LibString } from "solady/utils/LibString.sol";
+import { Script } from "lib/forge-std/src/Script.sol";
+import { LibString } from "lib/solady/src/utils/LibString.sol";
 import { BaseGeneralConfig } from "./BaseGeneralConfig.sol";
 import { console, BaseMigration } from "./BaseMigration.s.sol";
 

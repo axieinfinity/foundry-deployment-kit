@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Vm } from "forge-std/Vm.sol";
-import { stdJson } from "forge-std/StdJson.sol";
-import { StdStyle } from "forge-std/StdStyle.sol";
-import { console2 as console } from "forge-std/console2.sol";
-import { LibString } from "solady/utils/LibString.sol";
-import { JSONParserLib } from "solady/utils/JSONParserLib.sol";
+import { Vm } from "lib/forge-std/src/Vm.sol";
+import { stdJson } from "lib/forge-std/src/StdJson.sol";
+import { StdStyle } from "lib/forge-std/src/StdStyle.sol";
+import { console2 as console } from "lib/forge-std/src/console2.sol";
+import { LibString } from "lib/solady/src/utils/LibString.sol";
+import { JSONParserLib } from "lib/solady/src/utils/JSONParserLib.sol";
 import { IArtifactFactory } from "./interfaces/IArtifactFactory.sol";
 import { IGeneralConfig } from "./interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
@@ -23,7 +23,7 @@ contract ArtifactFactory is IArtifactFactory {
   function generateArtifact(
     address deployer,
     address contractAddr,
-    string calldata contractAbsolutePath,
+    string memory contractAbsolutePath,
     string calldata fileName,
     bytes calldata args,
     uint256 nonce
@@ -61,8 +61,11 @@ contract ArtifactFactory is IArtifactFactory {
     json.serialize("contractAbsolutePath", contractAbsolutePath);
     json.serialize("numDeployments", numDeployments);
 
+    console.log("contractAbsolutePath", contractAbsolutePath);
     string[] memory s = contractAbsolutePath.split(":");
-    string memory artifactPath = string.concat("./out/", s[0], s[1].replace(".sol", ""), ".json");
+    string memory artifactPath = s.length == 2
+      ? string.concat("./out/", s[0], "/", s[1], ".json")
+      : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
     string memory artifact = vm.readFile(artifactPath);
     JSONParserLib.Item memory item = artifact.parse();
 
