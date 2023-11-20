@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Vm } from "lib/forge-std/src/Vm.sol";
+import { Vm } from "../lib/forge-std/src/Vm.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
 
 library LibProxy {

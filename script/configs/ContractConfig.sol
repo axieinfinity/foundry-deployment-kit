@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Vm, VmSafe } from "lib/forge-std/src/Vm.sol";
+import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
 import { LibString } from "lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";

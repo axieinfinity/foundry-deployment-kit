@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { StdStyle } from "lib/forge-std/src/StdStyle.sol";
-import { console, Script } from "lib/forge-std/src/Script.sol";
-import { StdAssertions } from "lib/forge-std/src/StdAssertions.sol";
+import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
+import { console, Script } from "../../lib/forge-std/src/Script.sol";
+import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
