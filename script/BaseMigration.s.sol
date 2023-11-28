@@ -10,10 +10,12 @@ import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } 
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
+import { LibString, DefaultContract } from "./utils/DefaultContract.sol";
 import { TContract } from "./types/Types.sol";
 
 abstract contract BaseMigration is ScriptExtended {
   using StdStyle for string;
+  using LibString for bytes32;
   using LibProxy for address payable;
 
   IArtifactFactory public constant ARTIFACT_FACTORY = IArtifactFactory(LibSharedAddress.ARTIFACT_FACTORY);
@@ -60,8 +62,18 @@ abstract contract BaseMigration is ScriptExtended {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
   }
 
+  function _getContractNameFrom(TContract contractType) internal virtual returns (string memory contractName) {
+    string memory contractTypeName = TContract.unwrap(contractType).unpackOne();
+    contractName = CONFIG.getContractName(contractType);
+    contractName =
+      keccak256(bytes(contractTypeName)) == keccak256(bytes(contractName)) ? contractName : contractTypeName;
+  }
+
   function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
-    string memory contractName = CONFIG.getContractName(contractType);
+    string memory contractName = _getContractNameFrom(contractType);
+    if (keccak256(bytes(contractName)) != keccak256(bytes(TContract.unwrap(contractType).unpackOne()))) {
+      contractName = TContract.unwrap(contractType).unpackOne();
+    }
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
     bytes memory args = arguments();
     uint256 nonce;
@@ -71,7 +83,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _deployLogic(TContract contractType) internal virtual returns (address payable logic) {
-    string memory contractName = CONFIG.getContractName(contractType);
+    string memory contractName = _getContractNameFrom(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
 
     uint256 logicNonce;
@@ -90,8 +102,10 @@ abstract contract BaseMigration is ScriptExtended {
     address logic = _deployLogic(contractType);
     string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
     uint256 proxyNonce;
-    (deployed, proxyNonce) =
-      _deployRaw(proxyAbsolutePath, abi.encode(logic, CONFIG.getAddressByString("ProxyAdmin"), args));
+    address proxyAdmin = CONFIG.getAddressFromCurrentNetwork(DefaultContract.ProxyAdmin.key());
+    assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
+
+    (deployed, proxyNonce) = _deployRaw(proxyAbsolutePath, abi.encode(logic, proxyAdmin, args));
     CONFIG.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(
       sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce
@@ -120,6 +134,10 @@ abstract contract BaseMigration is ScriptExtended {
     broadcastAs(ProxyAdmin(proxyAdmin).owner())
   {
     ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
+  }
+
+  function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal {
+    _deployScript[contractType] = IMigrationScript(address(deployScript));
   }
 
   function _setDependencyDeployScript(TContract contractType, address deployScript) internal {

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-type TNetwork is uint256;
+type TNetwork is bytes32;
 
-type TContract is uint256;
+type TContract is bytes32;
 
 using { networkEq as ==, networkNeq as != } for TNetwork global;
 using { contractEq as ==, contractNeq as != } for TContract global;

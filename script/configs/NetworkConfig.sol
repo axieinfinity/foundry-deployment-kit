@@ -36,11 +36,16 @@ abstract contract NetworkConfig is INetworkConfig {
     TNetwork network,
     string memory chainAlias,
     string memory deploymentDir,
-    string memory privateKeyEnvLabel
+    string memory privateKeyEnvLabel,
+    string memory explorer
   ) public virtual {
     _networkMap[chainId] = network;
     _networkDataMap[network] =
-      NetworkData(tryCreateFork(chainAlias, chainId), chainId, chainAlias, deploymentDir, privateKeyEnvLabel);
+      NetworkData(tryCreateFork(chainAlias, chainId), chainId, chainAlias, deploymentDir, privateKeyEnvLabel, explorer);
+  }
+
+  function getExplorer(TNetwork network) public view virtual returns (string memory link) {
+    link = _networkDataMap[network].explorer;
   }
 
   function getAlias(TNetwork network) public view virtual returns (string memory networkAlias) {

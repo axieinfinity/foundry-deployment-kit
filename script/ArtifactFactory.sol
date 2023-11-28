@@ -29,7 +29,13 @@ contract ArtifactFactory is IArtifactFactory {
     uint256 nonce
   ) external {
     console.log(
-      string.concat(fileName, " deployed at: ", contractAddr.toHexString()).green(),
+      string.concat(
+        fileName,
+        " deployed at: ",
+        CONFIG.getExplorer(CONFIG.getCurrentNetwork()),
+        "/address/",
+        contractAddr.toHexString()
+      ).green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
     if (!CONFIG.getRuntimeConfig().log) {

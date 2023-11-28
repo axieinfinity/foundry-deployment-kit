@@ -17,7 +17,7 @@ contract Migration__XXXXYYZZ_DeploySample is SampleMigration {
     args = abi.encode(param);
   }
 
-  function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
+  function run() public onlyOn(DefaultNetwork.RoninMainnet.key()) {
     Sample sample = new SampleDeploy().run();
     SampleProxy sampleProxy = new SampleProxyDeploy().run();
 

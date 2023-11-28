@@ -47,21 +47,24 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
       DefaultNetwork.Local.key(),
       DefaultNetwork.Local.chainAlias(),
       DefaultNetwork.Local.deploymentDir(),
-      DefaultNetwork.Local.envLabel()
+      DefaultNetwork.Local.envLabel(),
+      DefaultNetwork.Local.explorer()
     );
     setNetworkInfo(
       DefaultNetwork.RoninTestnet.chainId(),
       DefaultNetwork.RoninTestnet.key(),
       DefaultNetwork.RoninTestnet.chainAlias(),
       DefaultNetwork.RoninTestnet.deploymentDir(),
-      DefaultNetwork.RoninTestnet.envLabel()
+      DefaultNetwork.RoninTestnet.envLabel(),
+      DefaultNetwork.RoninTestnet.explorer()
     );
     setNetworkInfo(
       DefaultNetwork.RoninMainnet.chainId(),
       DefaultNetwork.RoninMainnet.key(),
       DefaultNetwork.RoninMainnet.chainAlias(),
       DefaultNetwork.RoninMainnet.deploymentDir(),
-      DefaultNetwork.RoninMainnet.envLabel()
+      DefaultNetwork.RoninMainnet.envLabel(),
+      DefaultNetwork.RoninMainnet.explorer()
     );
   }
 

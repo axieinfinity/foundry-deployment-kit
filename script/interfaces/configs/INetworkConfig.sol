@@ -10,6 +10,7 @@ interface INetworkConfig {
     string chainAlias;
     string deploymentDir;
     string privateKeyEnvLabel;
+    string explorer;
   }
 
   function setNetworkInfo(
@@ -17,10 +18,13 @@ interface INetworkConfig {
     TNetwork network,
     string calldata chainAlias,
     string calldata deploymentDir,
-    string calldata privateKeyEnvLabel
+    string calldata privateKeyEnvLabel,
+    string calldata explorer
   ) external;
 
   function setForkMode(bool shouldEnable) external;
+
+  function getExplorer(TNetwork network) external view returns (string memory link);
 
   function getForkId(TNetwork network) external view returns (uint256 forkId);
 

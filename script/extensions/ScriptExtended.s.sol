@@ -8,6 +8,7 @@ import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
+import { TContract } from "../types/Types.sol";
 
 abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   using LibErrorHandler for bool;
@@ -76,6 +77,11 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
       vm.allowCheatcodes(where);
       deployCodeTo(bytecode, where);
     }
+  }
+
+  function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
+    where = address(ripemd160(abi.encode(contractType)));
+    deploySharedAddress(where, bytecode);
   }
 
   function deployCodeTo(bytes memory creationCode, address where) internal {
