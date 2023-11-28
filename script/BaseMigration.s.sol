@@ -71,9 +71,6 @@ abstract contract BaseMigration is ScriptExtended {
 
   function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
     string memory contractName = _getContractNameFrom(contractType);
-    if (keccak256(bytes(contractName)) != keccak256(bytes(TContract.unwrap(contractType).unpackOne()))) {
-      contractName = TContract.unwrap(contractType).unpackOne();
-    }
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
     bytes memory args = arguments();
     uint256 nonce;
