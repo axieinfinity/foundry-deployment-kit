@@ -10,12 +10,11 @@ import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } 
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
-import { LibString, DefaultContract } from "./utils/DefaultContract.sol";
+import { DefaultContract } from "./utils/DefaultContract.sol";
 import { TContract } from "./types/Types.sol";
 
 abstract contract BaseMigration is ScriptExtended {
   using StdStyle for string;
-  using LibString for bytes32;
   using LibProxy for address payable;
 
   IArtifactFactory public constant ARTIFACT_FACTORY = IArtifactFactory(LibSharedAddress.ARTIFACT_FACTORY);
@@ -62,15 +61,8 @@ abstract contract BaseMigration is ScriptExtended {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
   }
 
-  function _getContractNameFrom(TContract contractType) internal virtual returns (string memory contractName) {
-    string memory contractTypeName = TContract.unwrap(contractType).unpackOne();
-    contractName = CONFIG.getContractName(contractType);
-    contractName =
-      keccak256(bytes(contractTypeName)) == keccak256(bytes(contractName)) ? contractName : contractTypeName;
-  }
-
   function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
-    string memory contractName = _getContractNameFrom(contractType);
+    string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
     bytes memory args = arguments();
     uint256 nonce;
@@ -80,7 +72,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _deployLogic(TContract contractType) internal virtual returns (address payable logic) {
-    string memory contractName = _getContractNameFrom(contractType);
+    string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
 
     uint256 logicNonce;

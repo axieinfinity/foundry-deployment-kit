@@ -93,7 +93,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
     uint256 chainId = _networkDataMap[network].chainId;
-    string memory contractName = _contractNameMap[contractType];
+    string memory contractName = getContractName(contractType);
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
     _contractAddrMap[chainId][contractName] = contractAddr;

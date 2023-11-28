@@ -8,7 +8,7 @@ import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
 
 abstract contract ContractConfig is IContractConfig {
-  using LibString for string;
+  using LibString for *;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
 
@@ -28,7 +28,9 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function getContractName(TContract contractType) public view virtual returns (string memory name) {
+    string memory contractTypeName = TContract.unwrap(contractType).unpackOne();
     name = _contractNameMap[contractType];
+    name = keccak256(bytes(contractTypeName)) == keccak256(bytes(name)) ? name : contractTypeName;
     require(bytes(name).length != 0, "ContractConfig: Contract Key not found");
   }
 
