@@ -16,4 +16,6 @@ interface IContractConfig {
     external
     view
     returns (address payable addr);
+
+  function getAllAddressesByRawData(uint256 chainId) external view returns (address payable[] memory addrs);
 }

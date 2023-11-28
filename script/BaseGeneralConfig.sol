@@ -9,7 +9,7 @@ import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
 import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
-import { TContract, ContractConfig } from "./configs/ContractConfig.sol";
+import { EnumerableSet, TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { ISharedParameter } from "./interfaces/configs/ISharedParameter.sol";
 import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
@@ -17,6 +17,7 @@ import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
 contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
   using LibString for string;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   Vm internal constant vm = Vm(LibSharedAddress.VM);
 
@@ -97,6 +98,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
     _contractAddrMap[chainId][contractName] = contractAddr;
+    _contractAddrSet[chainId].add(contractAddr);
     vm.label(
       contractAddr, string.concat("(", vm.toString(chainId), ")", contractName, "[", vm.toString(contractAddr), "]")
     );
@@ -104,6 +106,10 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
     return getAddressByRawData(_networkDataMap[network].chainId, _contractNameMap[contractType]);
+  }
+
+  function getAllAddresses(TNetwork network) public view virtual returns (address payable[] memory) {
+    return getAllAddressesByRawData(_networkDataMap[network].chainId);
   }
 
   function _handleRuntimeConfig() internal virtual override {

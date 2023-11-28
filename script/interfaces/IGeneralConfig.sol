@@ -11,4 +11,6 @@ interface IGeneralConfig is IWalletConfig, IRuntimeConfig, INetworkConfig, ICont
   function setAddress(TNetwork network, TContract contractType, address contractAddr) external;
 
   function getAddress(TNetwork network, TContract contractType) external view returns (address payable);
+
+  function getAllAddresses(TNetwork network) external view returns (address payable[] memory);
 }

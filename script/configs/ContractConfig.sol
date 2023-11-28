@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { EnumerableSet } from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
-import { LibString } from "lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
 
 abstract contract ContractConfig is IContractConfig {
   using LibString for *;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
 
@@ -16,6 +18,7 @@ abstract contract ContractConfig is IContractConfig {
   string private _deploymentRoot;
   mapping(TContract => string contractName) internal _contractNameMap;
   mapping(TContract => string absolutePath) internal _contractAbsolutePathMap;
+  mapping(uint256 chainId => EnumerableSet.AddressSet) internal _contractAddrSet;
   mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
 
   constructor(string memory absolutePath, string memory deploymentRoot) {
@@ -66,6 +69,13 @@ abstract contract ContractConfig is IContractConfig {
     require(addr != address(0), string.concat("ContractConfig: Address not found: ", contractName));
   }
 
+  function getAllAddressesByRawData(uint256 chainId) public view virtual returns (address payable[] memory addrs) {
+    address[] memory v = _contractAddrSet[chainId].values();
+    assembly ("memory-safe") {
+      addrs := v
+    }
+  }
+
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
     if (!vm.exists(deploymentRoot)) return;
     VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
@@ -92,7 +102,10 @@ abstract contract ContractConfig is IContractConfig {
             string.concat("(", vm.toString(chainId), ")", contractName, "[", vm.toString(contractAddr), "]")
           );
           // filter out logic deployments
-          if (!path.endsWith("Logic.json")) _contractAddrMap[chainId][contractName] = contractAddr;
+          if (!path.endsWith("Logic.json")) {
+            _contractAddrMap[chainId][contractName] = contractAddr;
+            _contractAddrSet[chainId].add(contractAddr);
+          }
         }
 
         unchecked {
