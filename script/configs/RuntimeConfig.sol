@@ -19,8 +19,6 @@ abstract contract RuntimeConfig is IRuntimeConfig {
 
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
-
-    console.log("command", command);
     if (bytes(command).length != 0) {
       string[] memory args = command.split("@");
       uint256 length = args.length;

@@ -20,6 +20,12 @@ interface INetworkConfig {
     string calldata privateKeyEnvLabel
   ) external;
 
+  function setForkMode(bool shouldEnable) external;
+
+  function getForkId(TNetwork network) external view returns (uint256 forkId);
+
+  function getAlias(TNetwork network) external view returns (string memory networkAlias);
+
   function switchTo(TNetwork network) external;
 
   function tryCreateFork(string calldata chainAlias, uint256 chainId) external returns (uint256);

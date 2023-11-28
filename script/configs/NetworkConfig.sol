@@ -13,7 +13,7 @@ abstract contract NetworkConfig is INetworkConfig {
   uint256 private constant NULL_FORK_ID = uint256(keccak256("NULL_FORK_ID"));
 
   string internal _deploymentRoot;
-  bool internal _isForkModeDisabled;
+  bool internal _isForkModeEnabled;
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
   mapping(uint256 chainId => TNetwork network) internal _networkMap;
 
@@ -21,9 +21,13 @@ abstract contract NetworkConfig is INetworkConfig {
     _deploymentRoot = deploymentRoot;
   }
 
+  function setForkMode(bool shouldEnable) public {
+    _isForkModeEnabled = shouldEnable;
+  }
+
   function getDeploymentDirectory(TNetwork network) public view returns (string memory dirPath) {
     string memory dirName = _networkDataMap[network].deploymentDir;
-    require(bytes(dirName).length != 0, "GeneralConfig: Deployment dir not found");
+    require(bytes(dirName).length != 0, "NetworkConfig: Deployment directory not found");
     dirPath = string.concat(_deploymentRoot, dirName);
   }
 
@@ -39,14 +43,23 @@ abstract contract NetworkConfig is INetworkConfig {
       NetworkData(tryCreateFork(chainAlias, chainId), chainId, chainAlias, deploymentDir, privateKeyEnvLabel);
   }
 
+  function getAlias(TNetwork network) public view returns (string memory networkAlias) {
+    networkAlias = _networkDataMap[network].chainAlias;
+    require(bytes(networkAlias).length != 0, "NetworkConfig: Network alias not found");
+  }
+
+  function getForkId(TNetwork network) public view returns (uint256 forkId) {
+    forkId = _networkDataMap[network].forkId;
+    require(forkId != NULL_FORK_ID, "NetworkConfig: Network fork is not created");
+  }
+
   function tryCreateFork(string memory chainAlias, uint256 chainId) public returns (uint256) {
-    if (_isForkModeDisabled) return NULL_FORK_ID;
     uint256 currentFork;
     try vm.activeFork() returns (uint256 forkId) {
       currentFork = forkId;
     } catch {
-      _isForkModeDisabled = true;
       console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
+      return NULL_FORK_ID;
     }
     if (chainId == block.chainid) {
       console.log(
@@ -55,6 +68,7 @@ abstract contract NetworkConfig is INetworkConfig {
       );
       return currentFork;
     }
+    if (!_isForkModeEnabled) return NULL_FORK_ID;
     try vm.createFork(vm.rpcUrl(chainAlias)) returns (uint256 forkId) {
       console.log(StdStyle.blue(string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:")), forkId);
       return forkId;

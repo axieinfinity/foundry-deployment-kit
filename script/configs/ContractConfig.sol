@@ -29,7 +29,7 @@ abstract contract ContractConfig is IContractConfig {
 
   function getContractName(TContract contractType) public view returns (string memory name) {
     name = _contractNameMap[contractType];
-    require(bytes(name).length != 0, "Contract Key not found");
+    require(bytes(name).length != 0, "ContractConfig: Contract Key not found");
   }
 
   function getContractAbsolutePath(TContract contractType) public view returns (string memory name) {
@@ -46,7 +46,7 @@ abstract contract ContractConfig is IContractConfig {
 
   function getAddressFromCurrentNetwork(TContract contractType) public view returns (address payable) {
     string memory contractName = _contractNameMap[contractType];
-    require(bytes(contractName).length != 0, "Contract Key found");
+    require(bytes(contractName).length != 0, "ContractConfig: Contract Key found");
     return getAddressByRawData(block.chainid, contractName);
   }
 
@@ -56,7 +56,7 @@ abstract contract ContractConfig is IContractConfig {
 
   function getAddressByRawData(uint256 chainId, string memory contractName) public view returns (address payable addr) {
     addr = payable(_contractAddrMap[chainId][contractName]);
-    require(addr != address(0), string.concat("address not found: ", contractName));
+    require(addr != address(0), string.concat("ContractConfig: Address not found: ", contractName));
   }
 
   function _storeDeploymentData(string memory deploymentRoot) internal {
@@ -66,8 +66,6 @@ abstract contract ContractConfig is IContractConfig {
     for (uint256 i; i < deployments.length;) {
       VmSafe.DirEntry[] memory entries = vm.readDir(deployments[i].path);
       uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
-      string[] memory s = deployments[i].path.split("/");
-      string memory prefix = s[s.length - 1];
 
       for (uint256 j; j < entries.length;) {
         string memory path = entries[j].path;
@@ -82,7 +80,10 @@ abstract contract ContractConfig is IContractConfig {
           }
           string memory json = vm.readFile(path);
           address contractAddr = vm.parseJsonAddress(json, ".address");
-          vm.label(contractAddr, string.concat(prefix, "::", contractName));
+          vm.label(
+            contractAddr,
+            string.concat("(", vm.toString(chainId), ")", contractName, "[", vm.toString(contractAddr), "]")
+          );
           // filter out logic deployments
           if (!path.endsWith("Logic.json")) _contractAddrMap[chainId][contractName] = contractAddr;
         }

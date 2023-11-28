@@ -5,10 +5,9 @@ import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console, Script } from "../../lib/forge-std/src/Script.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
-import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
+import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { TNetwork } from "../types/Types.sol";
 
 abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   using LibErrorHandler for bool;
@@ -35,6 +34,11 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     vm.stopBroadcast();
   }
 
+  modifier onlyOn(TNetwork networkType) {
+    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
+    _;
+  }
+
   function setUp() public virtual {
     vm.pauseGasMetering();
     vm.label(address(CONFIG), "GeneralConfig");
@@ -53,13 +57,17 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     return CONFIG.getCurrentNetwork();
   }
 
+  function forkId() public view virtual returns (uint256) {
+    return CONFIG.getForkId(network());
+  }
+
   function sender() public view virtual returns (address payable) {
     return CONFIG.getSender();
   }
 
   function fail() internal override {
     super.fail();
-    revert("Got failed assertion");
+    revert("ScriptExtended: Got failed assertion");
   }
 
   function deploySharedAddress(address where, bytes memory bytecode) public {

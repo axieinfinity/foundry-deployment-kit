@@ -25,15 +25,21 @@ abstract contract BaseMigration is ScriptExtended {
     super.setUp();
     vm.label(address(ARTIFACT_FACTORY), "ArtifactFactory");
     deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode);
-    _setMigrationConfig();
     _injectDependencies();
+    _storeRawSharedArguments();
   }
+
+  function _storeRawSharedArguments() internal {
+    CONFIG.setRawSharedArguments(_sharedArguments());
+  }
+
+  function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
 
   function _injectDependencies() internal virtual { }
 
-  function _defaultArguments() internal virtual returns (bytes memory args) { }
-
-  function _buildMigrationRawConfig() internal virtual returns (bytes memory);
+  function _defaultArguments() internal virtual returns (bytes memory) {
+    revert("BaseMigration: _defaultArguments not implemented");
+  }
 
   function loadContractOrDeploy(TContract contractType) public returns (address payable contractAddr) {
     string memory contractName = CONFIG.getContractName(contractType);
@@ -60,8 +66,6 @@ abstract contract BaseMigration is ScriptExtended {
     bytes memory args = arguments();
     uint256 nonce;
     (deployed, nonce) = _deployRaw(contractAbsolutePath, args);
-    vm.label(deployed, contractName);
-
     CONFIG.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(sender(), deployed, contractAbsolutePath, contractName, args, nonce);
   }
@@ -72,8 +76,8 @@ abstract contract BaseMigration is ScriptExtended {
 
     uint256 logicNonce;
     (logic, logicNonce) = _deployRaw(contractAbsolutePath, EMPTY_ARGS);
+    vm.label(logic, string.concat(contractName, "::Logic[", vm.toString(logic), "]"));
 
-    vm.label(logic, string.concat(contractName, "::Logic"));
     ARTIFACT_FACTORY.generateArtifact(
       sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
     );
@@ -88,8 +92,6 @@ abstract contract BaseMigration is ScriptExtended {
     uint256 proxyNonce;
     (deployed, proxyNonce) =
       _deployRaw(proxyAbsolutePath, abi.encode(logic, CONFIG.getAddressByString("ProxyAdmin"), args));
-
-    vm.label(deployed, string.concat(contractName, "::Proxy"));
     CONFIG.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(
       sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce
@@ -105,7 +107,7 @@ abstract contract BaseMigration is ScriptExtended {
     deployed = payable(deployCode(filename, args));
   }
 
-  function _upgradeProxy(TContract contractType, bytes memory args) internal returns (address payable proxy) {
+  function _upgradeProxy(TContract contractType, bytes memory args) internal virtual returns (address payable proxy) {
     address logic = _deployLogic(contractType);
     proxy = CONFIG.getAddress(network(), contractType);
     _upgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
@@ -113,13 +115,10 @@ abstract contract BaseMigration is ScriptExtended {
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args)
     internal
+    virtual
     broadcastAs(ProxyAdmin(proxyAdmin).owner())
   {
     ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
-  }
-
-  function _setMigrationConfig() internal {
-    CONFIG.setMigrationRawConfig(_buildMigrationRawConfig());
   }
 
   function _setDependencyDeployScript(TContract contractType, address deployScript) internal {
