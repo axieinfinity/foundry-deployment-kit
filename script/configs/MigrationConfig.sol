@@ -6,12 +6,12 @@ import { IMigrationConfig } from "../interfaces/configs/IMigrationConfig.sol";
 abstract contract MigrationConfig is IMigrationConfig {
   bytes internal _migrationConfig;
 
-  function setRawSharedArguments(bytes memory config) public {
+  function setRawSharedArguments(bytes memory config) public virtual {
     if (_migrationConfig.length != 0) return;
     _migrationConfig = config;
   }
 
-  function getRawSharedArguments() public view returns (bytes memory) {
+  function getRawSharedArguments() public view virtual returns (bytes memory) {
     return _migrationConfig;
   }
 }

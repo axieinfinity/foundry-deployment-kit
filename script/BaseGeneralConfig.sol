@@ -43,6 +43,13 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function _setUpNetworks() internal virtual {
     setNetworkInfo(
+      DefaultNetwork.Local.chainId(),
+      DefaultNetwork.Local.key(),
+      DefaultNetwork.Local.chainAlias(),
+      DefaultNetwork.Local.deploymentDir(),
+      DefaultNetwork.Local.envLabel()
+    );
+    setNetworkInfo(
       DefaultNetwork.RoninTestnet.chainId(),
       DefaultNetwork.RoninTestnet.key(),
       DefaultNetwork.RoninTestnet.chainAlias(),
@@ -81,7 +88,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     require(sender != address(0), "GeneralConfig: Sender is address(0x0)");
   }
 
-  function setAddress(TNetwork network, TContract contractType, address contractAddr) public {
+  function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
     uint256 chainId = _networkDataMap[network].chainId;
     string memory contractName = _contractNameMap[contractType];
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
@@ -92,7 +99,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     );
   }
 
-  function getAddress(TNetwork network, TContract contractType) public view returns (address payable) {
+  function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
     return getAddressByRawData(_networkDataMap[network].chainId, _contractNameMap[contractType]);
   }
 

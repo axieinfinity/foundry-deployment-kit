@@ -21,11 +21,11 @@ abstract contract NetworkConfig is INetworkConfig {
     _deploymentRoot = deploymentRoot;
   }
 
-  function setForkMode(bool shouldEnable) public {
+  function setForkMode(bool shouldEnable) public virtual {
     _isForkModeEnabled = shouldEnable;
   }
 
-  function getDeploymentDirectory(TNetwork network) public view returns (string memory dirPath) {
+  function getDeploymentDirectory(TNetwork network) public view virtual returns (string memory dirPath) {
     string memory dirName = _networkDataMap[network].deploymentDir;
     require(bytes(dirName).length != 0, "NetworkConfig: Deployment directory not found");
     dirPath = string.concat(_deploymentRoot, dirName);
@@ -37,23 +37,23 @@ abstract contract NetworkConfig is INetworkConfig {
     string memory chainAlias,
     string memory deploymentDir,
     string memory privateKeyEnvLabel
-  ) public {
+  ) public virtual {
     _networkMap[chainId] = network;
     _networkDataMap[network] =
       NetworkData(tryCreateFork(chainAlias, chainId), chainId, chainAlias, deploymentDir, privateKeyEnvLabel);
   }
 
-  function getAlias(TNetwork network) public view returns (string memory networkAlias) {
+  function getAlias(TNetwork network) public view virtual returns (string memory networkAlias) {
     networkAlias = _networkDataMap[network].chainAlias;
     require(bytes(networkAlias).length != 0, "NetworkConfig: Network alias not found");
   }
 
-  function getForkId(TNetwork network) public view returns (uint256 forkId) {
+  function getForkId(TNetwork network) public view virtual returns (uint256 forkId) {
     forkId = _networkDataMap[network].forkId;
     require(forkId != NULL_FORK_ID, "NetworkConfig: Network fork is not created");
   }
 
-  function tryCreateFork(string memory chainAlias, uint256 chainId) public returns (uint256) {
+  function tryCreateFork(string memory chainAlias, uint256 chainId) public virtual returns (uint256) {
     uint256 currentFork;
     try vm.activeFork() returns (uint256 forkId) {
       currentFork = forkId;
@@ -78,23 +78,23 @@ abstract contract NetworkConfig is INetworkConfig {
     }
   }
 
-  function switchTo(TNetwork network) public {
+  function switchTo(TNetwork network) public virtual {
     uint256 forkId = _networkDataMap[network].forkId;
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
     vm.selectFork(forkId);
     require(_networkDataMap[network].chainId == block.chainid, "NetworkConfig: Switch chain failed");
   }
 
-  function getPrivateKeyEnvLabel(TNetwork network) public view returns (string memory privateKeyEnvLabel) {
+  function getPrivateKeyEnvLabel(TNetwork network) public view virtual returns (string memory privateKeyEnvLabel) {
     privateKeyEnvLabel = _networkDataMap[network].privateKeyEnvLabel;
     require(bytes(privateKeyEnvLabel).length != 0, "Network Config: ENV label not found");
   }
 
-  function getCurrentNetwork() public view returns (TNetwork network) {
+  function getCurrentNetwork() public view virtual returns (TNetwork network) {
     network = _networkMap[block.chainid];
   }
 
-  function getNetworkByChainId(uint256 chainId) public view returns (TNetwork network) {
+  function getNetworkByChainId(uint256 chainId) public view virtual returns (TNetwork network) {
     network = _networkMap[chainId];
   }
 }

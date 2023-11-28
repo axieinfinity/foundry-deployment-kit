@@ -41,7 +41,7 @@ abstract contract BaseMigration is ScriptExtended {
     revert("BaseMigration: _defaultArguments not implemented");
   }
 
-  function loadContractOrDeploy(TContract contractType) public returns (address payable contractAddr) {
+  function loadContractOrDeploy(TContract contractType) public virtual returns (address payable contractAddr) {
     string memory contractName = CONFIG.getContractName(contractType);
     try CONFIG.getAddressFromCurrentNetwork(contractType) returns (address payable addr) {
       contractAddr = addr;
@@ -51,16 +51,16 @@ abstract contract BaseMigration is ScriptExtended {
     }
   }
 
-  function overrideArgs(bytes memory args) public returns (IMigrationScript) {
+  function overrideArgs(bytes memory args) public virtual returns (IMigrationScript) {
     _overriddenArgs = args;
     return IMigrationScript(address(this));
   }
 
-  function arguments() public returns (bytes memory args) {
+  function arguments() public virtual returns (bytes memory args) {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
   }
 
-  function _deployImmutable(TContract contractType) internal returns (address payable deployed) {
+  function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
     string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
     bytes memory args = arguments();
@@ -70,7 +70,7 @@ abstract contract BaseMigration is ScriptExtended {
     ARTIFACT_FACTORY.generateArtifact(sender(), deployed, contractAbsolutePath, contractName, args, nonce);
   }
 
-  function _deployLogic(TContract contractType) internal returns (address payable logic) {
+  function _deployLogic(TContract contractType) internal virtual returns (address payable logic) {
     string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
 
@@ -83,7 +83,7 @@ abstract contract BaseMigration is ScriptExtended {
     );
   }
 
-  function _deployProxy(TContract contractType) internal returns (address payable deployed) {
+  function _deployProxy(TContract contractType) internal virtual returns (address payable deployed) {
     string memory contractName = CONFIG.getContractName(contractType);
     bytes memory args = arguments();
 
@@ -100,6 +100,7 @@ abstract contract BaseMigration is ScriptExtended {
 
   function _deployRaw(string memory filename, bytes memory args)
     internal
+    virtual
     broadcastAs(sender())
     returns (address payable deployed, uint256 nonce)
   {

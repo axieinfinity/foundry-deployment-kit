@@ -23,16 +23,16 @@ abstract contract ContractConfig is IContractConfig {
     _deploymentRoot = deploymentRoot;
   }
 
-  function setContractAbsolutePathMap(TContract contractType, string memory absolutePath) public {
+  function setContractAbsolutePathMap(TContract contractType, string memory absolutePath) public virtual {
     _contractAbsolutePathMap[contractType] = absolutePath;
   }
 
-  function getContractName(TContract contractType) public view returns (string memory name) {
+  function getContractName(TContract contractType) public view virtual returns (string memory name) {
     name = _contractNameMap[contractType];
     require(bytes(name).length != 0, "ContractConfig: Contract Key not found");
   }
 
-  function getContractAbsolutePath(TContract contractType) public view returns (string memory name) {
+  function getContractAbsolutePath(TContract contractType) public view virtual returns (string memory name) {
     if (bytes(_contractAbsolutePathMap[contractType]).length != 0) {
       name = string.concat(
         _contractAbsolutePathMap[contractType], _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]
@@ -44,22 +44,27 @@ abstract contract ContractConfig is IContractConfig {
     }
   }
 
-  function getAddressFromCurrentNetwork(TContract contractType) public view returns (address payable) {
+  function getAddressFromCurrentNetwork(TContract contractType) public view virtual returns (address payable) {
     string memory contractName = _contractNameMap[contractType];
     require(bytes(contractName).length != 0, "ContractConfig: Contract Key found");
     return getAddressByRawData(block.chainid, contractName);
   }
 
-  function getAddressByString(string calldata contractName) public view returns (address payable) {
+  function getAddressByString(string calldata contractName) public view virtual returns (address payable) {
     return getAddressByRawData(block.chainid, contractName);
   }
 
-  function getAddressByRawData(uint256 chainId, string memory contractName) public view returns (address payable addr) {
+  function getAddressByRawData(uint256 chainId, string memory contractName)
+    public
+    view
+    virtual
+    returns (address payable addr)
+  {
     addr = payable(_contractAddrMap[chainId][contractName]);
     require(addr != address(0), string.concat("ContractConfig: Address not found: ", contractName));
   }
 
-  function _storeDeploymentData(string memory deploymentRoot) internal {
+  function _storeDeploymentData(string memory deploymentRoot) internal virtual {
     if (!vm.exists(deploymentRoot)) return;
     VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
 
