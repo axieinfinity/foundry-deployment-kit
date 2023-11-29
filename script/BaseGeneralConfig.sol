@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { Vm } from "../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
 import { console2 as console } from "../lib/forge-std/src/console2.sol";
-import { LibString } from "lib/solady/src/utils/LibString.sol";
+import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
@@ -16,6 +16,7 @@ import { DefaultContract } from "./utils/DefaultContract.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
 contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
+  using StdStyle for string;
   using LibString for string;
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -97,10 +98,12 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     string memory contractName = getContractName(contractType);
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
-    _contractAddrMap[chainId][contractName] = contractAddr;
     _contractAddrSet[chainId].add(contractAddr);
+    _contractTypeMap[chainId][contractAddr] = contractType;
+    _contractAddrMap[chainId][contractName] = contractAddr;
     vm.label(
-      contractAddr, string.concat("(", vm.toString(chainId), ")", contractName, "[", vm.toString(contractAddr), "]")
+      contractAddr,
+      string.concat("(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]")
     );
   }
 

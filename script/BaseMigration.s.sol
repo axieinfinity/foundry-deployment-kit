@@ -77,7 +77,7 @@ abstract contract BaseMigration is ScriptExtended {
 
     uint256 logicNonce;
     (logic, logicNonce) = _deployRaw(contractAbsolutePath, EMPTY_ARGS);
-    vm.label(logic, string.concat(contractName, "::Logic[", vm.toString(logic), "]"));
+    vm.label(logic, string.concat(contractName.yellow(), "::Logic[", vm.toString(logic), "]"));
 
     ARTIFACT_FACTORY.generateArtifact(
       sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce

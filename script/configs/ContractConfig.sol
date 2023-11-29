@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { EnumerableSet } from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
+import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
@@ -10,20 +11,38 @@ import { TContract } from "../types/Types.sol";
 
 abstract contract ContractConfig is IContractConfig {
   using LibString for *;
+  using StdStyle for string;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
 
   string private _absolutePath;
   string private _deploymentRoot;
-  mapping(TContract => string contractName) internal _contractNameMap;
-  mapping(TContract => string absolutePath) internal _contractAbsolutePathMap;
+
+  mapping(TContract contractType => string contractName) internal _contractNameMap;
+  mapping(TContract contractType => string absolutePath) internal _contractAbsolutePathMap;
+
   mapping(uint256 chainId => EnumerableSet.AddressSet) internal _contractAddrSet;
   mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
+  mapping(uint256 chainId => mapping(address addr => TContract contractType)) internal _contractTypeMap;
 
   constructor(string memory absolutePath, string memory deploymentRoot) {
     _absolutePath = absolutePath;
     _deploymentRoot = deploymentRoot;
+  }
+
+  function getContractTypeByRawData(uint256 chainId, address contractAddr)
+    public
+    view
+    virtual
+    returns (TContract contractType)
+  {
+    contractType = _contractTypeMap[chainId][contractAddr];
+    require(TContract.unwrap(contractType) != bytes32(0x0), "ContractConfig: ContractType not found");
+  }
+
+  function getContractTypeFromCurrentNetwok(address contractAddr) public view virtual returns (TContract contractType) {
+    return getContractTypeByRawData(block.chainid, contractAddr);
   }
 
   function setContractAbsolutePathMap(TContract contractType, string memory absolutePath) public virtual {
@@ -92,19 +111,21 @@ abstract contract ContractConfig is IContractConfig {
           string memory contractName = splitteds[splitteds.length - 1];
           string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
           // remove suffix
-          assembly ("memory-safe") {
-            mstore(contractName, sub(mload(contractName), mload(suffix)))
-          }
+          contractName = contractName.replace(suffix, "");
           string memory json = vm.readFile(path);
           address contractAddr = vm.parseJsonAddress(json, ".address");
           vm.label(
             contractAddr,
-            string.concat("(", vm.toString(chainId), ")", contractName, "[", vm.toString(contractAddr), "]")
+            string.concat(
+              "(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]"
+            )
           );
+
           // filter out logic deployments
           if (!path.endsWith("Logic.json")) {
-            _contractAddrMap[chainId][contractName] = contractAddr;
             _contractAddrSet[chainId].add(contractAddr);
+            _contractAddrMap[chainId][contractName] = contractAddr;
+            _contractTypeMap[chainId][contractAddr] = TContract.wrap(contractName.packOne());
           }
         }
 
