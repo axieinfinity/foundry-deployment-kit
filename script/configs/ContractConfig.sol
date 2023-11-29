@@ -69,7 +69,7 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function getAddressFromCurrentNetwork(TContract contractType) public view virtual returns (address payable) {
-    string memory contractName = _contractNameMap[contractType];
+    string memory contractName = getContractName(contractType);
     require(bytes(contractName).length != 0, "ContractConfig: Contract Key found");
     return getAddressByRawData(block.chainid, contractName);
   }
