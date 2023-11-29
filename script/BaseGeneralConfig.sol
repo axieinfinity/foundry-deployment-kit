@@ -108,7 +108,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
   }
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
-    return getAddressByRawData(_networkDataMap[network].chainId, _contractNameMap[contractType]);
+    return getAddressByRawData(_networkDataMap[network].chainId, getContractName(contractType));
   }
 
   function getAllAddresses(TNetwork network) public view virtual returns (address payable[] memory) {
