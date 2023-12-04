@@ -23,8 +23,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   modifier prankAs(address from) {
     vm.startPrank(from);
+    vm.resumeGasMetering();
     _;
     vm.stopPrank();
+    vm.pauseGasMetering();
   }
 
   modifier broadcastAs(address from) {

@@ -95,6 +95,13 @@ abstract contract ContractConfig is IContractConfig {
     }
   }
 
+  function label(uint256 chainId, address contractAddr, string memory contractName) public virtual {
+    vm.label(
+      contractAddr,
+      string.concat("(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]")
+    );
+  }
+
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
     if (!vm.exists(deploymentRoot)) return;
     VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
@@ -114,12 +121,7 @@ abstract contract ContractConfig is IContractConfig {
           contractName = contractName.replace(suffix, "");
           string memory json = vm.readFile(path);
           address contractAddr = vm.parseJsonAddress(json, ".address");
-          vm.label(
-            contractAddr,
-            string.concat(
-              "(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]"
-            )
-          );
+          label(chainId, contractAddr, contractName);
 
           // filter out logic deployments
           if (!path.endsWith("Logic.json")) {

@@ -9,6 +9,8 @@ interface IContractConfig {
     view
     returns (TContract contractType);
 
+  function label(uint256 chainId, address contractAddr, string memory contractName) external;
+
   function getContractTypeFromCurrentNetwok(address contractAddr) external view returns (TContract contractType);
 
   function getContractName(TContract contractType) external view returns (string memory name);

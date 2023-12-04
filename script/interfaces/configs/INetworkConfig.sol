@@ -24,6 +24,8 @@ interface INetworkConfig {
 
   function setForkMode(bool shouldEnable) external;
 
+  function createFork(TNetwork network) external returns (uint256 forkId);
+
   function getExplorer(TNetwork network) external view returns (string memory link);
 
   function getForkId(TNetwork network) external view returns (uint256 forkId);

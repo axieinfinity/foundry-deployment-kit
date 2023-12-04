@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { LibString } from "lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { TNetwork } from "../types/Types.sol";
 
 enum DefaultNetwork {

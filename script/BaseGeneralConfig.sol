@@ -101,10 +101,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     _contractAddrSet[chainId].add(contractAddr);
     _contractTypeMap[chainId][contractAddr] = contractType;
     _contractAddrMap[chainId][contractName] = contractAddr;
-    vm.label(
-      contractAddr,
-      string.concat("(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]")
-    );
+    label(chainId, contractAddr, contractName);
   }
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {

@@ -19,6 +19,11 @@ abstract contract NetworkConfig is INetworkConfig {
 
   constructor(string memory deploymentRoot) {
     _deploymentRoot = deploymentRoot;
+    console.log(
+      string.concat("Block Number: ", vm.toString(block.number)),
+      "|",
+      string.concat("Timestamp: ", vm.toString(block.timestamp))
+    );
   }
 
   function setForkMode(bool shouldEnable) public virtual {
@@ -58,6 +63,13 @@ abstract contract NetworkConfig is INetworkConfig {
     require(forkId != NULL_FORK_ID, "NetworkConfig: Network fork is not created");
   }
 
+  function createFork(TNetwork network) public returns (uint256 forkId) {
+    NetworkData memory networkData = _networkDataMap[network];
+    setForkMode({ shouldEnable: true });
+    forkId = tryCreateFork(networkData.chainAlias, networkData.chainId);
+    _networkDataMap[network].forkId = forkId;
+  }
+
   function tryCreateFork(string memory chainAlias, uint256 chainId) public virtual returns (uint256) {
     uint256 currentFork;
     try vm.activeFork() returns (uint256 forkId) {
@@ -84,6 +96,7 @@ abstract contract NetworkConfig is INetworkConfig {
   }
 
   function switchTo(TNetwork network) public virtual {
+    console.log(StdStyle.blue("\n>>"), "Switching to:", StdStyle.yellow(_networkDataMap[network].chainAlias), "\n");
     uint256 forkId = _networkDataMap[network].forkId;
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
     vm.selectFork(forkId);

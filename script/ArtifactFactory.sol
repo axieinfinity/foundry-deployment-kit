@@ -39,7 +39,7 @@ contract ArtifactFactory is IArtifactFactory {
       string.concat("(nonce: ", nonce.toString(), ")")
     );
     if (!CONFIG.getRuntimeConfig().log) {
-      console.log("Skipping artifact generation for:", fileName.yellow());
+      console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
       return;
     }
     string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
@@ -67,7 +67,6 @@ contract ArtifactFactory is IArtifactFactory {
     json.serialize("contractAbsolutePath", contractAbsolutePath);
     json.serialize("numDeployments", numDeployments);
 
-    console.log("contractAbsolutePath", contractAbsolutePath);
     string[] memory s = contractAbsolutePath.split(":");
     string memory artifactPath = s.length == 2
       ? string.concat("./out/", s[0], "/", s[1], ".json")
