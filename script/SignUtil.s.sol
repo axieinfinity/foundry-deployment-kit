@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { MessageHashUtils } from "../lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ECDSA } from "../lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import { LibSig } from "./libraries/LibSig.sol";
 import { Script } from "../lib/forge-std/src/Script.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
@@ -14,7 +14,7 @@ contract SignUtil is Script {
     console.log("sender", vm.rememberKey(vm.envUint("TESTNET_PK")));
 
     string memory signData = "hello";
-    bytes32 digest = MessageHashUtils.toEthSignedMessageHash(bytes(signData));
+    bytes32 digest = ECDSA.toEthSignedMessageHash(bytes(signData));
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
     bytes memory vmSig = LibSig.merge(v, r, s);
