@@ -20,8 +20,8 @@ function chainId(DefaultNetwork defaultNetwork) pure returns (uint256) {
 }
 
 function explorer(DefaultNetwork defaultNetwork) pure returns (string memory link) {
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "https://saigon-app.roninchain.com";
+  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
+  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "https://saigon-app.roninchain.com/";
   return "";
 }
 

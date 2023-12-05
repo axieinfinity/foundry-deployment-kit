@@ -146,6 +146,35 @@ abstract contract BaseMigration is ScriptExtended {
     deployed = payable(deployCode(filename, args));
   }
 
+  function _mockUpgradeProxy(TContract contractType)
+    internal
+    virtual
+    logFn(string.concat("_mockUpgradeProxy ", TContract.unwrap(contractType).unpackOne()))
+    returns (address payable proxy)
+  {
+    proxy = _mockUpgradeProxy(contractType, arguments());
+  }
+
+  function _mockUpgradeProxy(TContract contractType, bytes memory args)
+    internal
+    virtual
+    logFn(string.concat("_mockUpgradeProxy ", TContract.unwrap(contractType).unpackOne()))
+    returns (address payable proxy)
+  {
+    address logic = _deployLogic(contractType);
+    proxy = CONFIG.getAddress(network(), contractType);
+    _mockUpgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
+  }
+
+  function _upgradeProxy(TContract contractType)
+    internal
+    virtual
+    logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
+    returns (address payable proxy)
+  {
+    proxy = _upgradeProxy(contractType, arguments());
+  }
+
   function _upgradeProxy(TContract contractType, bytes memory args)
     internal
     virtual
@@ -155,6 +184,14 @@ abstract contract BaseMigration is ScriptExtended {
     address logic = _deployLogic(contractType);
     proxy = CONFIG.getAddress(network(), contractType);
     _upgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
+  }
+
+  function _mockUpgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args)
+    internal
+    virtual
+    prankAs(ProxyAdmin(proxyAdmin).owner())
+  {
+    ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args)

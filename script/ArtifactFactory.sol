@@ -31,9 +31,9 @@ contract ArtifactFactory is IArtifactFactory {
     console.log(
       string.concat(
         fileName,
-        " deployed at: ",
+        " will be deployed at: ",
         CONFIG.getExplorer(CONFIG.getCurrentNetwork()),
-        "/address/",
+        "address/",
         contractAddr.toHexString()
       ).green(),
       string.concat("(nonce: ", nonce.toString(), ")")

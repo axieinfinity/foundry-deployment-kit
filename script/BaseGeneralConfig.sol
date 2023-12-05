@@ -29,7 +29,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
         return(add(returnData, 0x20), mload(returnData))
       }
     } else {
-      revert("BaseGeneralConfig: Unknown instruction, please rename interface to sharedArguments()");
+      revert("GeneralConfig: Unknown instruction, please rename interface to sharedArguments()");
     }
   }
 
@@ -83,9 +83,11 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function _setUpDefaultSender() internal virtual {
     // by default we will read private key from .env
-    _envSender = vm.rememberKey(vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork())));
-    console.log(StdStyle.blue(".ENV Account:"), _envSender);
-    vm.label(_envSender, string.concat("sender::env[", vm.toString(_envSender), "]"));
+    _envPk = vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork()));
+    _envSender = vm.rememberKey(_envPk);
+
+    label(block.chainid, _envSender, "ENVSender");
+    console.log("GeneralConfig:", vm.getLabel(_envSender));
   }
 
   function getSender() public view virtual override returns (address payable sender) {
@@ -98,10 +100,10 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     string memory contractName = getContractName(contractType);
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
+    label(chainId, contractAddr, contractName);
     _contractAddrSet[chainId].add(contractAddr);
     _contractTypeMap[chainId][contractAddr] = contractType;
     _contractAddrMap[chainId][contractName] = contractAddr;
-    label(chainId, contractAddr, contractName);
   }
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
@@ -114,10 +116,10 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function _handleRuntimeConfig() internal virtual override {
     if (_option.trezor) {
-      string memory str = vm.envString(DEPLOYER_ENV_LABEL);
-      _trezorSender = vm.parseAddress(str.replace(TREZOR_PREFIX, ""));
-      console.log(StdStyle.blue("Trezor Account:"), _trezorSender);
-      vm.label(_trezorSender, string.concat("sender::trezor[", vm.toString(_trezorSender), "]"));
+      string memory str = vm.envString(deployerEnvLabel());
+      _trezorSender = vm.parseAddress(str.replace(trezorPrefix(), ""));
+      label(block.chainid, _trezorSender, "TrezorSender");
+      console.log("GeneralConfig:", vm.getLabel(_trezorSender));
     }
   }
 }

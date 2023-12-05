@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { EnumerableSet } from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
+import { console2 as console } from "../../lib/forge-std/src/console2.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
@@ -38,7 +39,12 @@ abstract contract ContractConfig is IContractConfig {
     returns (TContract contractType)
   {
     contractType = _contractTypeMap[chainId][contractAddr];
-    require(TContract.unwrap(contractType) != bytes32(0x0), "ContractConfig: ContractType not found");
+    require(
+      TContract.unwrap(contractType) != bytes32(0x0),
+      string.concat(
+        "ContractConfig(getContractTypeByRawData): ContractType not found (", contractType.contractName(), ")"
+      )
+    );
   }
 
   function getContractTypeFromCurrentNetwok(address contractAddr) public view virtual returns (TContract contractType) {
@@ -50,10 +56,19 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function getContractName(TContract contractType) public view virtual returns (string memory name) {
-    string memory contractTypeName = TContract.unwrap(contractType).unpackOne();
+    string memory contractTypeName = contractType.contractName();
     name = _contractNameMap[contractType];
     name = keccak256(bytes(contractTypeName)) == keccak256(bytes(name)) ? name : contractTypeName;
-    require(bytes(name).length != 0, "ContractConfig: Contract Key not found");
+    require(
+      bytes(name).length != 0,
+      string.concat(
+        "ContractConfig(getContractName): Contract Type not found (",
+        contractTypeName,
+        ")\n",
+        "Storage Name Map: ",
+        _contractNameMap[contractType]
+      )
+    );
   }
 
   function getContractAbsolutePath(TContract contractType) public view virtual returns (string memory name) {
@@ -70,7 +85,12 @@ abstract contract ContractConfig is IContractConfig {
 
   function getAddressFromCurrentNetwork(TContract contractType) public view virtual returns (address payable) {
     string memory contractName = getContractName(contractType);
-    require(bytes(contractName).length != 0, "ContractConfig: Contract Key found");
+    require(
+      bytes(contractName).length != 0,
+      string.concat(
+        "ContractConfig(getAddressFromCurrentNetwork): Contract Type not found (", contractType.contractName(), ")"
+      )
+    );
     return getAddressByRawData(block.chainid, contractName);
   }
 
@@ -85,7 +105,9 @@ abstract contract ContractConfig is IContractConfig {
     returns (address payable addr)
   {
     addr = payable(_contractAddrMap[chainId][contractName]);
-    require(addr != address(0), string.concat("ContractConfig: Address not found: ", contractName));
+    require(
+      addr != address(0x0), string.concat("ContractConfig(getAddressByRawData): Address not found: ", contractName)
+    );
   }
 
   function getAllAddressesByRawData(uint256 chainId) public view virtual returns (address payable[] memory addrs) {
@@ -103,7 +125,10 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
-    if (!vm.exists(deploymentRoot)) return;
+    if (!vm.exists(deploymentRoot)) {
+      console.log("ContractConfig:", "No deployments folder, skip loading");
+      return;
+    }
     VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
 
     for (uint256 i; i < deployments.length;) {

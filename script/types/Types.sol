@@ -1,12 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+
 type TNetwork is bytes32;
 
 type TContract is bytes32;
 
-using { networkEq as ==, networkNeq as != } for TNetwork global;
-using { contractEq as ==, contractNeq as != } for TContract global;
+using LibString for bytes32;
+using { networkName, networkEq as ==, networkNeq as != } for TNetwork global;
+using { contractName, contractEq as ==, contractNeq as != } for TContract global;
+
+function networkName(TNetwork network) pure returns (string memory) {
+  return TNetwork.unwrap(network).unpackOne();
+}
+
+function contractName(TContract contractType) pure returns (string memory) {
+  return TContract.unwrap(contractType).unpackOne();
+}
 
 function networkEq(TNetwork a, TNetwork b) pure returns (bool) {
   return TNetwork.unwrap(a) == TNetwork.unwrap(b);
