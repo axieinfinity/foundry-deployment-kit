@@ -5,6 +5,11 @@ import { LibString } from "lib/solady/src/utils/LibString.sol";
 import { TContract } from "foundry-deployment-kit/types/Types.sol";
 
 enum Contract {
+  tSLP,
+  tAXS,
+  tWRON,
+  tBERRY,
+  tWETH,
   Sample,
   SampleClone,
   SampleProxy
@@ -18,6 +23,11 @@ function key(Contract contractEnum) pure returns (TContract) {
 
 function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.Sample) return "Sample";
+  if (contractEnum == Contract.tBERRY) return "tBERRY";
+  if (contractEnum == Contract.tWETH) return "tWETH";
+  if (contractEnum == Contract.tSLP) return "tSLP";
+  if (contractEnum == Contract.tAXS) return "tAXS";
+  if (contractEnum == Contract.tWRON) return "tWRON";
   if (contractEnum == Contract.SampleClone) return "SampleClone";
   if (contractEnum == Contract.SampleProxy) return "SampleProxy";
   revert("Contract: Unknown contract");

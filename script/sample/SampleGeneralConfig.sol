@@ -14,5 +14,12 @@ contract SampleGeneralConfig is BaseGeneralConfig {
     // {SamepleClone} share same logic as {Sample}
     _contractNameMap[Contract.SampleClone.key()] = Contract.Sample.name();
     _contractNameMap[Contract.SampleProxy.key()] = Contract.SampleProxy.name();
+
+    // allow diffrent contracts to share same logic
+    _contractNameMap[Contract.tSLP.key()] = "Token";
+    _contractNameMap[Contract.tAXS.key()] = "Token";
+    _contractNameMap[Contract.tWETH.key()] = "Token";
+    _contractNameMap[Contract.tWRON.key()] = "Token";
+    _contractNameMap[Contract.tBERRY.key()] = "Token";
   }
 }
