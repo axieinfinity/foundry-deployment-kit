@@ -26,6 +26,10 @@ abstract contract NetworkConfig is INetworkConfig {
     );
   }
 
+  function getDeploymentRoot() public virtual returns (string memory) {
+    return _deploymentRoot;
+  }
+
   function setForkMode(bool shouldEnable) public virtual {
     _isForkModeEnabled = shouldEnable;
   }

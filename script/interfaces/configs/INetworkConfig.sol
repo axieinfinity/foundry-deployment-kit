@@ -38,6 +38,8 @@ interface INetworkConfig {
 
   function getDeploymentDirectory(TNetwork network) external view returns (string memory dirPath);
 
+  function getDeploymentRoot() external returns (string memory);
+
   function getCurrentNetwork() external view returns (TNetwork network);
 
   function getPrivateKeyEnvLabel(TNetwork network) external view returns (string memory privateKeyEnvLabel);
