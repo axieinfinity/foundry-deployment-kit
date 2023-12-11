@@ -6,7 +6,7 @@ import { console, Script } from "../../lib/forge-std/src/Script.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
-import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
+import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
 
@@ -53,7 +53,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   function run(bytes calldata callData, string calldata command) public virtual {
     CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
-    success.handleRevert(data);
+    success.handleRevert(msg.sig, data);
   }
 
   function network() public view virtual returns (TNetwork) {
