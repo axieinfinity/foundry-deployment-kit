@@ -139,10 +139,10 @@ abstract contract BaseMigration is ScriptExtended {
   function _deployRaw(string memory filename, bytes memory args)
     internal
     virtual
-    broadcastAs(sender())
     returns (address payable deployed, uint256 nonce)
   {
     nonce = vm.getNonce(sender());
+    vm.broadcast(sender());
     deployed = payable(deployCode(filename, args));
   }
 
@@ -192,32 +192,20 @@ abstract contract BaseMigration is ScriptExtended {
   {
     if (proxyAdmin.code.length == 0) {
       vm.prank(proxyAdmin);
-      vm.resumeGasMetering();
-
       if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
       else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
-
-      vm.pauseGasMetering();
     } else {
       try ProxyAdmin(proxyAdmin).owner() returns (address owner) {
         vm.prank(owner);
-        vm.resumeGasMetering();
-
         if (args.length == 0) {
           ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
         } else {
           ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
         }
-
-        vm.pauseGasMetering();
       } catch {
         vm.prank(proxyAdmin);
-        vm.resumeGasMetering();
-
         if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
         else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
-
-        vm.pauseGasMetering();
       }
     }
   }
@@ -225,24 +213,16 @@ abstract contract BaseMigration is ScriptExtended {
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual {
     if (proxyAdmin.code.length == 0) {
       vm.broadcast(proxyAdmin);
-      vm.resumeGasMetering();
-
       if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
       else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
-
-      vm.pauseGasMetering();
     } else {
       try ProxyAdmin(proxyAdmin).owner() returns (address owner) {
         vm.broadcast(owner);
-        vm.resumeGasMetering();
-
         if (args.length == 0) {
           ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
         } else {
           ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
         }
-
-        vm.pauseGasMetering();
       } catch {
         revert("BaseMigration: Unhandled case for upgrading proxy!");
       }

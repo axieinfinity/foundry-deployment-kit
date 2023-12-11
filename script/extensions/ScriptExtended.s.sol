@@ -20,30 +20,13 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     console.log("> ", StdStyle.blue(fnName), "...");
     _;
   }
-
-  modifier prankAs(address from) {
-    vm.startPrank(from);
-    vm.resumeGasMetering();
-    _;
-    vm.stopPrank();
-    vm.pauseGasMetering();
-  }
-
-  modifier broadcastAs(address from) {
-    vm.startBroadcast(from);
-    vm.resumeGasMetering();
-    _;
-    vm.pauseGasMetering();
-    vm.stopBroadcast();
-  }
-
+  
   modifier onlyOn(TNetwork networkType) {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
     _;
   }
 
   function setUp() public virtual {
-    vm.pauseGasMetering();
     vm.label(address(CONFIG), "GeneralConfig");
     deploySharedAddress(address(CONFIG), _configByteCode());
   }

@@ -55,10 +55,12 @@ contract Migration__20231204_DeployMockERC20 is SampleMigration {
     address admin = makeAddr("admin");
 
     vm.startBroadcast();
+
     tAXS.mint(admin, mAXSTotalSupply);
     tSLP.mint(admin, mSLPTotalSupply);
     tWETH.mint(admin, mWETHTotalSupply);
     tBERRY.mint(admin, mBERRYTotalSupply);
+
     vm.stopBroadcast();
   }
 }

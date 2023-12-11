@@ -24,8 +24,8 @@ contract OnchainDebugger is ScriptExtended {
   function trace(uint256 forkBlock, address from, address to, uint256 value, bytes calldata callData)
     public
     rollFork(forkBlock)
-    prankAs(from)
   {
+    vm.prank(from);
     (bool success, bytes memory returnOrRevertData) = to.call{ value: value }(callData);
     success.handleRevert(msg.sig, returnOrRevertData);
   }
