@@ -37,13 +37,19 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     NetworkConfig(deploymentRoot)
     ContractConfig(absolutePath, deploymentRoot)
   {
-    _setUpNetworks();
-    _setUpContracts();
+    _setUpDefaultNetworks();
+    _setUpDefaultContracts();
     _setUpDefaultSender();
     _storeDeploymentData(deploymentRoot);
   }
 
-  function _setUpNetworks() internal virtual {
+  function _setUpNetworks() internal virtual { }
+
+  function _setUpContracts() internal virtual { }
+
+  function _setUpSender() internal virtual { }
+
+  function _setUpDefaultNetworks() private {
     setNetworkInfo(
       DefaultNetwork.Local.chainId(),
       DefaultNetwork.Local.key(),
@@ -68,26 +74,31 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
       DefaultNetwork.RoninMainnet.envLabel(),
       DefaultNetwork.RoninMainnet.explorer()
     );
+
+    _setUpNetworks();
   }
 
-  function _setUpContracts() internal virtual {
+  function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
-
     setAddress(
       DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
     setAddress(
       DefaultNetwork.RoninMainnet.key(), DefaultContract.ProxyAdmin.key(), 0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
     );
+
+    _setUpContracts();
   }
 
-  function _setUpDefaultSender() internal virtual {
+  function _setUpDefaultSender() private {
     // by default we will read private key from .env
     _envPk = vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork()));
     _envSender = vm.rememberKey(_envPk);
 
     label(block.chainid, _envSender, "ENVSender");
     console.log("GeneralConfig:", vm.getLabel(_envSender));
+
+    _setUpSender();
   }
 
   function getSender() public view virtual override returns (address payable sender) {
