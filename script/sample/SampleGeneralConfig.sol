@@ -8,8 +8,6 @@ contract SampleGeneralConfig is BaseGeneralConfig {
   constructor() BaseGeneralConfig("", "deployments/") { }
 
   function _setUpContracts() internal virtual override {
-    super._setUpContracts();
-
     _contractNameMap[Contract.Sample.key()] = Contract.Sample.name();
     // {SamepleClone} share same logic as {Sample}
     _contractNameMap[Contract.SampleClone.key()] = Contract.Sample.name();
