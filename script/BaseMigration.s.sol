@@ -169,7 +169,6 @@ abstract contract BaseMigration is ScriptExtended {
   function _upgradeProxy(TContract contractType)
     internal
     virtual
-    logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable proxy)
   {
     proxy = _upgradeProxy(contractType, arguments());
