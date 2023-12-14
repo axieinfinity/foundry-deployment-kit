@@ -20,7 +20,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     console.log("> ", StdStyle.blue(fnName), "...");
     _;
   }
-  
+
   modifier onlyOn(TNetwork networkType) {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
     _;
@@ -33,10 +33,13 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   function _configByteCode() internal virtual returns (bytes memory);
 
+  function _postCheck() internal virtual { }
+
   function run(bytes calldata callData, string calldata command) public virtual {
     CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
+    _postCheck();
   }
 
   function network() public view virtual returns (TNetwork) {
