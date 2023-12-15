@@ -9,6 +9,7 @@ import {
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
+import { OnchainDebugger } from "./OnchainDebugger.s.sol";  // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
@@ -166,12 +167,7 @@ abstract contract BaseMigration is ScriptExtended {
     _mockUpgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
   }
 
-  function _upgradeProxy(TContract contractType)
-    internal
-    virtual
-    logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
-    returns (address payable proxy)
-  {
+  function _upgradeProxy(TContract contractType) internal virtual returns (address payable proxy) {
     proxy = _upgradeProxy(contractType, arguments());
   }
 
@@ -190,41 +186,73 @@ abstract contract BaseMigration is ScriptExtended {
     internal
     virtual
   {
+    ITransparentUpgradeableProxy iProxy = ITransparentUpgradeableProxy(proxy);
+    ProxyAdmin wProxyAdmin = ProxyAdmin(proxyAdmin);
+    // if proxyAdmin is External Owned Wallet
     if (proxyAdmin.code.length == 0) {
       vm.prank(proxyAdmin);
-      if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
-      else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
+      if (args.length == 0) iProxy.upgradeTo(logic);
+      else iProxy.upgradeToAndCall(logic, args);
     } else {
-      try ProxyAdmin(proxyAdmin).owner() returns (address owner) {
-        vm.prank(owner);
+      try wProxyAdmin.owner() returns (address owner) {
         if (args.length == 0) {
-          ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
+          // try `upgrade` function
+          vm.prank(owner);
+          (bool success,) = proxyAdmin.call(abi.encodeCall(ProxyAdmin.upgrade, (iProxy, logic)));
+          if (success) {
+            vm.prank(owner);
+            wProxyAdmin.upgrade(iProxy, logic);
+          } else {
+            console.log(
+              StdStyle.yellow(
+                "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args..."
+              )
+            );
+            vm.prank(owner);
+            wProxyAdmin.upgradeAndCall(iProxy, logic, args);
+          }
         } else {
-          ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
+          vm.prank(owner);
+          wProxyAdmin.upgradeAndCall(iProxy, logic, args);
         }
       } catch {
-        vm.prank(proxyAdmin);
-        if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
-        else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
+        revert("BaseMigration: Unknown ProxyAdmin contract!");
       }
     }
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual {
+    ITransparentUpgradeableProxy iProxy = ITransparentUpgradeableProxy(proxy);
+    ProxyAdmin wProxyAdmin = ProxyAdmin(proxyAdmin);
+    // if proxyAdmin is External Owned Wallet
     if (proxyAdmin.code.length == 0) {
       vm.broadcast(proxyAdmin);
-      if (args.length == 0) ITransparentUpgradeableProxy(proxy).upgradeTo(logic);
-      else ITransparentUpgradeableProxy(proxy).upgradeToAndCall(logic, args);
+      if (args.length == 0) iProxy.upgradeTo(logic);
+      else iProxy.upgradeToAndCall(logic, args);
     } else {
-      try ProxyAdmin(proxyAdmin).owner() returns (address owner) {
-        vm.broadcast(owner);
+      try wProxyAdmin.owner() returns (address owner) {
         if (args.length == 0) {
-          ProxyAdmin(proxyAdmin).upgrade(ITransparentUpgradeableProxy(proxy), logic);
+          // try `upgrade` function
+          vm.prank(owner);
+          (bool success,) = proxyAdmin.call(abi.encodeCall(ProxyAdmin.upgrade, (iProxy, logic)));
+          if (success) {
+            vm.broadcast(owner);
+            wProxyAdmin.upgrade(iProxy, logic);
+          } else {
+            console.log(
+              StdStyle.yellow(
+                "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args..."
+              )
+            );
+            vm.broadcast(owner);
+            wProxyAdmin.upgradeAndCall(iProxy, logic, args);
+          }
         } else {
-          ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), logic, args);
+          vm.broadcast(owner);
+          wProxyAdmin.upgradeAndCall(iProxy, logic, args);
         }
       } catch {
-        revert("BaseMigration: Unhandled case for upgrading proxy!");
+        revert("BaseMigration: Unknown ProxyAdmin contract!");
       }
     }
   }

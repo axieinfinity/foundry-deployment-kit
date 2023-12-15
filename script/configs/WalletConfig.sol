@@ -10,6 +10,10 @@ abstract contract WalletConfig is IWalletConfig {
 
   function getSender() public view virtual returns (address payable sender);
 
+  function getSenderPk() public view virtual returns (uint256) {
+    return _envPk;
+  }
+
   function trezorPrefix() public view virtual returns (string memory) {
     return "trezor://";
   }
