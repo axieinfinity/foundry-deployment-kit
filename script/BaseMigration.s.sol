@@ -9,6 +9,7 @@ import {
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
+import { OnchainDebugger } from "./OnchainDebugger.s.sol";  // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
