@@ -7,7 +7,7 @@ fi
 
 verify_arg=""
 extra_argument=""
-op_command=""
+op_command="op run --env-file="./.env" --"
 
 for arg in "$@"; do
     case $arg in
@@ -36,4 +36,4 @@ echo Value: ${VALUE}
 echo Calldata:
 cast pretty-calldata ${CALLDATA}
 calldata=$(cast calldata 'trace(uint256,address,address,uint256,bytes)' ${BLOCK} ${FROM} ${TO} ${VALUE} ${CALLDATA})
-${op_command} forge script ${verify_arg} --legacy ${@} script/OnchainDebugger.s.sol --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
+${op_command} forge script ${verify_arg} --legacy ${@} OnchainDebugger --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
