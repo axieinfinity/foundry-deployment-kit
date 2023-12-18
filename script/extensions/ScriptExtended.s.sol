@@ -17,13 +17,19 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
 
   modifier logFn(string memory fnName) {
-    console.log("> ", StdStyle.blue(fnName), "...");
+    _logFn(fnName);
     _;
   }
 
   modifier onlyOn(TNetwork networkType) {
-    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
+    _requireOn(networkType);
     _;
+  }
+
+  modifier onNetwork(TNetwork networkType) {
+    TNetwork currentNetwork = _before(networkType);
+    _;
+    _after(currentNetwork);
   }
 
   function setUp() public virtual {
@@ -85,5 +91,23 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     (bool success, bytes memory runtimeBytecode) = where.call{ value: value }("");
     assertTrue(success, "ScriptExtended: Failed to create runtime bytecode.");
     vm.etch(where, runtimeBytecode);
+  }
+
+  function _logFn(string memory fnName) private view {
+    console.log("> ", StdStyle.blue(fnName), "...");
+  }
+
+  function _requireOn(TNetwork networkType) private view {
+    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
+  }
+
+  function _before(TNetwork networkType) private returns (TNetwork currentNetwork) {
+    currentNetwork = network();
+    CONFIG.createFork(networkType);
+    CONFIG.switchTo(networkType);
+  }
+
+  function _after(TNetwork currentNetwork) private {
+    CONFIG.switchTo(currentNetwork);
   }
 }
