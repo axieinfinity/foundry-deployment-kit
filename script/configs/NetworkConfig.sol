@@ -82,14 +82,13 @@ abstract contract NetworkConfig is INetworkConfig {
       console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
       return NULL_FORK_ID;
     }
-    if (chainId == block.chainid) {
-      console.log(
-        StdStyle.yellow(string.concat("NetworkConfig: ", chainAlias, " is already created and active at forkId:")),
-        currentFork
-      );
-      return currentFork;
-    }
+
+    if (chainId == block.chainid) return currentFork;
     if (!_isForkModeEnabled) return NULL_FORK_ID;
+    if (_networkDataMap[_networkMap[chainId]].forkId != NULL_FORK_ID) {
+      return _networkDataMap[_networkMap[chainId]].forkId;
+    }
+
     try vm.createFork(vm.rpcUrl(chainAlias)) returns (uint256 forkId) {
       console.log(StdStyle.blue(string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:")), forkId);
       return forkId;
