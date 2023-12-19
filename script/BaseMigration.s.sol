@@ -45,12 +45,16 @@ abstract contract BaseMigration is ScriptExtended {
 
   function loadContractOrDeploy(TContract contractType) public virtual returns (address payable contractAddr) {
     string memory contractName = CONFIG.getContractName(contractType);
-    try CONFIG.getAddressFromCurrentNetwork(contractType) returns (address payable addr) {
+    try this.loadContract(contractType) returns (address payable addr) {
       contractAddr = addr;
     } catch {
       console.log(string.concat("Deployment for ", contractName, " not found, try fresh deploy ...").yellow());
       contractAddr = _deployScript[contractType].run();
     }
+  }
+
+  function loadContract(TContract contractType) public virtual returns (address payable contractAddr) {
+    return CONFIG.getAddressFromCurrentNetwork(contractType);
   }
 
   function overrideArgs(bytes memory args) public virtual returns (IMigrationScript) {
@@ -60,6 +64,10 @@ abstract contract BaseMigration is ScriptExtended {
 
   function arguments() public virtual returns (bytes memory args) {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
+  }
+
+  function _getProxyAdmin() internal view virtual returns (address payable proxyAdmin) {
+    proxyAdmin = CONFIG.getAddressFromCurrentNetwork(DefaultContract.ProxyAdmin.key());
   }
 
   function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
@@ -112,7 +120,7 @@ abstract contract BaseMigration is ScriptExtended {
     address logic = _deployLogic(contractType);
     string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
     uint256 proxyNonce;
-    address proxyAdmin = CONFIG.getAddressFromCurrentNetwork(DefaultContract.ProxyAdmin.key());
+    address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
     (deployed, proxyNonce) = _deployRaw(proxyAbsolutePath, abi.encode(logic, proxyAdmin, args));
