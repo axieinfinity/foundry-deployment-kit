@@ -53,7 +53,7 @@ abstract contract BaseMigration is ScriptExtended {
     }
   }
 
-  function loadContract(TContract contractType) public virtual returns (address payable contractAddr) {
+  function loadContract(TContract contractType) public view virtual returns (address payable contractAddr) {
     return CONFIG.getAddressFromCurrentNetwork(contractType);
   }
 
@@ -67,7 +67,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _getProxyAdmin() internal view virtual returns (address payable proxyAdmin) {
-    proxyAdmin = CONFIG.getAddressFromCurrentNetwork(DefaultContract.ProxyAdmin.key());
+    proxyAdmin = loadContract(DefaultContract.ProxyAdmin.key());
   }
 
   function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
