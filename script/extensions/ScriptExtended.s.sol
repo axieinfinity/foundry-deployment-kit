@@ -27,9 +27,9 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   modifier onNetwork(TNetwork networkType) {
-    TNetwork currentNetwork = _before(networkType);
+    TNetwork currentNetwork = _switchTo(networkType);
     _;
-    _after(currentNetwork);
+    _swichBack(currentNetwork);
   }
 
   function setUp() public virtual {
@@ -101,13 +101,13 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
   }
 
-  function _before(TNetwork networkType) private returns (TNetwork currentNetwork) {
+  function _switchTo(TNetwork networkType) private returns (TNetwork currentNetwork) {
     currentNetwork = network();
     CONFIG.createFork(networkType);
     CONFIG.switchTo(networkType);
   }
 
-  function _after(TNetwork currentNetwork) private {
+  function _swichBack(TNetwork currentNetwork) private {
     CONFIG.switchTo(currentNetwork);
   }
 }

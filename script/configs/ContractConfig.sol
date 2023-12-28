@@ -125,11 +125,27 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
-    if (!vm.exists(deploymentRoot)) {
+    VmSafe.DirEntry[] memory deployments;
+    try vm.exists(deploymentRoot) returns (bool exists) {
+      if (!exists) {
+        console.log("ContractConfig:", "No deployments folder, skip loading");
+        return;
+      }
+    } catch {
+      try vm.readDir(deploymentRoot) returns (VmSafe.DirEntry[] memory res) {
+        deployments = res;
+      } catch {
+        console.log("ContractConfig:", "No deployments folder, skip loading");
+        return;
+      }
+    }
+
+    try vm.readDir(deploymentRoot) returns (VmSafe.DirEntry[] memory res) {
+      deployments = res;
+    } catch {
       console.log("ContractConfig:", "No deployments folder, skip loading");
       return;
     }
-    VmSafe.DirEntry[] memory deployments = vm.readDir(deploymentRoot);
 
     for (uint256 i; i < deployments.length;) {
       VmSafe.DirEntry[] memory entries = vm.readDir(deployments[i].path);
