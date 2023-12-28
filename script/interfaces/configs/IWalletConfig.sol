@@ -2,7 +2,10 @@
 pragma solidity ^0.8.19;
 
 interface IWalletConfig {
-  function getSenderPk() external view returns (uint256);
+  enum WalletOption {
+    Env,
+    Trezor
+  }
 
   function getSender() external view returns (address payable sender);
 
