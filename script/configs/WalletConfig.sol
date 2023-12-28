@@ -23,6 +23,99 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     return "DEPLOYER";
   }
 
+  function ethSignMessage(address by, string memory message, WalletOption walletOption)
+    public
+    returns (bytes memory sig)
+  {
+    sig =
+      walletOption == WalletOption.Env ? envEthSignMessage(by, message, _envLabel) : trezorEthSignMessage(by, message);
+  }
+
+  function ethSignMessage(string memory message) public returns (bytes memory sig) {
+    sig = _walletOption == WalletOption.Env
+      ? envEthSignMessage(_envSender, message, _envLabel)
+      : trezorEthSignMessage(_trezorSender, message);
+  }
+
+  function envEthSignMessage(address by, string memory message, string memory envLabel)
+    public
+    returns (bytes memory sig)
+  {
+    string[] memory commandInput = new string[](8);
+    commandInput[0] = "cast";
+    commandInput[1] = "wallet";
+    commandInput[2] = "sign";
+    commandInput[3] = "--from";
+    commandInput[4] = vm.toString(by);
+    commandInput[5] = "--private-key";
+    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[7] = message;
+
+    sig = vm.ffi(commandInput);
+  }
+
+  function trezorEthSignMessage(address by, string memory message) public returns (bytes memory sig) {
+    string[] memory commandInput = new string[](7);
+    commandInput[0] = "cast";
+    commandInput[1] = "wallet";
+    commandInput[2] = "sign";
+    commandInput[3] = "--from";
+    commandInput[4] = vm.toString(by);
+    commandInput[5] = "--trezor";
+    commandInput[6] = message;
+
+    sig = vm.ffi(commandInput);
+  }
+
+  function signTypedDataV4(address by, string memory filePath, WalletOption walletOption)
+    public
+    returns (bytes memory sig)
+  {
+    sig = walletOption == WalletOption.Env
+      ? envSignTypedDataV4(by, filePath, _envLabel)
+      : trezorSignTypedDataV4(by, filePath);
+  }
+
+  function signTypedDataV4(string memory filePath) public returns (bytes memory sig) {
+    sig = _walletOption == WalletOption.Env
+      ? envSignTypedDataV4(_envSender, filePath, _envLabel)
+      : trezorSignTypedDataV4(_trezorSender, filePath);
+  }
+
+  function envSignTypedDataV4(address by, string memory filePath, string memory envLabel)
+    public
+    returns (bytes memory sig)
+  {
+    string[] memory commandInput = new string[](10);
+    commandInput[0] = "cast";
+    commandInput[1] = "wallet";
+    commandInput[2] = "sign";
+    commandInput[3] = "--from";
+    commandInput[4] = vm.toString(by);
+    commandInput[5] = "--private-key";
+    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[7] = "--data";
+    commandInput[8] = "--from-file";
+    commandInput[9] = filePath;
+
+    sig = vm.ffi(commandInput);
+  }
+
+  function trezorSignTypedDataV4(address by, string memory filePath) public returns (bytes memory sig) {
+    string[] memory commandInput = new string[](9);
+    commandInput[0] = "cast";
+    commandInput[1] = "wallet";
+    commandInput[2] = "sign";
+    commandInput[3] = "--from";
+    commandInput[4] = vm.toString(by);
+    commandInput[5] = "--trezor";
+    commandInput[6] = "--data";
+    commandInput[7] = "--from-file";
+    commandInput[8] = filePath;
+
+    sig = vm.ffi(commandInput);
+  }
+
   function _loadTrezorAccount() internal {
     if (tx.origin != DEFAULT_SENDER) {
       _trezorSender = tx.origin;
