@@ -19,11 +19,7 @@ abstract contract NetworkConfig is INetworkConfig {
 
   constructor(string memory deploymentRoot) {
     _deploymentRoot = deploymentRoot;
-    console.log(
-      string.concat("Block Number: ", vm.toString(block.number)),
-      "|",
-      string.concat("Timestamp: ", vm.toString(block.timestamp))
-    );
+    _logCurrentForkInfo();
   }
 
   function getDeploymentRoot() public virtual returns (string memory) {
@@ -82,19 +78,18 @@ abstract contract NetworkConfig is INetworkConfig {
       console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
       return NULL_FORK_ID;
     }
-    if (chainId == block.chainid) {
-      console.log(
-        StdStyle.yellow(string.concat("NetworkConfig: ", chainAlias, " is already created and active at forkId:")),
-        currentFork
-      );
-      return currentFork;
-    }
+
+    if (chainId == block.chainid) return currentFork;
     if (!_isForkModeEnabled) return NULL_FORK_ID;
-    try vm.createFork(vm.rpcUrl(chainAlias)) returns (uint256 forkId) {
+    uint256 id = _networkDataMap[_networkMap[chainId]].forkId;
+    if (id != NULL_FORK_ID) return id;
+
+    string memory rpcUrl = vm.rpcUrl(chainAlias);
+    try vm.createFork(rpcUrl) returns (uint256 forkId) {
       console.log(StdStyle.blue(string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:")), forkId);
       return forkId;
     } catch {
-      console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), vm.rpcUrl(chainAlias));
+      console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), rpcUrl);
       return NULL_FORK_ID;
     }
   }
@@ -105,6 +100,7 @@ abstract contract NetworkConfig is INetworkConfig {
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
     vm.selectFork(forkId);
     require(_networkDataMap[network].chainId == block.chainid, "NetworkConfig: Switch chain failed");
+    _logCurrentForkInfo();
   }
 
   function getPrivateKeyEnvLabel(TNetwork network) public view virtual returns (string memory privateKeyEnvLabel) {
@@ -118,5 +114,26 @@ abstract contract NetworkConfig is INetworkConfig {
 
   function getNetworkByChainId(uint256 chainId) public view virtual returns (TNetwork network) {
     network = _networkMap[chainId];
+  }
+
+  function _logCurrentForkInfo() internal view {
+    console.log(
+      StdStyle.yellow(
+        string.concat(
+          "Block Number: ",
+          vm.toString(block.number),
+          " | ",
+          "Timestamp: ",
+          vm.toString(block.timestamp),
+          " | ",
+          "Gas Price: ",
+          vm.toString(tx.gasprice),
+          " | ",
+          "Block Gas Limit: ",
+          vm.toString(block.gaslimit),
+          "\n"
+        )
+      )
+    );
   }
 }
