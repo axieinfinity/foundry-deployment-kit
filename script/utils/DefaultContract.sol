@@ -4,7 +4,9 @@ pragma solidity ^0.8.19;
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { TContract } from "../types/Types.sol";
 
-enum DefaultContract { ProxyAdmin }
+enum DefaultContract {
+  ProxyAdmin
+}
 
 using { key, name } for DefaultContract global;
 
