@@ -19,6 +19,8 @@ interface IWalletConfig {
 
   function ethSignMessage(string memory message) external returns (bytes memory sig);
 
+  function ethSignMessage(address by, string memory message, uint256 privateKey) external returns (bytes memory sig);
+
   function envEthSignMessage(address by, string memory message, string memory envLabel)
     external
     returns (bytes memory sig);
@@ -30,6 +32,8 @@ interface IWalletConfig {
   function trezorEthSignMessage(address by, string memory message) external returns (bytes memory sig);
 
   function trezorSignTypedDataV4(address by, string memory filePath) external returns (bytes memory sig);
+
+  function signTypedDataV4(address by, string memory filePath, uint256 privateKey) external returns (bytes memory sig);
 
   function signTypedDataV4(address by, string memory filePath, WalletOption walletOption)
     external
