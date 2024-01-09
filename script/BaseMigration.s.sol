@@ -142,7 +142,12 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable deployed, uint256 nonce)
   {
     nonce = vm.getNonce(sender());
-    vm.broadcast(sender());
+    if (CONFIG.isBroadcastDisable()) {
+      vm.prank(sender());
+    } else {
+      vm.broadcast(sender());
+    }
+
     deployed = payable(deployCode(filename, args));
   }
 

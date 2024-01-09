@@ -12,4 +12,8 @@ interface IRuntimeConfig {
   function resolveCommand(string calldata command) external;
 
   function getRuntimeConfig() external view returns (Option memory options);
+
+  function setBroadcastDisableStatus(bool status) external;
+
+  function isBroadcastDisable() external view returns (bool);
 }
