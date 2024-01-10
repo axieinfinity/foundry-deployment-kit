@@ -8,6 +8,7 @@ import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
+import { UserDefinedConfig } from "./configs/UserDefinedConfig.sol";
 import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
 import { EnumerableSet, TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { ISharedParameter } from "./interfaces/configs/ISharedParameter.sol";
@@ -15,7 +16,14 @@ import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
+contract BaseGeneralConfig is
+  RuntimeConfig,
+  WalletConfig,
+  ContractConfig,
+  NetworkConfig,
+  MigrationConfig,
+  UserDefinedConfig
+{
   using StdStyle for string;
   using LibString for string;
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -33,21 +41,21 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     }
   }
 
-  constructor(string memory absolutePath, string memory deploymentRoot)
-    NetworkConfig(deploymentRoot)
-    ContractConfig(absolutePath, deploymentRoot)
-  {
+  constructor(
+    string memory absolutePath,
+    string memory deploymentRoot
+  ) NetworkConfig(deploymentRoot) ContractConfig(absolutePath, deploymentRoot) {
     _setUpDefaultNetworks();
     _setUpDefaultContracts();
     _setUpDefaultSender();
     _storeDeploymentData(deploymentRoot);
   }
 
-  function _setUpNetworks() internal virtual { }
+  function _setUpNetworks() internal virtual {}
 
-  function _setUpContracts() internal virtual { }
+  function _setUpContracts() internal virtual {}
 
-  function _setUpSender() internal virtual { }
+  function _setUpSender() internal virtual {}
 
   function _setUpDefaultNetworks() private {
     setNetworkInfo(
@@ -81,10 +89,14 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
   function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
     setAddress(
-      DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
+      DefaultNetwork.RoninTestnet.key(),
+      DefaultContract.ProxyAdmin.key(),
+      0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
     setAddress(
-      DefaultNetwork.RoninMainnet.key(), DefaultContract.ProxyAdmin.key(), 0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
+      DefaultNetwork.RoninMainnet.key(),
+      DefaultContract.ProxyAdmin.key(),
+      0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
     );
 
     _setUpContracts();
