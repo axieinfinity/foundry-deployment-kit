@@ -29,19 +29,26 @@ contract ArtifactFactory is IArtifactFactory {
     uint256 nonce
   ) external {
     console.log(
-      string.concat(
-        fileName,
-        " will be deployed at: ",
-        CONFIG.getExplorer(CONFIG.getCurrentNetwork()),
-        "address/",
-        contractAddr.toHexString()
-      ).green(),
+      string
+        .concat(
+          fileName,
+          " will be deployed at: ",
+          CONFIG.getExplorer(CONFIG.getCurrentNetwork()),
+          "address/",
+          contractAddr.toHexString()
+        )
+        .green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
-    if (!CONFIG.getRuntimeConfig().log) {
-      console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
-      return;
+
+    {
+      bool disableLogArtifactConfig = CONFIG.getUserDefinedConfig(CONFIG.DISABLE_LOG_ARTIFACT()) == 0x00 ? false : true;
+      if (!CONFIG.getRuntimeConfig().log || disableLogArtifactConfig) {
+        console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
+        return;
+      }
     }
+
     string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
     string memory filePath = string.concat(dirPath, fileName, ".json");
 

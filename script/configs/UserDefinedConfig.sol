@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import { IUserDefinedConfig } from "../interfaces/configs/IUserDefinedConfig.sol";
 
 abstract contract UserDefinedConfig is IUserDefinedConfig {
+  string public constant DISABLE_LOG_ARTIFACT = "DISABLE_LOG_ARTIFACT";
+
   function setUserDefinedConfig(string calldata slotSig, bytes32 value) external {
     bytes32 $_slot = calcSlot(slotSig);
     assembly {
