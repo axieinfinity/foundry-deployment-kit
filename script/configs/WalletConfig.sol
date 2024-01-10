@@ -41,6 +41,10 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     public
     returns (bytes memory sig)
   {
+    sig = ethSignMessage(by, message, _loadENVPrivateKey(envLabel));
+  }
+
+  function ethSignMessage(address by, string memory message, uint256 privateKey) public returns (bytes memory sig) {
     string[] memory commandInput = new string[](8);
     commandInput[0] = "cast";
     commandInput[1] = "wallet";
@@ -48,7 +52,7 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     commandInput[3] = "--from";
     commandInput[4] = vm.toString(by);
     commandInput[5] = "--private-key";
-    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[6] = LibString.toHexString(privateKey);
     commandInput[7] = message;
 
     sig = vm.ffi(commandInput);
@@ -86,6 +90,10 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     public
     returns (bytes memory sig)
   {
+    sig = signTypedDataV4(by, filePath, _loadENVPrivateKey(envLabel));
+  }
+
+  function signTypedDataV4(address by, string memory filePath, uint256 privateKey) public returns (bytes memory sig) {
     string[] memory commandInput = new string[](10);
     commandInput[0] = "cast";
     commandInput[1] = "wallet";
@@ -93,7 +101,7 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     commandInput[3] = "--from";
     commandInput[4] = vm.toString(by);
     commandInput[5] = "--private-key";
-    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[6] = LibString.toHexString(privateKey);
     commandInput[7] = "--data";
     commandInput[8] = "--from-file";
     commandInput[9] = filePath;
