@@ -27,8 +27,7 @@ abstract contract BaseMigration is ScriptExtended {
 
   function setUp() public virtual override {
     super.setUp();
-    vm.label(address(ARTIFACT_FACTORY), "ArtifactFactory");
-    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode);
+    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
     _injectDependencies();
     _storeRawSharedArguments();
   }
@@ -66,7 +65,7 @@ abstract contract BaseMigration is ScriptExtended {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
   }
 
-  function _getProxyAdmin() internal view virtual returns (address payable proxyAdmin) {
+  function _getProxyAdmin() internal virtual returns (address payable proxyAdmin) {
     proxyAdmin = loadContract(DefaultContract.ProxyAdmin.key());
   }
 
