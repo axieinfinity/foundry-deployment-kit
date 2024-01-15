@@ -32,9 +32,12 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     _switchBack(currentNetwork);
   }
 
+  constructor() {
+    setUp();
+  }
+
   function setUp() public virtual {
-    vm.label(address(CONFIG), "GeneralConfig");
-    deploySharedAddress(address(CONFIG), _configByteCode());
+    deploySharedAddress(address(CONFIG), _configByteCode(), "GeneralConfig");
   }
 
   function _configByteCode() internal virtual returns (bytes memory);
@@ -65,17 +68,18 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function deploySharedAddress(address where, bytes memory bytecode) public {
+  function deploySharedAddress(address where, bytes memory bytecode, string memory label) public {
     if (where.code.length == 0) {
       vm.makePersistent(where);
       vm.allowCheatcodes(where);
       deployCodeTo(bytecode, where);
+      if (bytes(label).length != 0) vm.label(where, label);
     }
   }
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode);
+    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
   }
 
   function deployCodeTo(bytes memory creationCode, address where) internal {

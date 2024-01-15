@@ -76,11 +76,18 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
+    _contractNameMap[DefaultContract.Multicall3.key()] = DefaultContract.Multicall3.name();
     setAddress(
       DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
     setAddress(
       DefaultNetwork.RoninMainnet.key(), DefaultContract.ProxyAdmin.key(), 0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
+    );
+    setAddress(
+      DefaultNetwork.RoninMainnet.key(), DefaultContract.Multicall3.key(), 0xcA11bde05977b3631167028862bE2a173976CA11
+    );
+    setAddress(
+      DefaultNetwork.RoninTestnet.key(), DefaultContract.Multicall3.key(), 0xcA11bde05977b3631167028862bE2a173976CA11
     );
 
     _setUpContracts();
@@ -92,6 +99,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
+    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.Local.key()) sender = payable(DEFAULT_SENDER);
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }
 
