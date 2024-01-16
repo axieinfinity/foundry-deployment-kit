@@ -29,7 +29,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   modifier onNetwork(TNetwork networkType) {
     TNetwork currentNetwork = _switchTo(networkType);
     _;
-    _swichBack(currentNetwork);
+    _switchBack(currentNetwork);
   }
 
   constructor() {
@@ -111,7 +111,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     CONFIG.switchTo(networkType);
   }
 
-  function _swichBack(TNetwork currentNetwork) private {
+  function _switchBack(TNetwork currentNetwork) private {
     CONFIG.switchTo(currentNetwork);
   }
 }
