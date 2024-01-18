@@ -280,15 +280,25 @@ abstract contract BaseMigration is ScriptExtended {
     virtual
   {
     bytes memory callData = abi.encodeCall(ProxyAdmin.upgrade, (iProxy, logic));
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+
     console.log(
       "------------------------------------------------------------------------------- Multi-Sig Proposal -------------------------------------------------------------------------------"
     );
     console.log("To:".cyan(), vm.getLabel(address(wProxyAdmin)));
     console.log(
+      "Raw Calldata Data (Please double check using `cast 4byte-decode {raw_bytes}`):\n".cyan(),
+      string.concat(" - ", vm.toString(callData))
+    );
+    console.log(
       "Method:\n".cyan(),
       string.concat(" - upgrade(address,address)\n  - ", vm.getLabel(address(iProxy)), "\n  - ", vm.getLabel(logic))
     );
-    console.log("Raw Calldata Data:\n".cyan(), string.concat(" - ", vm.toString(callData)));
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
     console.log(
       "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     );
@@ -306,18 +316,32 @@ abstract contract BaseMigration is ScriptExtended {
     bytes memory args
   ) internal virtual {
     bytes memory callData = abi.encodeCall(ProxyAdmin.upgradeAndCall, (iProxy, logic, args));
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+    commandInputs[2] = vm.toString(args);
+    string memory decodedInnerCall = string(vm.ffi(commandInputs));
+
     console.log(
       "------------------------------------------------------------------------------- Multi-Sig Proposal -------------------------------------------------------------------------------"
     );
     console.log("To:".cyan(), vm.getLabel(address(wProxyAdmin)));
     console.log(
+      "Raw Call Data (Please double check using `cast 4byte-decode {raw_bytes}`):\n".cyan(),
+      " - ",
+      vm.toString(callData)
+    );
+    console.log(
       "Method:\n".cyan(),
       " - upgradeAndCall(address,address,bytes)\n",
       string.concat(" - ", vm.getLabel(address(iProxy)), "\n  - ", vm.getLabel(logic), "\n  - ", vm.toString(args))
     );
-    console.log("Raw Call Data:\n".cyan(), " - ", vm.toString(callData));
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
+    console.log("Cast Decoded Inner Method:".cyan(), decodedInnerCall);
     console.log(
-      "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+      "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n"
     );
 
     // cheat prank to update `implementation slot` for next call
