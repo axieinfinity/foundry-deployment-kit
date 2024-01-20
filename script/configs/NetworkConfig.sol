@@ -76,7 +76,7 @@ abstract contract NetworkConfig is INetworkConfig {
       currentFork = forkId;
     } catch {
       console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
-      return NULL_FORK_ID;
+      currentFork = NULL_FORK_ID;
     }
 
     if (chainId == block.chainid) return currentFork;
