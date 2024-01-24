@@ -33,6 +33,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _storeRawSharedArguments() internal virtual {
+    if (CONFIG.areSharedArgumentsStored()) return;
     CONFIG.setRawSharedArguments(_sharedArguments());
   }
 
