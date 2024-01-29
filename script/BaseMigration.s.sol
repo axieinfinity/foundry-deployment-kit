@@ -27,9 +27,9 @@ abstract contract BaseMigration is ScriptExtended {
 
   function setUp() public virtual override {
     super.setUp();
-    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
-    _injectDependencies();
     _storeRawSharedArguments();
+    _injectDependencies();
+    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
   }
 
   function _storeRawSharedArguments() internal virtual {
