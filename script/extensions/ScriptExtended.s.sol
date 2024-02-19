@@ -17,26 +17,38 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
 
   modifier logFn(string memory fnName) {
-    console.log("> ", StdStyle.blue(fnName), "...");
+    _logFn(fnName);
     _;
   }
-  
+
   modifier onlyOn(TNetwork networkType) {
-    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
+    _requireOn(networkType);
     _;
+  }
+
+  modifier onNetwork(TNetwork networkType) {
+    TNetwork currentNetwork = _switchTo(networkType);
+    _;
+    _switchBack(currentNetwork);
+  }
+
+  constructor() {
+    setUp();
   }
 
   function setUp() public virtual {
-    vm.label(address(CONFIG), "GeneralConfig");
-    deploySharedAddress(address(CONFIG), _configByteCode());
+    deploySharedAddress(address(CONFIG), _configByteCode(), "GeneralConfig");
   }
 
   function _configByteCode() internal virtual returns (bytes memory);
+
+  function _postCheck() internal virtual { }
 
   function run(bytes calldata callData, string calldata command) public virtual {
     CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
+    _postCheck();
   }
 
   function network() public view virtual returns (TNetwork) {
@@ -56,17 +68,18 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function deploySharedAddress(address where, bytes memory bytecode) public {
+  function deploySharedAddress(address where, bytes memory bytecode, string memory label) public {
     if (where.code.length == 0) {
       vm.makePersistent(where);
       vm.allowCheatcodes(where);
       deployCodeTo(bytecode, where);
+      if (bytes(label).length != 0) vm.label(where, label);
     }
   }
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode);
+    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
   }
 
   function deployCodeTo(bytes memory creationCode, address where) internal {
@@ -82,5 +95,23 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     (bool success, bytes memory runtimeBytecode) = where.call{ value: value }("");
     assertTrue(success, "ScriptExtended: Failed to create runtime bytecode.");
     vm.etch(where, runtimeBytecode);
+  }
+
+  function _logFn(string memory fnName) private view {
+    console.log("> ", StdStyle.blue(fnName), "...");
+  }
+
+  function _requireOn(TNetwork networkType) private view {
+    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
+  }
+
+  function _switchTo(TNetwork networkType) private returns (TNetwork currentNetwork) {
+    currentNetwork = network();
+    CONFIG.createFork(networkType);
+    CONFIG.switchTo(networkType);
+  }
+
+  function _switchBack(TNetwork currentNetwork) private {
+    CONFIG.switchTo(currentNetwork);
   }
 }

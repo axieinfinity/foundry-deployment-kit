@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Vm } from "../lib/forge-std/src/Vm.sol";
+import { Vm, VmSafe } from "../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
 import { console2 as console } from "../lib/forge-std/src/console2.sol";
-import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
@@ -25,10 +24,7 @@ contract BaseGeneralConfig is
   UserDefinedConfig
 {
   using StdStyle for string;
-  using LibString for string;
   using EnumerableSet for EnumerableSet.AddressSet;
-
-  Vm internal constant vm = Vm(LibSharedAddress.VM);
 
   fallback() external {
     if (msg.sig == ISharedParameter.sharedArguments.selector) {
@@ -88,6 +84,7 @@ contract BaseGeneralConfig is
 
   function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
+    _contractNameMap[DefaultContract.Multicall3.key()] = DefaultContract.Multicall3.name();
     setAddress(
       DefaultNetwork.RoninTestnet.key(),
       DefaultContract.ProxyAdmin.key(),
@@ -98,24 +95,24 @@ contract BaseGeneralConfig is
       DefaultContract.ProxyAdmin.key(),
       0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
     );
+    setAddress(
+      DefaultNetwork.RoninMainnet.key(), DefaultContract.Multicall3.key(), 0xcA11bde05977b3631167028862bE2a173976CA11
+    );
+    setAddress(
+      DefaultNetwork.RoninTestnet.key(), DefaultContract.Multicall3.key(), 0xcA11bde05977b3631167028862bE2a173976CA11
+    );
 
     _setUpContracts();
   }
 
   function _setUpDefaultSender() private {
-    // by default we will read private key from .env
-    _envPk = vm.envUint(getPrivateKeyEnvLabel(getCurrentNetwork()));
-    _envSender = vm.rememberKey(_envPk);
-
-    label(block.chainid, _envSender, "ENVSender");
-    console.log("GeneralConfig:", vm.getLabel(_envSender));
-
     _setUpSender();
   }
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
-    require(sender != address(0), "GeneralConfig: Sender is address(0x0)");
+    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.Local.key()) sender = payable(DEFAULT_SENDER);
+    require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }
 
   function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
@@ -139,10 +136,14 @@ contract BaseGeneralConfig is
 
   function _handleRuntimeConfig() internal virtual override {
     if (_option.trezor) {
-      string memory str = vm.envString(deployerEnvLabel());
-      _trezorSender = vm.parseAddress(str.replace(trezorPrefix(), ""));
+      _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
-      console.log("GeneralConfig:", vm.getLabel(_trezorSender));
+      console.log("GeneralConfig:", vm.getLabel(_trezorSender), "Enabled!");
+    } else {
+      string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
+      _loadENVAccount(envLabel);
+      label(block.chainid, _envSender, "ENVSender");
+      console.log("GeneralConfig:", vm.getLabel(_envSender), "Enabled!");
     }
   }
 }
