@@ -43,6 +43,11 @@ contract ArtifactFactory is IArtifactFactory {
       return;
     }
     string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
+    if (!vm.exists(dirPath)) {
+      console.log("\n", string.concat(dirPath, " not existed, making one...").yellow());
+      vm.createDir(dirPath, true);
+      vm.writeFile(string.concat(dirPath, ".chainId"), vm.toString(block.chainid));
+    }
     string memory filePath = string.concat(dirPath, fileName, ".json");
 
     string memory json;
