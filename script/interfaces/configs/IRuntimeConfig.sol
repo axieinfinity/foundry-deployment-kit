@@ -7,6 +7,10 @@ interface IRuntimeConfig {
     bool trezor;
   }
 
+  function isPostChecking() external view returns (bool);
+
+  function setPostCheckingStatus(bool status) external;
+
   function getCommand() external view returns (string memory);
 
   function resolveCommand(string calldata command) external;

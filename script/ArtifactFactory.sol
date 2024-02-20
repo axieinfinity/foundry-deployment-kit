@@ -38,7 +38,7 @@ contract ArtifactFactory is IArtifactFactory {
       ).green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
-    if (!CONFIG.getRuntimeConfig().log) {
+    if (!CONFIG.getRuntimeConfig().log || CONFIG.isPostChecking()) {
       console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
       return;
     }

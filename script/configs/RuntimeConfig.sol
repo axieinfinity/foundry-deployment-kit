@@ -12,9 +12,18 @@ abstract contract RuntimeConfig is IRuntimeConfig {
   bool internal _resolved;
   Option internal _option;
   string internal _rawCommand;
+  bool internal _isPostChecking;
 
   function getCommand() public view virtual returns (string memory) {
     return _rawCommand;
+  }
+
+  function isPostChecking() public view virtual returns (bool) {
+    return _isPostChecking;
+  }
+
+  function setPostCheckingStatus(bool status) public virtual {
+    _isPostChecking = status;
   }
 
   function resolveCommand(string calldata command) external virtual {
