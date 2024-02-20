@@ -15,6 +15,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   bytes public constant EMPTY_ARGS = "";
   IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
+  bool internal _isPostChecking;
 
   modifier logFn(string memory fnName) {
     _logFn(fnName);
@@ -48,7 +49,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
+
+    CONFIG.setPostCheckingStatus({ status: true });
     _postCheck();
+    CONFIG.setPostCheckingStatus({ status: false });
   }
 
   function network() public view virtual returns (TNetwork) {
