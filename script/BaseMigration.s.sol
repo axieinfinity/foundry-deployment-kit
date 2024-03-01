@@ -7,7 +7,15 @@ import {
   TransparentUpgradeableProxy
 } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
-import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol";
+import {
+  console,
+  StdStyle,
+  stdStorage,
+  StdStorage,
+  ScriptExtended,
+  IScriptExtended,
+  LibSharedAddress
+} from "./extensions/ScriptExtended.s.sol";
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
@@ -244,6 +252,11 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual {
+    if (logic.codehash == payable(proxyAdmin).getProxyImplementation({ nullCheck: true }).codehash) {
+      console.log("BaseMigration: Logic is already upgraded!".yellow());
+      return;
+    }
+
     ITransparentUpgradeableProxy iProxy = ITransparentUpgradeableProxy(proxy);
     ProxyAdmin wProxyAdmin = ProxyAdmin(proxyAdmin);
 

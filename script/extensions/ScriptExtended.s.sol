@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console, Script } from "../../lib/forge-std/src/Script.sol";
+import { stdStorage, StdStorage } from "../../lib/forge-std/src/StdStorage.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
@@ -11,6 +12,7 @@ import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
 
 abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
+  using StdStyle for *;
   using LibErrorHandler for bool;
 
   bytes public constant EMPTY_ARGS = "";
@@ -50,6 +52,12 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
 
+    if (CONFIG.getRuntimeConfig().disablePostcheck) {
+      console.log("\nPostchecking is disabled.".yellow());
+      return;
+    }
+
+    console.log("\n>> Postchecking...".yellow());
     CONFIG.setPostCheckingStatus({ status: true });
     _postCheck();
     CONFIG.setPostCheckingStatus({ status: false });
