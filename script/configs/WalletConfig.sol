@@ -151,28 +151,18 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     _envSender = vm.rememberKey(_loadENVPrivateKey(envLabel));
   }
 
-  function _loadENVPrivateKey(string memory envLabel) private returns (uint256) {
+  function _loadENVPrivateKey(string memory envLabel) private view returns (uint256) {
     try vm.envUint(envLabel) returns (uint256 pk) {
       return pk;
     } catch {
-      string[] memory commandInput = new string[](3);
-
-      try vm.envString(envLabel) returns (string memory data) {
-        commandInput[2] = data;
-      } catch {
-        revert(
-          string.concat(
-            "\nGeneralConfig: Error finding env address!\n- Please make `.env` file and create field `",
-            envLabel,
-            "=",
-            "{op_secret_reference_or_your_private_key}`"
-          )
-        );
-      }
-      commandInput[0] = "op";
-      commandInput[1] = "read";
-
-      return vm.parseUint(vm.toString(vm.ffi(commandInput)));
+      revert(
+        string.concat(
+          "\nGeneralConfig: Error finding env address!\n- Please make `.env` file and create field `",
+          envLabel,
+          "=",
+          "{op_secret_reference_or_your_private_key}`"
+        )
+      );
     }
   }
 }
