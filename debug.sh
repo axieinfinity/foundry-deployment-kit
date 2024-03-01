@@ -5,7 +5,6 @@ else
     echo "Error: .debug.env file not found."
 fi
 
-verify_arg=""
 extra_argument=""
 
 for arg in "$@"; do
