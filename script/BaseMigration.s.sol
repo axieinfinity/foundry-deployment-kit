@@ -94,14 +94,23 @@ abstract contract BaseMigration is ScriptExtended {
     logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable logic)
   {
+    logic = _deployLogic(contractType, EMPTY_ARGS);
+  }
+
+  function _deployLogic(TContract contractType, bytes memory args)
+    internal
+    virtual
+    logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
+    returns (address payable logic)
+  {
     string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
 
     uint256 logicNonce;
-    (logic, logicNonce) = _deployRaw(contractAbsolutePath, EMPTY_ARGS);
+    (logic, logicNonce) = _deployRaw(contractAbsolutePath, args);
     CONFIG.label(block.chainid, logic, string.concat(contractName, "::Logic"));
     ARTIFACT_FACTORY.generateArtifact(
-      sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
+      sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), args, logicNonce
     );
   }
 
@@ -109,7 +118,11 @@ abstract contract BaseMigration is ScriptExtended {
     deployed = _deployProxy(contractType, arguments());
   }
 
-  function _deployProxy(TContract contractType, bytes memory args)
+  function _deployProxy(TContract contractType, bytes memory args) internal virtual returns (address payable deployed) {
+    deployed = _deployProxy(contractType, args, EMPTY_ARGS);
+  }
+
+  function _deployProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
     internal
     virtual
     logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne()))
@@ -117,13 +130,14 @@ abstract contract BaseMigration is ScriptExtended {
   {
     string memory contractName = CONFIG.getContractName(contractType);
 
-    address logic = _deployLogic(contractType);
+    address logic = _deployLogic(contractType, argsLogicConstructor);
     string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
-    uint256 proxyNonce;
+    uint256 proxyNonce = vm.getNonce(sender());
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
-    (deployed, proxyNonce) = _deployRaw(proxyAbsolutePath, abi.encode(logic, proxyAdmin, args));
+    vm.broadcast(sender());
+    deployed = payable(address(new TransparentUpgradeableProxy(logic, proxyAdmin, args)));
 
     // validate proxy admin
     address actualProxyAdmin = deployed.getProxyAdmin();
