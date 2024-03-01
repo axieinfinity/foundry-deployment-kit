@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 interface IRuntimeConfig {
   struct Option {
-    bool log;
+    bool generateArtifact;
     bool trezor;
+    bool disablePostcheck;
   }
 
   function isPostChecking() external view returns (bool);

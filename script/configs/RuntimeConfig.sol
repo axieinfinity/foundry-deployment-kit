@@ -33,8 +33,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
       uint256 length = args.length;
 
       for (uint256 i; i < length;) {
-        if (args[i].eq("log")) _option.log = true;
+        if (args[i].eq("generate-artifact")) _option.generateArtifact = true;
         else if (args[i].eq("trezor")) _option.trezor = true;
+        else if (args[i].eq("no-postcheck")) _option.disablePostcheck = true;
         else console.log(StdStyle.yellow("Unsupported command: "), args[i]);
 
         unchecked {
