@@ -139,7 +139,7 @@ abstract contract BaseMigration is ScriptExtended {
     string memory contractName = CONFIG.getContractName(contractType);
 
     address logic = _deployLogic(contractType, argsLogicConstructor);
-    string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
+    string memory proxyAbsolutePath = "./out/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json";
     uint256 proxyNonce = vm.getNonce(sender());
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
