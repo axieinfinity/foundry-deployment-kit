@@ -19,10 +19,12 @@ import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { TContract } from "./types/Types.sol";
+import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
 
 abstract contract BaseMigration is ScriptExtended {
   using StdStyle for *;
   using LibString for bytes32;
+  using LibErrorHandler for bool;
   using LibProxy for address payable;
 
   IArtifactFactory public constant ARTIFACT_FACTORY = IArtifactFactory(LibSharedAddress.ARTIFACT_FACTORY);
@@ -302,6 +304,28 @@ abstract contract BaseMigration is ScriptExtended {
         revert("BaseMigration: Unknown ProxyAdmin contract!");
       }
     }
+  }
+
+  function _cheatBroadcast(address from, address to, bytes memory callData) internal virtual {
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+
+    console.log("\n");
+    console.log("--------------------------- Call Detail ---------------------------");
+    console.log("To:".cyan(), vm.getLabel(to));
+    console.log(
+      "Raw Calldata Data (Please double check using `cast pretty-calldata {raw_bytes}`):\n".cyan(),
+      string.concat(" - ", vm.toString(callData))
+    );
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
+    console.log("--------------------------------------------------------------------");
+
+    vm.prank(from);
+    (bool success, bytes memory returnOrRevertData) = to.call(callData);
+    success.handleRevert(bytes4(callData), returnOrRevertData);
   }
 
   function _cheatUpgrade(address owner, ProxyAdmin wProxyAdmin, ITransparentUpgradeableProxy iProxy, address logic)
