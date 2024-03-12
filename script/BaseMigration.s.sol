@@ -2,10 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { ProxyAdmin } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
-import {
-  ITransparentUpgradeableProxy,
-  TransparentUpgradeableProxy
-} from "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy, Proxy } from "../src/Proxy.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import {
   console,
@@ -139,13 +136,13 @@ abstract contract BaseMigration is ScriptExtended {
     string memory contractName = CONFIG.getContractName(contractType);
 
     address logic = _deployLogic(contractType, argsLogicConstructor);
-    string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
+    string memory proxyAbsolutePath = "Proxy.sol:Proxy";
     uint256 proxyNonce = vm.getNonce(sender());
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
     vm.broadcast(sender());
-    deployed = payable(address(new TransparentUpgradeableProxy(logic, proxyAdmin, args)));
+    deployed = payable(address(new Proxy(logic, proxyAdmin, args)));
 
     // validate proxy admin
     address actualProxyAdmin = deployed.getProxyAdmin();
