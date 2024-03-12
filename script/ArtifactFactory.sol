@@ -24,7 +24,7 @@ contract ArtifactFactory is IArtifactFactory {
     address deployer,
     address contractAddr,
     string memory contractAbsolutePath,
-    string calldata fileName,
+    string memory fileName,
     bytes calldata args,
     uint256 nonce
   ) external {
@@ -72,10 +72,14 @@ contract ArtifactFactory is IArtifactFactory {
     json.serialize("contractAbsolutePath", contractAbsolutePath);
     json.serialize("numDeployments", numDeployments);
 
-    string[] memory s = contractAbsolutePath.split(":");
-    string memory artifactPath = s.length == 2
-      ? string.concat("./out/", s[0], "/", s[1], ".json")
-      : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
+    string memory artifactPath = contractAbsolutePath;
+    if (!artifactPath.endsWith(".json")) {
+      string[] memory s = contractAbsolutePath.split(":");
+      artifactPath = s.length == 2
+        ? string.concat("./out/", s[0], "/", s[1], ".json")
+        : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
+    }
+
     string memory artifact = vm.readFile(artifactPath);
     JSONParserLib.Item memory item = artifact.parse();
 

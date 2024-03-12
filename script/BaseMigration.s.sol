@@ -198,13 +198,17 @@ abstract contract BaseMigration is ScriptExtended {
     proxy = _upgradeProxy(contractType, arguments());
   }
 
-  function _upgradeProxy(TContract contractType, bytes memory args)
+  function _upgradeProxy(TContract contractType, bytes memory args) internal virtual returns (address payable proxy) {
+    proxy = _upgradeProxy(contractType, args, EMPTY_ARGS);
+  }
+
+  function _upgradeProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
     internal
     virtual
     logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable proxy)
   {
-    address logic = _deployLogic(contractType);
+    address logic = _deployLogic(contractType, argsLogicConstructor);
     proxy = CONFIG.getAddress(network(), contractType);
     _upgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
   }
@@ -249,7 +253,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual {
-    if (logic.codehash == payable(proxyAdmin).getProxyImplementation({ nullCheck: true }).codehash) {
+    if (logic.codehash == payable(proxy).getProxyImplementation({ nullCheck: true }).codehash) {
       console.log("BaseMigration: Logic is already upgraded!".yellow());
       return;
     }
