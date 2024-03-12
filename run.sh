@@ -6,8 +6,8 @@ for arg in "$@"; do
     --trezor)
         extra_argument+=trezor@
         ;;
-    --disable-postcheck)
-        set -- "${@/#--disable-postcheck/}"
+    --no-postcheck)
+        set -- "${@/#--no-postcheck/}"
         extra_argument+=no-postcheck@
         ;;
     --generate-artifacts)
