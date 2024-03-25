@@ -8,7 +8,7 @@
 	shallow = true
 [submodule "lib/solady"]
 	path = lib/solady
-	url = https://github.com/Vectorized/solady
+	url = https://github.com/vectorized/solady
 	shallow = true
 [submodule "lib/contract-libs"]
 	path = lib/contract-libs
