@@ -2,22 +2,29 @@
 pragma solidity ^0.8.19;
 
 import { ProxyAdmin } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
-import {
-  ITransparentUpgradeableProxy,
-  TransparentUpgradeableProxy
-} from "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy, Proxy } from "../src/Proxy.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
-import { console, LibSharedAddress, StdStyle, IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol";
+import {
+  console,
+  StdStyle,
+  stdStorage,
+  StdStorage,
+  ScriptExtended,
+  IScriptExtended,
+  LibSharedAddress
+} from "./extensions/ScriptExtended.s.sol";
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { TContract } from "./types/Types.sol";
+import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
 
 abstract contract BaseMigration is ScriptExtended {
   using StdStyle for *;
   using LibString for bytes32;
+  using LibErrorHandler for bool;
   using LibProxy for address payable;
 
   IArtifactFactory public constant ARTIFACT_FACTORY = IArtifactFactory(LibSharedAddress.ARTIFACT_FACTORY);
@@ -27,13 +34,13 @@ abstract contract BaseMigration is ScriptExtended {
 
   function setUp() public virtual override {
     super.setUp();
-    vm.label(address(ARTIFACT_FACTORY), "ArtifactFactory");
-    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode);
-    _injectDependencies();
     _storeRawSharedArguments();
+    _injectDependencies();
+    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
   }
 
   function _storeRawSharedArguments() internal virtual {
+    if (CONFIG.areSharedArgumentsStored()) return;
     CONFIG.setRawSharedArguments(_sharedArguments());
   }
 
@@ -66,7 +73,7 @@ abstract contract BaseMigration is ScriptExtended {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
   }
 
-  function _getProxyAdmin() internal view virtual returns (address payable proxyAdmin) {
+  function _getProxyAdmin() internal virtual returns (address payable proxyAdmin) {
     proxyAdmin = loadContract(DefaultContract.ProxyAdmin.key());
   }
 
@@ -94,14 +101,23 @@ abstract contract BaseMigration is ScriptExtended {
     logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable logic)
   {
+    logic = _deployLogic(contractType, EMPTY_ARGS);
+  }
+
+  function _deployLogic(TContract contractType, bytes memory args)
+    internal
+    virtual
+    logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
+    returns (address payable logic)
+  {
     string memory contractName = CONFIG.getContractName(contractType);
     string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
 
     uint256 logicNonce;
-    (logic, logicNonce) = _deployRaw(contractAbsolutePath, EMPTY_ARGS);
+    (logic, logicNonce) = _deployRaw(contractAbsolutePath, args);
     CONFIG.label(block.chainid, logic, string.concat(contractName, "::Logic"));
     ARTIFACT_FACTORY.generateArtifact(
-      sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), EMPTY_ARGS, logicNonce
+      sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), args, logicNonce
     );
   }
 
@@ -109,7 +125,11 @@ abstract contract BaseMigration is ScriptExtended {
     deployed = _deployProxy(contractType, arguments());
   }
 
-  function _deployProxy(TContract contractType, bytes memory args)
+  function _deployProxy(TContract contractType, bytes memory args) internal virtual returns (address payable deployed) {
+    deployed = _deployProxy(contractType, args, EMPTY_ARGS);
+  }
+
+  function _deployProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
     internal
     virtual
     logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne()))
@@ -117,13 +137,14 @@ abstract contract BaseMigration is ScriptExtended {
   {
     string memory contractName = CONFIG.getContractName(contractType);
 
-    address logic = _deployLogic(contractType);
-    string memory proxyAbsolutePath = "TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy";
-    uint256 proxyNonce;
+    address logic = _deployLogic(contractType, argsLogicConstructor);
+    string memory proxyAbsolutePath = "Proxy.sol:Proxy";
+    uint256 proxyNonce = vm.getNonce(sender());
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
-    (deployed, proxyNonce) = _deployRaw(proxyAbsolutePath, abi.encode(logic, proxyAdmin, args));
+    _prankOrBroadcast(sender());
+    deployed = payable(address(new Proxy(logic, proxyAdmin, args)));
 
     // validate proxy admin
     address actualProxyAdmin = deployed.getProxyAdmin();
@@ -151,7 +172,7 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable deployed, uint256 nonce)
   {
     nonce = vm.getNonce(sender());
-    vm.broadcast(sender());
+    _prankOrBroadcast(sender());
     deployed = payable(deployCode(filename, args));
   }
 
@@ -179,13 +200,17 @@ abstract contract BaseMigration is ScriptExtended {
     proxy = _upgradeProxy(contractType, arguments());
   }
 
-  function _upgradeProxy(TContract contractType, bytes memory args)
+  function _upgradeProxy(TContract contractType, bytes memory args) internal virtual returns (address payable proxy) {
+    proxy = _upgradeProxy(contractType, args, EMPTY_ARGS);
+  }
+
+  function _upgradeProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
     internal
     virtual
     logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable proxy)
   {
-    address logic = _deployLogic(contractType);
+    address logic = _deployLogic(contractType, argsLogicConstructor);
     proxy = CONFIG.getAddress(network(), contractType);
     _upgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
   }
@@ -230,12 +255,17 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual {
+    if (logic.codehash == payable(proxy).getProxyImplementation({ nullCheck: true }).codehash) {
+      console.log("BaseMigration: Logic is already upgraded!".yellow());
+      return;
+    }
+
     ITransparentUpgradeableProxy iProxy = ITransparentUpgradeableProxy(proxy);
     ProxyAdmin wProxyAdmin = ProxyAdmin(proxyAdmin);
 
     // if proxyAdmin is External Owned Wallet
     if (proxyAdmin.code.length == 0) {
-      vm.broadcast(proxyAdmin);
+      _prankOrBroadcast(proxyAdmin);
       if (args.length == 0) iProxy.upgradeTo(logic);
       else iProxy.upgradeToAndCall(logic, args);
     } else {
@@ -248,7 +278,7 @@ abstract contract BaseMigration is ScriptExtended {
             if (owner.code.length != 0) {
               _cheatUpgrade(owner, wProxyAdmin, iProxy, logic);
             } else {
-              vm.broadcast(owner);
+              _prankOrBroadcast(owner);
               wProxyAdmin.upgrade(iProxy, logic);
             }
           } else {
@@ -258,7 +288,7 @@ abstract contract BaseMigration is ScriptExtended {
             if (owner.code.length != 0) {
               _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
             } else {
-              vm.broadcast(owner);
+              _prankOrBroadcast(owner);
               wProxyAdmin.upgradeAndCall(iProxy, logic, args);
             }
           }
@@ -266,7 +296,7 @@ abstract contract BaseMigration is ScriptExtended {
           if (owner.code.length != 0) {
             _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
           } else {
-            vm.broadcast(owner);
+            _prankOrBroadcast(owner);
             wProxyAdmin.upgradeAndCall(iProxy, logic, args);
           }
         }
@@ -276,20 +306,52 @@ abstract contract BaseMigration is ScriptExtended {
     }
   }
 
+  function _cheatBroadcast(address from, address to, bytes memory callData) internal virtual {
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+
+    console.log("\n");
+    console.log("--------------------------- Call Detail ---------------------------");
+    console.log("To:".cyan(), vm.getLabel(to));
+    console.log(
+      "Raw Calldata Data (Please double check using `cast pretty-calldata {raw_bytes}`):\n".cyan(),
+      string.concat(" - ", vm.toString(callData))
+    );
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
+    console.log("--------------------------------------------------------------------");
+
+    vm.prank(from);
+    (bool success, bytes memory returnOrRevertData) = to.call(callData);
+    success.handleRevert(bytes4(callData), returnOrRevertData);
+  }
+
   function _cheatUpgrade(address owner, ProxyAdmin wProxyAdmin, ITransparentUpgradeableProxy iProxy, address logic)
     internal
     virtual
   {
     bytes memory callData = abi.encodeCall(ProxyAdmin.upgrade, (iProxy, logic));
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+
     console.log(
       "------------------------------------------------------------------------------- Multi-Sig Proposal -------------------------------------------------------------------------------"
     );
     console.log("To:".cyan(), vm.getLabel(address(wProxyAdmin)));
     console.log(
+      "Raw Calldata Data (Please double check using `cast 4byte-decode {raw_bytes}`):\n".cyan(),
+      string.concat(" - ", vm.toString(callData))
+    );
+    console.log(
       "Method:\n".cyan(),
       string.concat(" - upgrade(address,address)\n  - ", vm.getLabel(address(iProxy)), "\n  - ", vm.getLabel(logic))
     );
-    console.log("Raw Calldata Data:\n".cyan(), string.concat(" - ", vm.toString(callData)));
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
     console.log(
       "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     );
@@ -307,23 +369,45 @@ abstract contract BaseMigration is ScriptExtended {
     bytes memory args
   ) internal virtual {
     bytes memory callData = abi.encodeCall(ProxyAdmin.upgradeAndCall, (iProxy, logic, args));
+    string[] memory commandInputs = new string[](3);
+    commandInputs[0] = "cast";
+    commandInputs[1] = "4byte-decode";
+    commandInputs[2] = vm.toString(callData);
+    string memory decodedCallData = string(vm.ffi(commandInputs));
+    commandInputs[2] = vm.toString(args);
+    string memory decodedInnerCall = string(vm.ffi(commandInputs));
+
     console.log(
       "------------------------------------------------------------------------------- Multi-Sig Proposal -------------------------------------------------------------------------------"
     );
     console.log("To:".cyan(), vm.getLabel(address(wProxyAdmin)));
     console.log(
+      "Raw Call Data (Please double check using `cast 4byte-decode {raw_bytes}`):\n".cyan(),
+      " - ",
+      vm.toString(callData)
+    );
+    console.log(
       "Method:\n".cyan(),
       " - upgradeAndCall(address,address,bytes)\n",
       string.concat(" - ", vm.getLabel(address(iProxy)), "\n  - ", vm.getLabel(logic), "\n  - ", vm.toString(args))
     );
-    console.log("Raw Call Data:\n".cyan(), " - ", vm.toString(callData));
+    console.log("Cast Decoded Call Data:".cyan(), decodedCallData);
+    console.log("Cast Decoded Inner Method:".cyan(), decodedInnerCall);
     console.log(
-      "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+      "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n"
     );
 
     // cheat prank to update `implementation slot` for next call
     vm.prank(owner);
     wProxyAdmin.upgradeAndCall(iProxy, logic, args);
+  }
+
+  function _prankOrBroadcast(address to) internal virtual {
+    if (CONFIG.isPostChecking()) {
+      vm.prank(to);
+    } else {
+      vm.broadcast(to);
+    }
   }
 
   function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal virtual {

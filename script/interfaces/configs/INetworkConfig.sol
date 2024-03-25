@@ -28,6 +28,8 @@ interface INetworkConfig {
 
   function getExplorer(TNetwork network) external view returns (string memory link);
 
+  function getNetworkData(TNetwork network) external view returns (NetworkData memory);
+
   function getForkId(TNetwork network) external view returns (uint256 forkId);
 
   function getAlias(TNetwork network) external view returns (string memory networkAlias);

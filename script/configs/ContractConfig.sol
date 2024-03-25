@@ -73,9 +73,7 @@ abstract contract ContractConfig is IContractConfig {
 
   function getContractAbsolutePath(TContract contractType) public view virtual returns (string memory name) {
     if (bytes(_contractAbsolutePathMap[contractType]).length != 0) {
-      name = string.concat(
-        _contractAbsolutePathMap[contractType], _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]
-      );
+      name = _contractAbsolutePathMap[contractType];
     } else if (bytes(_absolutePath).length != 0) {
       name = string.concat(_absolutePath, _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]);
     } else {

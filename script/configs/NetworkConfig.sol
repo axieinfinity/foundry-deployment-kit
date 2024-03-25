@@ -30,6 +30,10 @@ abstract contract NetworkConfig is INetworkConfig {
     _isForkModeEnabled = shouldEnable;
   }
 
+  function getNetworkData(TNetwork network) public view virtual returns (NetworkData memory) {
+    return _networkDataMap[network];
+  }
+
   function getDeploymentDirectory(TNetwork network) public view virtual returns (string memory dirPath) {
     string memory dirName = _networkDataMap[network].deploymentDir;
     require(bytes(dirName).length != 0, "NetworkConfig: Deployment directory not found");
@@ -76,7 +80,7 @@ abstract contract NetworkConfig is INetworkConfig {
       currentFork = forkId;
     } catch {
       console.log(StdStyle.yellow("NetworkConfig: fork mode disabled, no active fork"));
-      return NULL_FORK_ID;
+      currentFork = NULL_FORK_ID;
     }
 
     if (chainId == block.chainid) return currentFork;

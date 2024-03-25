@@ -24,7 +24,7 @@ contract ArtifactFactory is IArtifactFactory {
     address deployer,
     address contractAddr,
     string memory contractAbsolutePath,
-    string calldata fileName,
+    string memory fileName,
     bytes calldata args,
     uint256 nonce
   ) external {
@@ -38,11 +38,16 @@ contract ArtifactFactory is IArtifactFactory {
       ).green(),
       string.concat("(nonce: ", nonce.toString(), ")")
     );
-    if (!CONFIG.getRuntimeConfig().log) {
+    if (!CONFIG.getRuntimeConfig().generateArtifact || CONFIG.isPostChecking()) {
       console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
       return;
     }
     string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
+    if (!vm.exists(dirPath)) {
+      console.log("\n", string.concat(dirPath, " not existed, making one...").yellow());
+      vm.createDir(dirPath, true);
+      vm.writeFile(string.concat(dirPath, ".chainId"), vm.toString(block.chainid));
+    }
     string memory filePath = string.concat(dirPath, fileName, ".json");
 
     string memory json;
@@ -67,10 +72,14 @@ contract ArtifactFactory is IArtifactFactory {
     json.serialize("contractAbsolutePath", contractAbsolutePath);
     json.serialize("numDeployments", numDeployments);
 
-    string[] memory s = contractAbsolutePath.split(":");
-    string memory artifactPath = s.length == 2
-      ? string.concat("./out/", s[0], "/", s[1], ".json")
-      : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
+    string memory artifactPath = contractAbsolutePath;
+    if (!artifactPath.endsWith(".json")) {
+      string[] memory s = contractAbsolutePath.split(":");
+      artifactPath = s.length == 2
+        ? string.concat("./out/", s[0], "/", s[1], ".json")
+        : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
+    }
+
     string memory artifact = vm.readFile(artifactPath);
     JSONParserLib.Item memory item = artifact.parse();
 
