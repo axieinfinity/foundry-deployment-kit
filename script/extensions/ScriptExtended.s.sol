@@ -17,7 +17,6 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   bytes public constant EMPTY_ARGS = "";
   IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
-  bool internal _isPostChecking;
 
   modifier logFn(string memory fnName) {
     _logFn(fnName);
