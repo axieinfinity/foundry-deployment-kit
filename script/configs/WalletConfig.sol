@@ -41,6 +41,10 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     public
     returns (bytes memory sig)
   {
+    sig = ethSignMessage(by, message, _loadENVPrivateKey(envLabel));
+  }
+
+  function ethSignMessage(address by, string memory message, uint256 privateKey) public returns (bytes memory sig) {
     string[] memory commandInput = new string[](8);
     commandInput[0] = "cast";
     commandInput[1] = "wallet";
@@ -48,7 +52,7 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     commandInput[3] = "--from";
     commandInput[4] = vm.toString(by);
     commandInput[5] = "--private-key";
-    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[6] = LibString.toHexString(privateKey);
     commandInput[7] = message;
 
     sig = vm.ffi(commandInput);
@@ -86,6 +90,10 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     public
     returns (bytes memory sig)
   {
+    sig = signTypedDataV4(by, filePath, _loadENVPrivateKey(envLabel));
+  }
+
+  function signTypedDataV4(address by, string memory filePath, uint256 privateKey) public returns (bytes memory sig) {
     string[] memory commandInput = new string[](10);
     commandInput[0] = "cast";
     commandInput[1] = "wallet";
@@ -93,7 +101,7 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     commandInput[3] = "--from";
     commandInput[4] = vm.toString(by);
     commandInput[5] = "--private-key";
-    commandInput[6] = LibString.toHexString(_loadENVPrivateKey(envLabel));
+    commandInput[6] = LibString.toHexString(privateKey);
     commandInput[7] = "--data";
     commandInput[8] = "--from-file";
     commandInput[9] = filePath;
@@ -143,28 +151,18 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     _envSender = vm.rememberKey(_loadENVPrivateKey(envLabel));
   }
 
-  function _loadENVPrivateKey(string memory envLabel) private returns (uint256) {
+  function _loadENVPrivateKey(string memory envLabel) private view returns (uint256) {
     try vm.envUint(envLabel) returns (uint256 pk) {
       return pk;
     } catch {
-      string[] memory commandInput = new string[](3);
-
-      try vm.envString(envLabel) returns (string memory data) {
-        commandInput[2] = data;
-      } catch {
-        revert(
-          string.concat(
-            "\nGeneralConfig: Error finding env address!\n- Please make `.env` file and create field `",
-            envLabel,
-            "=",
-            "{op_secret_reference_or_your_private_key}`"
-          )
-        );
-      }
-      commandInput[0] = "op";
-      commandInput[1] = "read";
-
-      return vm.parseUint(vm.toString(vm.ffi(commandInput)));
+      revert(
+        string.concat(
+          "\nGeneralConfig: Error finding env address!\n- Please make `.env` file and create field `",
+          envLabel,
+          "=",
+          "{op_secret_reference_or_your_private_key}`"
+        )
+      );
     }
   }
 }

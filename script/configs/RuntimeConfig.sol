@@ -12,9 +12,18 @@ abstract contract RuntimeConfig is IRuntimeConfig {
   bool internal _resolved;
   Option internal _option;
   string internal _rawCommand;
+  bool internal _isPostChecking;
 
   function getCommand() public view virtual returns (string memory) {
     return _rawCommand;
+  }
+
+  function isPostChecking() public view virtual returns (bool) {
+    return _isPostChecking;
+  }
+
+  function setPostCheckingStatus(bool status) public virtual {
+    _isPostChecking = status;
   }
 
   function resolveCommand(string calldata command) external virtual {
@@ -24,8 +33,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
       uint256 length = args.length;
 
       for (uint256 i; i < length;) {
-        if (args[i].eq("log")) _option.log = true;
+        if (args[i].eq("generate-artifact")) _option.generateArtifact = true;
         else if (args[i].eq("trezor")) _option.trezor = true;
+        else if (args[i].eq("no-postcheck")) _option.disablePostcheck = true;
         else console.log(StdStyle.yellow("Unsupported command: "), args[i]);
 
         unchecked {

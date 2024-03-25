@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console, Script } from "../../lib/forge-std/src/Script.sol";
+import { stdStorage, StdStorage } from "../../lib/forge-std/src/StdStorage.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
@@ -11,6 +12,7 @@ import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/Types.sol";
 
 abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
+  using StdStyle for *;
   using LibErrorHandler for bool;
 
   bytes public constant EMPTY_ARGS = "";
@@ -29,12 +31,15 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   modifier onNetwork(TNetwork networkType) {
     TNetwork currentNetwork = _switchTo(networkType);
     _;
-    _swichBack(currentNetwork);
+    _switchBack(currentNetwork);
+  }
+
+  constructor() {
+    setUp();
   }
 
   function setUp() public virtual {
-    vm.label(address(CONFIG), "GeneralConfig");
-    deploySharedAddress(address(CONFIG), _configByteCode());
+    deploySharedAddress(address(CONFIG), _configByteCode(), "GeneralConfig");
   }
 
   function _configByteCode() internal virtual returns (bytes memory);
@@ -45,7 +50,16 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     CONFIG.resolveCommand(command);
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
+
+    if (CONFIG.getRuntimeConfig().disablePostcheck) {
+      console.log("\nPostchecking is disabled.".yellow());
+      return;
+    }
+
+    console.log("\n>> Postchecking...".yellow());
+    CONFIG.setPostCheckingStatus({ status: true });
     _postCheck();
+    CONFIG.setPostCheckingStatus({ status: false });
   }
 
   function network() public view virtual returns (TNetwork) {
@@ -65,17 +79,18 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function deploySharedAddress(address where, bytes memory bytecode) public {
+  function deploySharedAddress(address where, bytes memory bytecode, string memory label) public {
     if (where.code.length == 0) {
       vm.makePersistent(where);
       vm.allowCheatcodes(where);
       deployCodeTo(bytecode, where);
+      if (bytes(label).length != 0) vm.label(where, label);
     }
   }
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode);
+    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
   }
 
   function deployCodeTo(bytes memory creationCode, address where) internal {
@@ -107,7 +122,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     CONFIG.switchTo(networkType);
   }
 
-  function _swichBack(TNetwork currentNetwork) private {
+  function _switchBack(TNetwork currentNetwork) private {
     CONFIG.switchTo(currentNetwork);
   }
 }
