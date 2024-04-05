@@ -14,10 +14,6 @@ for arg in "$@"; do
         set -- "${@/#--generate-artifacts/}"
         extra_argument+=generate-artifact@
         ;;
-    -atf)
-        set -- "${@/#-atf/}"
-        extra_argument+=generate-artifact@
-        ;;
     *) ;;
     esac
 done
