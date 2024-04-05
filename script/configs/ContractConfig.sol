@@ -145,11 +145,18 @@ abstract contract ContractConfig is IContractConfig {
       return;
     }
 
-    for (uint256 i; i < deployments.length;) {
+    for (uint256 i; i < deployments.length; ++i) {
       VmSafe.DirEntry[] memory entries = vm.readDir(deployments[i].path);
-      uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
+      uint256 chainId;
 
-      for (uint256 j; j < entries.length;) {
+      try vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId"))) returns (uint256 res) {
+        chainId = res;
+      } catch {
+        console.log("ContractConfig:", "No chainId file, skip loading");
+        continue;
+      }
+
+      for (uint256 j; j < entries.length; ++j) {
         string memory path = entries[j].path;
 
         if (path.endsWith(".json")) {
@@ -169,14 +176,6 @@ abstract contract ContractConfig is IContractConfig {
             _contractTypeMap[chainId][contractAddr] = TContract.wrap(contractName.packOne());
           }
         }
-
-        unchecked {
-          ++j;
-        }
-      }
-
-      unchecked {
-        ++i;
       }
     }
   }
