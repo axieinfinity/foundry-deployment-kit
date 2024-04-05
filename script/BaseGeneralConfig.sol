@@ -75,11 +75,16 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
   }
 
   function _setUpDefaultContracts() private {
+    _contractNameMap[DefaultContract.WRON.key()] = DefaultContract.WRON.name();
+    _contractNameMap[DefaultContract.WETH.key()] = DefaultContract.WETH.name();
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
     _contractNameMap[DefaultContract.Multicall3.key()] = DefaultContract.Multicall3.name();
+
+    setAddress(DefaultNetwork.Local.key(), DefaultContract.ProxyAdmin.key(), DEFAULT_SENDER);
     setAddress(
       DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
+
     setAddress(
       DefaultNetwork.RoninMainnet.key(), DefaultContract.ProxyAdmin.key(), 0xA3e7d085E65CB0B916f6717da876b7bE5cC92f03
     );
@@ -126,12 +131,22 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
-      console.log("GeneralConfig:", vm.getLabel(_trezorSender), "Enabled!");
+      console.log(
+        "GeneralConfig:",
+        vm.getLabel(_trezorSender),
+        "Enabled!",
+        string.concat("| Balance: ", vm.toString(_trezorSender.balance)).magenta()
+      );
     } else {
       string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
       _loadENVAccount(envLabel);
       label(block.chainid, _envSender, "ENVSender");
-      console.log("GeneralConfig:", vm.getLabel(_envSender), "Enabled!");
+      console.log(
+        "GeneralConfig:",
+        vm.getLabel(_envSender),
+        "Enabled!",
+        string.concat("| Balance: ", vm.toString(_trezorSender.balance)).magenta()
+      );
     }
   }
 }
