@@ -98,7 +98,6 @@ abstract contract BaseMigration is ScriptExtended {
   function _deployLogic(TContract contractType)
     internal
     virtual
-    logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable logic)
   {
     logic = _deployLogic(contractType, EMPTY_ARGS);
