@@ -6,7 +6,9 @@ import { TContract } from "../types/Types.sol";
 
 enum DefaultContract {
   ProxyAdmin,
-  Multicall3
+  Multicall3,
+  WRON,
+  WETH
 }
 
 using { key, name } for DefaultContract global;
@@ -18,5 +20,7 @@ function key(DefaultContract defaultContract) pure returns (TContract) {
 function name(DefaultContract defaultContract) pure returns (string memory) {
   if (defaultContract == DefaultContract.ProxyAdmin) return "ProxyAdmin";
   if (defaultContract == DefaultContract.Multicall3) return "Multicall3";
+  if (defaultContract == DefaultContract.WRON) return "WRON";
+  if (defaultContract == DefaultContract.WETH) return "WETH";
   revert("DefaultContract: Unknown contract");
 }
