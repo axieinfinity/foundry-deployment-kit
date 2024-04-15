@@ -126,10 +126,14 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function _deployProxy(TContract contractType, bytes memory args) internal virtual returns (address payable deployed) {
-    deployed = _deployProxy(contractType, args, EMPTY_ARGS);
+    deployed = _deployProxy(contractType, args, EMPTY_ARGS, address(0));
   }
 
-  function _deployProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
+  function _deployProxy(TContract contractType, address nominatedAdmin) internal virtual returns (address payable deployed) {
+    deployed = _deployProxy(contractType, arguments(), EMPTY_ARGS, nominatedAdmin);
+  }
+
+  function _deployProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor, address nominatedAdmin)
     internal
     virtual
     logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne()))
@@ -140,25 +144,34 @@ abstract contract BaseMigration is ScriptExtended {
     address logic = _deployLogic(contractType, argsLogicConstructor);
     string memory proxyAbsolutePath = "Proxy.sol:Proxy";
     uint256 proxyNonce = vm.getNonce(sender());
-    address proxyAdmin = _getProxyAdmin();
+    address proxyAdmin = nominatedAdmin != address(0) ? nominatedAdmin : _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
     _prankOrBroadcast(sender());
     deployed = payable(address(new Proxy(logic, proxyAdmin, args)));
 
-    // validate proxy admin
-    address actualProxyAdmin = deployed.getProxyAdmin();
-    assertEq(
-      actualProxyAdmin,
-      proxyAdmin,
-      string.concat(
-        "BaseMigration: Invalid proxy admin\n",
-        "Actual: ",
-        vm.toString(actualProxyAdmin),
-        "\nExpected: ",
-        vm.toString(proxyAdmin)
-      )
-    );
+    if (nominatedAdmin == address(0)) {
+      // validate proxy admin
+      address actualProxyAdmin = deployed.getProxyAdmin();
+      assertEq(
+        actualProxyAdmin,
+        proxyAdmin,
+        string.concat(
+          "BaseMigration: Invalid proxy admin\n",
+          "Actual: ",
+          vm.toString(actualProxyAdmin),
+          "\nExpected: ",
+          vm.toString(proxyAdmin)
+        )
+      );
+    } else {
+      console.log(
+        StdStyle.yellow(
+          string.concat("`ProxyAdmin:_deployProxy` deploy by nominated admin", vm.toString(nominatedAdmin))
+        )
+      );
+    }
+
 
     CONFIG.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(
