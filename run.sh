@@ -73,10 +73,13 @@ start_time=$(date +%s)
 echo ${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
 ${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
 
-if [[ $should_verify == true ]]; then
-    if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
-        echo "Verifying contract..."
-        yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+# Check if the command was successful
+if [ $? -eq 0 ]; then
+    if [[ $should_verify == true ]]; then
+        if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
+            echo "Verifying contract..."
+            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+        fi
     fi
 fi
 
