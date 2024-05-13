@@ -140,7 +140,7 @@ abstract contract BaseMigration is ScriptExtended {
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
-    vme.prankOrBroadcast(sender());
+    prankOrBroadcast(sender());
     deployed = payable(address(new TransparentUpgradeableProxyV4_9_5(logic, proxyAdmin, args)));
 
     // validate proxy admin
@@ -169,7 +169,7 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable deployed, uint256 nonce)
   {
     nonce = vm.getNonce(sender());
-    vme.prankOrBroadcast(sender());
+    prankOrBroadcast(sender());
     deployed = payable(deployCode(filename, args));
   }
 
@@ -260,7 +260,7 @@ abstract contract BaseMigration is ScriptExtended {
 
     // if proxyAdmin is External Owned Wallet
     if (proxyAdmin.code.length == 0) {
-      vme.prankOrBroadcast(proxyAdmin);
+      prankOrBroadcast(proxyAdmin);
       if (args.length == 0) iProxy.upgradeTo(logic);
       else iProxy.upgradeToAndCall(logic, args);
     } else {
@@ -273,7 +273,7 @@ abstract contract BaseMigration is ScriptExtended {
             if (owner.code.length != 0) {
               _cheatUpgrade(owner, wProxyAdmin, iProxy, logic);
             } else {
-              vme.prankOrBroadcast(owner);
+              prankOrBroadcast(owner);
               wProxyAdmin.upgrade(iProxy, logic);
             }
           } else {
@@ -283,7 +283,7 @@ abstract contract BaseMigration is ScriptExtended {
             if (owner.code.length != 0) {
               _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
             } else {
-              vme.prankOrBroadcast(owner);
+              prankOrBroadcast(owner);
               wProxyAdmin.upgradeAndCall(iProxy, logic, args);
             }
           }
@@ -291,7 +291,7 @@ abstract contract BaseMigration is ScriptExtended {
           if (owner.code.length != 0) {
             _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
           } else {
-            vme.prankOrBroadcast(owner);
+            prankOrBroadcast(owner);
             wProxyAdmin.upgradeAndCall(iProxy, logic, args);
           }
         }
@@ -403,5 +403,13 @@ abstract contract BaseMigration is ScriptExtended {
 
   function _setDependencyDeployScript(TContract contractType, address deployScript) internal virtual {
     _deployScript[contractType] = IMigrationScript(deployScript);
+  }
+
+  function prankOrBroadcast(address account) internal {
+    if (vme.isPostChecking()) {
+      vm.prank(account);
+    } else {
+      vm.broadcast(account);
+    }
   }
 }

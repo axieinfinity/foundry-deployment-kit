@@ -6,9 +6,11 @@ import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IWalletConfig } from "../interfaces/configs/IWalletConfig.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
+import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
 
 abstract contract WalletConfig is CommonBase, IWalletConfig {
   using LibString for string;
+  using LibErrorHandler for bool;
 
   string internal constant TREZOR_PREFIX = "trezor://";
   string internal constant DEPLOYER_ENV_LABEL = "DEPLOYER";
@@ -20,14 +22,6 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
   WalletOption internal _walletOption;
 
   function getSender() public view virtual returns (address payable sender);
-
-  function prankOrBroadcast(address account) external {
-    if (vme.isPostChecking()) {
-      vm.prank(account);
-    } else {
-      vm.broadcast(account);
-    }
-  }
 
   function ethSignMessage(address by, string memory message, WalletOption walletOption)
     public
