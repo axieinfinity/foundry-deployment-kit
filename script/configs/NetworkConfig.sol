@@ -174,7 +174,15 @@ abstract contract NetworkConfig is INetworkConfig {
 
     vm.selectFork(forkId);
 
-    require(_networkDataMap[network].chainId == block.chainid, "NetworkConfig: Switch chain failed");
+    require(
+      _networkDataMap[network].chainId == block.chainid,
+      string.concat(
+        "NetworkConfig: Switch chain failed. Expected: ",
+        vm.toString(_networkDataMap[network].chainId),
+        " Got: ",
+        vm.toString(block.chainid)
+      )
+    );
 
     _logCurrentForkInfo();
   }
@@ -227,7 +235,7 @@ abstract contract NetworkConfig is INetworkConfig {
         "\n"
       ).yellow()
     );
-    
+
     vme.logSenderInfo();
   }
 }

@@ -35,7 +35,7 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   constructor() {
-    // setUp();
+    setUp();
   }
 
   function setUp() public virtual {
@@ -146,7 +146,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   function _requireOn(TNetwork networkType) private view {
-    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType)));
+    require(
+      network() == networkType,
+      string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType), " Got: ", vme.getAlias(network()))
+    );
   }
 
   function _switchTo(TNetwork networkType) private returns (TNetwork currNetwork, uint256 currForkId) {
