@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { BaseMigration } from "@fdk/BaseMigration.s.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { SampleGeneralConfig } from "./SampleGeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
 
 contract SampleMigration is BaseMigration {
-  ISharedArgument public constant config = ISharedArgument(address(CONFIG));
+  ISharedArgument public constant config = ISharedArgument(address(vme));
 
-  function _configByteCode() internal virtual override returns (bytes memory) {
-    return abi.encodePacked(type(SampleGeneralConfig).creationCode);
+  function _configCreationData() internal virtual override returns (bytes memory creationCode, bytes memory callData) {
+    creationCode = abi.encodePacked(type(SampleGeneralConfig).creationCode);
+    callData = abi.encodeCall(SampleGeneralConfig.initialize, ());
   }
 
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {

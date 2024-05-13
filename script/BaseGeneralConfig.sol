@@ -3,10 +3,11 @@ pragma solidity ^0.8.19;
 
 import { Vm, VmSafe } from "../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
-import { console2 as console } from "../lib/forge-std/src/console2.sol";
+import { console } from "../lib/forge-std/src/console.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
+import { UserDefinedConfig } from "./configs/UserDefinedConfig.sol";
 import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
 import { EnumerableSet, TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { ISharedParameter } from "./interfaces/configs/ISharedParameter.sol";
@@ -14,25 +15,37 @@ import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
-  using StdStyle for string;
+contract BaseGeneralConfig is
+  RuntimeConfig,
+  WalletConfig,
+  ContractConfig,
+  NetworkConfig,
+  MigrationConfig,
+  UserDefinedConfig
+{
+  using StdStyle for *;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   fallback() external {
     if (msg.sig == ISharedParameter.sharedArguments.selector) {
       bytes memory returnData = getRawSharedArguments();
+
       assembly ("memory-safe") {
         return(add(returnData, 0x20), mload(returnData))
       }
-    } else {
-      revert("GeneralConfig: Unknown instruction, please rename interface to sharedArguments()");
     }
+
+    revert("GeneralConfig: Unknown instruction, please rename interface to sharedArguments()");
   }
 
-  constructor(string memory absolutePath, string memory deploymentRoot)
-    NetworkConfig(deploymentRoot)
-    ContractConfig(absolutePath, deploymentRoot)
-  {
+  function initialize() external virtual {
+    __BaseGeneralConfig_init("", "deployments/");
+  }
+
+  function __BaseGeneralConfig_init(string memory absolutePath, string memory deploymentRoot) internal {
+    __NetworkConfig_init_unchained(deploymentRoot);
+    __ContractConfig_init_unchained(absolutePath, deploymentRoot);
+
     _setUpDefaultNetworks();
     _setUpDefaultContracts();
     _setUpDefaultSender();
@@ -104,8 +117,13 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
+
     if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.Local.key()) sender = payable(DEFAULT_SENDER);
-    require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
+
+    require(
+      sender != address(0x0),
+      "GeneralConfig: Sender is address(0x0), please override `BaseGeneralConfig::getSender()` function"
+    );
   }
 
   function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
@@ -114,9 +132,9 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
 
     label(chainId, contractAddr, contractName);
-    _contractAddrSet[chainId].add(contractAddr);
-    _contractTypeMap[chainId][contractAddr] = contractType;
-    _contractAddrMap[chainId][contractName] = contractAddr;
+    _contractInfoMap[chainId].allAddrs.add(contractAddr);
+    _contractInfoMap[chainId].addr2Type[contractAddr] = contractType;
+    _contractInfoMap[chainId].name2Addr[contractName] = contractAddr;
   }
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
@@ -131,22 +149,19 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
-      console.log(
-        "GeneralConfig:",
-        vm.getLabel(_trezorSender),
-        "Enabled!",
-        string.concat("| Balance: ", vm.toString(_trezorSender.balance)).magenta()
-      );
     } else {
-      string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
+      string memory envLabel = getPrivateKeyEnvLabel(_option.network);
       _loadENVAccount(envLabel);
       label(block.chainid, _envSender, "ENVSender");
-      console.log(
-        "GeneralConfig:",
-        vm.getLabel(_envSender),
-        "Enabled!",
-        string.concat("| Balance: ", vm.toString(_trezorSender.balance)).magenta()
-      );
     }
+  }
+
+  function logSenderInfo() public view {
+    console.log(
+      "GeneralConfig:".cyan(),
+      "Sender:",
+      vm.getLabel(getSender()),
+      string.concat("| Balance: ", vm.toString(getSender().balance / 1 ether), " ETHER\n").magenta()
+    );
   }
 }

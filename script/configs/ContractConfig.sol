@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { EnumerableSet } from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
-import { console2 as console } from "../../lib/forge-std/src/console2.sol";
+import { console } from "../../lib/forge-std/src/console.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
@@ -20,14 +20,11 @@ abstract contract ContractConfig is IContractConfig {
   string private _absolutePath;
   string private _deploymentRoot;
 
+  mapping(uint256 chainId => ContractInfo) internal _contractInfoMap;
   mapping(TContract contractType => string contractName) internal _contractNameMap;
   mapping(TContract contractType => string absolutePath) internal _contractAbsolutePathMap;
 
-  mapping(uint256 chainId => EnumerableSet.AddressSet) internal _contractAddrSet;
-  mapping(uint256 chainId => mapping(string name => address addr)) internal _contractAddrMap;
-  mapping(uint256 chainId => mapping(address addr => TContract contractType)) internal _contractTypeMap;
-
-  constructor(string memory absolutePath, string memory deploymentRoot) {
+  function __ContractConfig_init_unchained(string memory absolutePath, string memory deploymentRoot) internal {
     _absolutePath = absolutePath;
     _deploymentRoot = deploymentRoot;
   }
@@ -38,7 +35,8 @@ abstract contract ContractConfig is IContractConfig {
     virtual
     returns (TContract contractType)
   {
-    contractType = _contractTypeMap[chainId][contractAddr];
+    contractType = _contractInfoMap[chainId].addr2Type[contractAddr];
+
     require(
       TContract.unwrap(contractType) != bytes32(0x0),
       string.concat(
@@ -47,7 +45,7 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function getContractTypeFromCurrentNetwok(address contractAddr) public view virtual returns (TContract contractType) {
+  function getContractTypeFromCurrentNetwork(address contractAddr) public view virtual returns (TContract contractType) {
     return getContractTypeByRawData(block.chainid, contractAddr);
   }
 
@@ -57,8 +55,10 @@ abstract contract ContractConfig is IContractConfig {
 
   function getContractName(TContract contractType) public view virtual returns (string memory name) {
     string memory contractTypeName = contractType.contractName();
+
     name = _contractNameMap[contractType];
     name = keccak256(bytes(contractTypeName)) == keccak256(bytes(name)) ? name : contractTypeName;
+
     require(
       bytes(name).length != 0,
       string.concat(
@@ -73,22 +73,26 @@ abstract contract ContractConfig is IContractConfig {
 
   function getContractAbsolutePath(TContract contractType) public view virtual returns (string memory name) {
     if (bytes(_contractAbsolutePathMap[contractType]).length != 0) {
-      name = _contractAbsolutePathMap[contractType];
-    } else if (bytes(_absolutePath).length != 0) {
-      name = string.concat(_absolutePath, _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]);
-    } else {
-      name = string.concat(_contractNameMap[contractType], ".sol");
+      return _contractAbsolutePathMap[contractType];
     }
+
+    if (bytes(_absolutePath).length != 0) {
+      return string.concat(_absolutePath, _contractNameMap[contractType], ".sol:", _contractNameMap[contractType]);
+    }
+
+    return string.concat(_contractNameMap[contractType], ".sol");
   }
 
   function getAddressFromCurrentNetwork(TContract contractType) public view virtual returns (address payable) {
     string memory contractName = getContractName(contractType);
+
     require(
       bytes(contractName).length != 0,
       string.concat(
         "ContractConfig(getAddressFromCurrentNetwork): Contract Type not found (", contractType.contractName(), ")"
       )
     );
+
     return getAddressByRawData(block.chainid, contractName);
   }
 
@@ -102,14 +106,16 @@ abstract contract ContractConfig is IContractConfig {
     virtual
     returns (address payable addr)
   {
-    addr = payable(_contractAddrMap[chainId][contractName]);
+    addr = payable(_contractInfoMap[chainId].name2Addr[contractName]);
+
     require(
       addr != address(0x0), string.concat("ContractConfig(getAddressByRawData): Address not found: ", contractName)
     );
   }
 
   function getAllAddressesByRawData(uint256 chainId) public view virtual returns (address payable[] memory addrs) {
-    address[] memory v = _contractAddrSet[chainId].values();
+    address[] memory v = _contractInfoMap[chainId].allAddrs.values();
+
     assembly ("memory-safe") {
       addrs := v
     }
@@ -124,19 +130,13 @@ abstract contract ContractConfig is IContractConfig {
 
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
     VmSafe.DirEntry[] memory deployments;
+
     try vm.exists(deploymentRoot) returns (bool exists) {
       if (!exists) {
         console.log("ContractConfig:", "No deployments folder, skip loading");
         return;
       }
-    } catch {
-      try vm.readDir(deploymentRoot) returns (VmSafe.DirEntry[] memory res) {
-        deployments = res;
-      } catch {
-        console.log("ContractConfig:", "No deployments folder, skip loading");
-        return;
-      }
-    }
+    } catch { }
 
     try vm.readDir(deploymentRoot) returns (VmSafe.DirEntry[] memory res) {
       deployments = res;
@@ -156,24 +156,26 @@ abstract contract ContractConfig is IContractConfig {
         continue;
       }
 
+      ContractInfo storage $ = _contractInfoMap[chainId];
+
       for (uint256 j; j < entries.length; ++j) {
         string memory path = entries[j].path;
 
         if (path.endsWith(".json")) {
-          string[] memory splitteds = path.split("/");
+          string[] memory splitteds = vm.split(path, "/");
           string memory contractName = splitteds[splitteds.length - 1];
           string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
           // remove suffix
-          contractName = contractName.replace(suffix, "");
+          contractName = vm.replace(contractName, suffix, "");
           string memory json = vm.readFile(path);
           address contractAddr = vm.parseJsonAddress(json, ".address");
           label(chainId, contractAddr, contractName);
 
           // filter out logic deployments
           if (!path.endsWith("Logic.json")) {
-            _contractAddrSet[chainId].add(contractAddr);
-            _contractAddrMap[chainId][contractName] = contractAddr;
-            _contractTypeMap[chainId][contractAddr] = TContract.wrap(contractName.packOne());
+            $.allAddrs.add(contractAddr);
+            $.name2Addr[contractName] = contractAddr;
+            $.addr2Type[contractAddr] = TContract.wrap(contractName.packOne());
           }
         }
       }

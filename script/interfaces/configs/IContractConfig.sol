@@ -2,8 +2,15 @@
 pragma solidity ^0.8.19;
 
 import { TContract } from "../../types/Types.sol";
+import { EnumerableSet } from "../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 interface IContractConfig {
+  struct ContractInfo {
+    EnumerableSet.AddressSet allAddrs;
+    mapping(string name => address addr) name2Addr;
+    mapping(address addr => TContract contractType) addr2Type;
+  }
+
   function getContractTypeByRawData(uint256 chainId, address contractAddr)
     external
     view
@@ -11,7 +18,7 @@ interface IContractConfig {
 
   function label(uint256 chainId, address contractAddr, string memory contractName) external;
 
-  function getContractTypeFromCurrentNetwok(address contractAddr) external view returns (TContract contractType);
+  function getContractTypeFromCurrentNetwork(address contractAddr) external view returns (TContract contractType);
 
   function getContractName(TContract contractType) external view returns (string memory name);
 

@@ -4,9 +4,15 @@ pragma solidity ^0.8.19;
 import { CommonBase } from "../../lib/forge-std/src/Base.sol";
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IWalletConfig } from "../interfaces/configs/IWalletConfig.sol";
+import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
+import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 
 abstract contract WalletConfig is CommonBase, IWalletConfig {
   using LibString for string;
+
+  string internal constant TREZOR_PREFIX = "trezor://";
+  string internal constant DEPLOYER_ENV_LABEL = "DEPLOYER";
+  IRuntimeConfig internal constant vme = IRuntimeConfig(LibSharedAddress.VME);
 
   string internal _envLabel;
   address internal _envSender;
@@ -15,12 +21,12 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
 
   function getSender() public view virtual returns (address payable sender);
 
-  function trezorPrefix() public view virtual returns (string memory) {
-    return "trezor://";
-  }
-
-  function deployerEnvLabel() public view virtual returns (string memory) {
-    return "DEPLOYER";
+  function prankOrBroadcast(address account) external {
+    if (vme.isPostChecking()) {
+      vm.prank(account);
+    } else {
+      vm.broadcast(account);
+    }
   }
 
   function ethSignMessage(address by, string memory message, WalletOption walletOption)
@@ -60,6 +66,7 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
 
   function trezorEthSignMessage(address by, string memory message) public returns (bytes memory sig) {
     string[] memory commandInput = new string[](7);
+
     commandInput[0] = "cast";
     commandInput[1] = "wallet";
     commandInput[2] = "sign";
@@ -128,20 +135,21 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     if (tx.origin != DEFAULT_SENDER) {
       _trezorSender = tx.origin;
     } else {
-      try vm.envString(deployerEnvLabel()) returns (string memory str) {
-        _trezorSender = vm.parseAddress(str.replace(trezorPrefix(), ""));
+      try vm.envString(DEPLOYER_ENV_LABEL) returns (string memory str) {
+        _trezorSender = vm.parseAddress(vm.replace(str, TREZOR_PREFIX, ""));
       } catch {
         revert(
           string.concat(
             "\nGeneralConfig: Error finding trezor address!\n- Please override default sender with `--sender {your_trezor_account}` tag \n- Or make `.env` file and create field `",
-            deployerEnvLabel(),
+            DEPLOYER_ENV_LABEL,
             "=",
-            trezorPrefix(),
+            TREZOR_PREFIX,
             "{your_trezor_account}`"
           )
         );
       }
     }
+
     _walletOption = WalletOption.Trezor;
   }
 

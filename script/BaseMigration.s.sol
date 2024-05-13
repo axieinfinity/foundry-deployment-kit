@@ -2,23 +2,20 @@
 pragma solidity ^0.8.19;
 
 import { ProxyAdmin } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
-import { ITransparentUpgradeableProxy, Proxy } from "../src/Proxy.sol";
-import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import {
-  console,
-  StdStyle,
-  stdStorage,
-  StdStorage,
-  ScriptExtended,
-  IScriptExtended,
-  LibSharedAddress
-} from "./extensions/ScriptExtended.s.sol";
+  ITransparentUpgradeableProxy, TransparentUpgradeableProxyV4_9_5
+} from "../src/TransparentUpgradeableProxyV4_9_5.sol";
+import { LibString } from "../lib/solady/src/utils/LibString.sol";
+import { console } from "../lib/forge-std/src/console.sol";
+import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
+import { ScriptExtended, IScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { IArtifactFactory, ArtifactFactory } from "./ArtifactFactory.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { TContract } from "./types/Types.sol";
+import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
 
 abstract contract BaseMigration is ScriptExtended {
@@ -34,14 +31,13 @@ abstract contract BaseMigration is ScriptExtended {
 
   function setUp() public virtual override {
     super.setUp();
-    _storeRawSharedArguments();
-    _injectDependencies();
-    deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
-  }
 
-  function _storeRawSharedArguments() internal virtual {
-    if (CONFIG.areSharedArgumentsStored()) return;
-    CONFIG.setRawSharedArguments(_sharedArguments());
+    // store raw shared arguments
+    if (vme.areSharedArgumentsStored()) return;
+    vme.setRawSharedArguments(_sharedArguments());
+
+    _injectDependencies();
+    _deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
   }
 
   function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
@@ -51,7 +47,8 @@ abstract contract BaseMigration is ScriptExtended {
   function _defaultArguments() internal virtual returns (bytes memory) { }
 
   function loadContractOrDeploy(TContract contractType) public virtual returns (address payable contractAddr) {
-    string memory contractName = CONFIG.getContractName(contractType);
+    string memory contractName = vme.getContractName(contractType);
+
     try this.loadContract(contractType) returns (address payable addr) {
       contractAddr = addr;
     } catch {
@@ -61,7 +58,7 @@ abstract contract BaseMigration is ScriptExtended {
   }
 
   function loadContract(TContract contractType) public view virtual returns (address payable contractAddr) {
-    return CONFIG.getAddressFromCurrentNetwork(contractType);
+    return vme.getAddressFromCurrentNetwork(contractType);
   }
 
   function overrideArgs(bytes memory args) public virtual returns (IMigrationScript) {
@@ -87,19 +84,17 @@ abstract contract BaseMigration is ScriptExtended {
     logFn(string.concat("_deployImmutable ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable deployed)
   {
-    string memory contractName = CONFIG.getContractName(contractType);
-    string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
+    string memory contractName = vme.getContractName(contractType);
+    string memory contractAbsolutePath = vme.getContractAbsolutePath(contractType);
+
     uint256 nonce;
     (deployed, nonce) = _deployRaw(contractAbsolutePath, args);
-    CONFIG.setAddress(network(), contractType, deployed);
+
+    vme.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(sender(), deployed, contractAbsolutePath, contractName, args, nonce);
   }
 
-  function _deployLogic(TContract contractType)
-    internal
-    virtual
-    returns (address payable logic)
-  {
+  function _deployLogic(TContract contractType) internal virtual returns (address payable logic) {
     logic = _deployLogic(contractType, EMPTY_ARGS);
   }
 
@@ -109,12 +104,14 @@ abstract contract BaseMigration is ScriptExtended {
     logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable logic)
   {
-    string memory contractName = CONFIG.getContractName(contractType);
-    string memory contractAbsolutePath = CONFIG.getContractAbsolutePath(contractType);
+    string memory contractName = vme.getContractName(contractType);
+    string memory contractAbsolutePath = vme.getContractAbsolutePath(contractType);
 
     uint256 logicNonce;
     (logic, logicNonce) = _deployRaw(contractAbsolutePath, args);
-    CONFIG.label(block.chainid, logic, string.concat(contractName, "::Logic"));
+
+    vme.label(block.chainid, logic, string.concat(contractName, "::Logic"));
+
     ARTIFACT_FACTORY.generateArtifact(
       sender(), logic, contractAbsolutePath, string.concat(contractName, "Logic"), args, logicNonce
     );
@@ -134,16 +131,17 @@ abstract contract BaseMigration is ScriptExtended {
     logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne()))
     returns (address payable deployed)
   {
-    string memory contractName = CONFIG.getContractName(contractType);
+    string memory contractName = vme.getContractName(contractType);
 
     address logic = _deployLogic(contractType, argsLogicConstructor);
-    string memory proxyAbsolutePath = "Proxy.sol:Proxy";
+    string memory proxyAbsolutePath = "TransparentUpgradeableProxyV4_9_5.sol:TransparentUpgradeableProxyV4_9_5";
+
     uint256 proxyNonce = vm.getNonce(sender());
     address proxyAdmin = _getProxyAdmin();
     assertTrue(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
 
-    _prankOrBroadcast(sender());
-    deployed = payable(address(new Proxy(logic, proxyAdmin, args)));
+    vme.prankOrBroadcast(sender());
+    deployed = payable(address(new TransparentUpgradeableProxyV4_9_5(logic, proxyAdmin, args)));
 
     // validate proxy admin
     address actualProxyAdmin = deployed.getProxyAdmin();
@@ -159,7 +157,7 @@ abstract contract BaseMigration is ScriptExtended {
       )
     );
 
-    CONFIG.setAddress(network(), contractType, deployed);
+    vme.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(
       sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce
     );
@@ -171,7 +169,7 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable deployed, uint256 nonce)
   {
     nonce = vm.getNonce(sender());
-    _prankOrBroadcast(sender());
+    vme.prankOrBroadcast(sender());
     deployed = payable(deployCode(filename, args));
   }
 
@@ -191,7 +189,7 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable proxy)
   {
     address logic = _deployLogic(contractType);
-    proxy = CONFIG.getAddress(network(), contractType);
+    proxy = vme.getAddress(network(), contractType);
     _mockUpgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
   }
 
@@ -210,7 +208,7 @@ abstract contract BaseMigration is ScriptExtended {
     returns (address payable proxy)
   {
     address logic = _deployLogic(contractType, argsLogicConstructor);
-    proxy = CONFIG.getAddress(network(), contractType);
+    proxy = vme.getAddress(network(), contractType);
     _upgradeRaw(proxy.getProxyAdmin(), proxy, logic, args);
   }
 
@@ -236,9 +234,7 @@ abstract contract BaseMigration is ScriptExtended {
             wProxyAdmin.upgrade(iProxy, logic);
           } else {
             console.log(
-              StdStyle.yellow(
-                "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args..."
-              )
+              "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with empty args...".yellow()
             );
             vm.prank(owner);
             wProxyAdmin.upgradeAndCall(iProxy, logic, args);
@@ -264,7 +260,7 @@ abstract contract BaseMigration is ScriptExtended {
 
     // if proxyAdmin is External Owned Wallet
     if (proxyAdmin.code.length == 0) {
-      _prankOrBroadcast(proxyAdmin);
+      vme.prankOrBroadcast(proxyAdmin);
       if (args.length == 0) iProxy.upgradeTo(logic);
       else iProxy.upgradeToAndCall(logic, args);
     } else {
@@ -277,17 +273,17 @@ abstract contract BaseMigration is ScriptExtended {
             if (owner.code.length != 0) {
               _cheatUpgrade(owner, wProxyAdmin, iProxy, logic);
             } else {
-              _prankOrBroadcast(owner);
+              vme.prankOrBroadcast(owner);
               wProxyAdmin.upgrade(iProxy, logic);
             }
           } else {
             console.log(
-              "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args...".yellow()
+              "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with empty args...".yellow()
             );
             if (owner.code.length != 0) {
               _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
             } else {
-              _prankOrBroadcast(owner);
+              vme.prankOrBroadcast(owner);
               wProxyAdmin.upgradeAndCall(iProxy, logic, args);
             }
           }
@@ -295,7 +291,7 @@ abstract contract BaseMigration is ScriptExtended {
           if (owner.code.length != 0) {
             _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);
           } else {
-            _prankOrBroadcast(owner);
+            vme.prankOrBroadcast(owner);
             wProxyAdmin.upgradeAndCall(iProxy, logic, args);
           }
         }
@@ -401,16 +397,8 @@ abstract contract BaseMigration is ScriptExtended {
     wProxyAdmin.upgradeAndCall(iProxy, logic, args);
   }
 
-  function _prankOrBroadcast(address to) internal virtual {
-    if (CONFIG.isPostChecking()) {
-      vm.prank(to);
-    } else {
-      vm.broadcast(to);
-    }
-  }
-
   function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal virtual {
-    _deployScript[contractType] = IMigrationScript(address(deployScript));
+    _setDependencyDeployScript(contractType, address(deployScript));
   }
 
   function _setDependencyDeployScript(TContract contractType, address deployScript) internal virtual {

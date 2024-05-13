@@ -8,6 +8,7 @@ abstract contract MigrationConfig is IMigrationConfig {
 
   function setRawSharedArguments(bytes memory config) public virtual {
     if (areSharedArgumentsStored()) return;
+
     _migrationConfig = config;
   }
 

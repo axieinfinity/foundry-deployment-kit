@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { TNetwork } from "../../types/Types.sol";
+
 interface IRuntimeConfig {
   struct Option {
-    bool generateArtifact;
     bool trezor;
+    TNetwork network;
+    bool generateArtifact;
     bool disablePostcheck;
+    uint256 forkBlockNumber;
   }
 
   function isPostChecking() external view returns (bool);

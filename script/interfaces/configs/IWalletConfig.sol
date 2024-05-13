@@ -7,11 +7,9 @@ interface IWalletConfig {
     Trezor
   }
 
+  function prankOrBroadcast(address account) external;
+
   function getSender() external view returns (address payable sender);
-
-  function trezorPrefix() external view returns (string memory);
-
-  function deployerEnvLabel() external view returns (string memory);
 
   function ethSignMessage(address by, string memory message, WalletOption walletOption)
     external

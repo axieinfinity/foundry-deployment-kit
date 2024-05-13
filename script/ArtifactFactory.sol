@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { Vm } from "../lib/forge-std/src/Vm.sol";
 import { stdJson } from "../lib/forge-std/src/StdJson.sol";
 import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
-import { console2 as console } from "../lib/forge-std/src/console2.sol";
+import { console } from "../lib/forge-std/src/console.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { JSONParserLib } from "../lib/solady/src/utils/JSONParserLib.sol";
 import { IArtifactFactory } from "./interfaces/IArtifactFactory.sol";
@@ -17,8 +17,8 @@ contract ArtifactFactory is IArtifactFactory {
   using LibString for *;
   using JSONParserLib for *;
 
-  Vm internal constant vm = Vm(LibSharedAddress.VM);
-  IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
+  Vm private constant vm = Vm(LibSharedAddress.VM);
+  IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);
 
   function generateArtifact(
     address deployer,
@@ -32,17 +32,19 @@ contract ArtifactFactory is IArtifactFactory {
       string.concat(
         fileName,
         " will be deployed at: ",
-        CONFIG.getExplorer(CONFIG.getCurrentNetwork()),
+        vme.getExplorer(vme.getCurrentNetwork()),
         "address/",
         contractAddr.toHexString()
       ).green(),
-      string.concat("(nonce: ", nonce.toString(), ")")
+      string.concat("(nonce: ", vm.toString(nonce), ")")
     );
-    if (!CONFIG.getRuntimeConfig().generateArtifact || CONFIG.isPostChecking()) {
+
+    if (!vme.getRuntimeConfig().generateArtifact || vme.isPostChecking()) {
       console.log("Skipping artifact generation for:", vm.getLabel(contractAddr), "\n");
       return;
     }
-    string memory dirPath = CONFIG.getDeploymentDirectory(CONFIG.getCurrentNetwork());
+
+    string memory dirPath = vme.getDeploymentDirectory(vme.getCurrentNetwork());
     if (!vm.exists(dirPath)) {
       console.log("\n", string.concat(dirPath, " not existed, making one...").yellow());
       vm.createDir(dirPath, true);
@@ -67,8 +69,8 @@ contract ArtifactFactory is IArtifactFactory {
     json.serialize("deployer", deployer);
     json.serialize("chainId", block.chainid);
     json.serialize("address", contractAddr);
-    json.serialize("blockNumber", block.number);
-    json.serialize("timestamp", block.timestamp);
+    json.serialize("blockNumber", vm.getBlockNumber());
+    json.serialize("timestamp", vm.getBlockTimestamp());
     json.serialize("contractAbsolutePath", contractAbsolutePath);
     json.serialize("numDeployments", numDeployments);
 
@@ -77,7 +79,7 @@ contract ArtifactFactory is IArtifactFactory {
       string[] memory s = contractAbsolutePath.split(":");
       artifactPath = s.length == 2
         ? string.concat("./out/", s[0], "/", s[1], ".json")
-        : string.concat("./out/", contractAbsolutePath, "/", contractAbsolutePath.replace(".sol", ".json"));
+        : string.concat("./out/", contractAbsolutePath, "/", vm.replace(contractAbsolutePath, ".sol", ".json"));
     }
 
     string memory artifact = vm.readFile(artifactPath);

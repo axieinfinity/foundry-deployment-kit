@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { console2 as console } from "forge-std/console2.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { console } from "forge-std/console.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "../../utils/Contract.sol";
+import { TNetwork } from "@fdk/types/Types.sol";
 import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
 import { Token } from "../../../../src/Token.sol";
 import { WNT } from "../../../../src/WNT.sol";
@@ -32,8 +33,7 @@ contract Migration__20231204_DeployMockERC20 is SampleMigration {
   function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
     ISharedArgument.SharedParameter memory param = config.sharedArguments();
 
-    config.createFork(DefaultNetwork.RoninMainnet.key());
-    config.switchTo(DefaultNetwork.RoninMainnet.key());
+    (TNetwork currNetwork, uint256 currForkId) = _switchTo(DefaultNetwork.RoninMainnet.key(), 0);
 
     uint256 mAXSTotalSupply = Token(param.mAXS).totalSupply();
     uint256 mSLPTotalSupply = Token(param.mSLP).totalSupply();
@@ -45,7 +45,7 @@ contract Migration__20231204_DeployMockERC20 is SampleMigration {
     console.log("mWETHTotalSupply", mWETHTotalSupply);
     console.log("mBERRYTotalSupply", mBERRYTotalSupply);
 
-    config.switchTo(DefaultNetwork.RoninTestnet.key());
+    _switchBack(currNetwork, currForkId);
 
     Token tAXS = Token(_deployImmutable(Contract.tAXS.key(), abi.encode("Axie Infinity Shard", "AXS")));
     Token tSLP = Token(_deployImmutable(Contract.tSLP.key(), abi.encode("Smooth Love Potion", "SLP")));

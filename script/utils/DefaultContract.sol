@@ -22,5 +22,6 @@ function name(DefaultContract defaultContract) pure returns (string memory) {
   if (defaultContract == DefaultContract.Multicall3) return "Multicall3";
   if (defaultContract == DefaultContract.WRON) return "WRON";
   if (defaultContract == DefaultContract.WETH) return "WETH";
+
   revert("DefaultContract: Unknown contract");
 }
