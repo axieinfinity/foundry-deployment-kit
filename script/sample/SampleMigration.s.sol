@@ -5,9 +5,10 @@ import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { SampleGeneralConfig } from "./SampleGeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
+import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 
 contract SampleMigration is BaseMigration {
-  ISharedArgument public constant config = ISharedArgument(address(vme));
+  ISharedArgument public constant config = ISharedArgument(address(LibSharedAddress.VME));
 
   function _configCreationData() internal virtual override returns (bytes memory creationCode, bytes memory callData) {
     creationCode = abi.encodePacked(type(SampleGeneralConfig).creationCode);

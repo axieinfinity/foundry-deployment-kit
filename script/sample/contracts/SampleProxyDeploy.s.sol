@@ -7,12 +7,12 @@ import { ISharedArgument, SampleMigration } from "../SampleMigration.s.sol";
 
 contract SampleProxyDeploy is SampleMigration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {
-    ISharedArgument.SharedParameter memory param = ISharedArgument(address(vme)).sharedArguments();
+    ISharedArgument.SharedParameter memory param = config.sharedArguments();
     args = abi.encodeCall(SampleProxy.initialize, (param.proxyMessage));
   }
 
   function run() public virtual returns (SampleProxy instance) {
     instance = SampleProxy(_deployProxy(Contract.SampleProxy.key()));
-    assertEq(instance.getMessage(), ISharedArgument(address(vme)).sharedArguments().proxyMessage);
+    assertEq(instance.getMessage(), config.sharedArguments().proxyMessage);
   }
 }

@@ -78,7 +78,7 @@ if [ $? -eq 0 ]; then
     if [[ $should_verify == true ]]; then
         if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
             echo "Verifying contract..."
-            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+            ${op_command} yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
         fi
     fi
 fi

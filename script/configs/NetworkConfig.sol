@@ -184,25 +184,15 @@ abstract contract NetworkConfig is INetworkConfig {
       )
     );
 
-    _logCurrentForkInfo();
+    _logCurrentForkInfo(_networkDataMap[network].chainAlias);
   }
 
   function switchTo(uint256 forkId) public virtual {
     vm.selectFork(forkId);
 
     TNetwork currNetwork = _networkMap[block.chainid];
-    console.log(
-      string.concat(
-        "\n>>".blue(),
-        " Switching to: ",
-        _networkDataMap[currNetwork].chainAlias.yellow(),
-        " - Fork Block Number ".blue(),
-        vm.toString(vm.getBlockNumber()),
-        "\n"
-      )
-    );
 
-    _logCurrentForkInfo();
+    _logCurrentForkInfo(_networkDataMap[currNetwork].chainAlias);
   }
 
   function getPrivateKeyEnvLabel(TNetwork network) public view virtual returns (string memory privateKeyEnvLabel) {
@@ -218,7 +208,18 @@ abstract contract NetworkConfig is INetworkConfig {
     network = _networkMap[chainId];
   }
 
-  function _logCurrentForkInfo() internal view {
+  function _logCurrentForkInfo(string memory chainAlias) internal view {
+    console.log(
+      string.concat(
+        "\n>>".blue(),
+        " Switching to: ",
+        chainAlias.yellow(),
+        " - Fork Block Number ".blue(),
+        vm.toString(vm.getBlockNumber()),
+        "\n"
+      )
+    );
+
     console.log(
       string.concat(
         "Block Number: ",

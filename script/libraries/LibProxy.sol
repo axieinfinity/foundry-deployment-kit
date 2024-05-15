@@ -26,7 +26,9 @@ library LibProxy {
 
   function getProxyImplementation(address proxy, bool nullCheck) internal view returns (address payable impl) {
     impl = payable(address(uint160(uint256(vm.load(address(proxy), IMPLEMENTATION_SLOT)))));
+
     if (!nullCheck) return impl;
+
     require(
       impl != address(0x0),
       string.concat("LibProxy: Null Implementation, Provided address: ", vm.getLabel(proxy), " is not EIP1967 Proxy")
