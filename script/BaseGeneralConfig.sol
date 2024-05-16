@@ -137,7 +137,7 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
       label(block.chainid, _trezorSender, "TrezorSender");
       console.log("GeneralConfig:", vm.getLabel(_trezorSender), "Enabled!");
     } else {
-      string memory envLabel = getPrivateKeyEnvLabel(_option.network);
+      string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
       _loadENVAccount(envLabel);
       label(block.chainid, _envSender, "ENVSender");
       console.log("GeneralConfig:", vm.getLabel(_envSender), "Enabled!");
