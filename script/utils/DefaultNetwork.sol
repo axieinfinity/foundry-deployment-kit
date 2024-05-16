@@ -26,7 +26,7 @@ function explorer(DefaultNetwork defaultNetwork) pure returns (string memory lin
 }
 
 function key(DefaultNetwork defaultNetwork) pure returns (TNetwork) {
-  return TNetwork.wrap(LibString.packOne(name(defaultNetwork)));
+  return TNetwork.wrap(LibString.packOne(chainAlias(defaultNetwork)));
 }
 
 function name(DefaultNetwork defaultNetwork) pure returns (string memory) {

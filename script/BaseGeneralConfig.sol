@@ -15,7 +15,7 @@ import { DefaultContract } from "./utils/DefaultContract.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
 contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
-  using StdStyle for string;
+  using StdStyle for *;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   fallback() external {
@@ -122,16 +122,22 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     return getAllAddressesByRawData(_networkDataMap[network].chainId);
   }
 
-  function _handleRuntimeConfig() internal virtual override {
+  function logSenderInfo() public view {
+    console.log(
+      "Sender:",
+      vm.getLabel(getSender()),
+      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER\n")
+    );
+  }
+
+  function buildRuntimeConfig() public virtual override {
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
-      console.log("GeneralConfig:", vm.getLabel(_trezorSender), "Enabled!");
     } else {
       string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
       _loadENVAccount(envLabel);
       label(block.chainid, _envSender, "ENVSender");
-      console.log("GeneralConfig:", vm.getLabel(_envSender), "Enabled!");
     }
   }
 }

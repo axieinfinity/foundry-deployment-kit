@@ -18,7 +18,7 @@ import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load arti
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
-import { TContract } from "./types/Types.sol";
+import { TContract, TNetwork } from "./types/Types.sol";
 import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
 
 abstract contract BaseMigration is ScriptExtended {
@@ -39,8 +39,22 @@ abstract contract BaseMigration is ScriptExtended {
     deploySharedAddress(address(ARTIFACT_FACTORY), type(ArtifactFactory).creationCode, "ArtifactFactory");
   }
 
+  function switchTo(TNetwork networkType, uint256 forkBlockNumber)
+    public
+    virtual
+    override
+    returns (TNetwork currNetwork, uint256 currForkId)
+  {
+    (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
+    // Should rebuild the shared arguments since different chain may have different shared arguments
+    _storeRawSharedArguments();
+    // Should rebuild runtime config
+    CONFIG.buildRuntimeConfig();
+    // Log Sender Info of current network
+    CONFIG.logSenderInfo();
+  }
+
   function _storeRawSharedArguments() internal virtual {
-    if (CONFIG.areSharedArgumentsStored()) return;
     CONFIG.setRawSharedArguments(_sharedArguments());
   }
 

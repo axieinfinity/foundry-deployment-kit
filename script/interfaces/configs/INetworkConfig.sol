@@ -5,7 +5,6 @@ import { TNetwork } from "../../types/Types.sol";
 
 interface INetworkConfig {
   struct NetworkData {
-    uint256 forkId;
     uint256 chainId;
     string chainAlias;
     string deploymentDir;
@@ -26,6 +25,8 @@ interface INetworkConfig {
 
   function createFork(TNetwork network) external returns (uint256 forkId);
 
+  function createFork(TNetwork network, uint256 forkBlockNumber) external returns (uint256 forkId);
+
   function getExplorer(TNetwork network) external view returns (string memory link);
 
   function getNetworkData(TNetwork network) external view returns (NetworkData memory);
@@ -36,11 +37,15 @@ interface INetworkConfig {
 
   function switchTo(TNetwork network) external;
 
-  function tryCreateFork(string calldata chainAlias, uint256 chainId) external returns (uint256);
+  function switchTo(TNetwork network, uint256 forkBlockNumber) external;
+
+  function tryCreateFork(string calldata chainAlias, uint256 chainId, uint256 forkBlockNumber)
+    external
+    returns (uint256);
+
+  function switchTo(uint256 forkId) external;
 
   function getDeploymentDirectory(TNetwork network) external view returns (string memory dirPath);
-
-  function getDeploymentRoot() external returns (string memory);
 
   function getCurrentNetwork() external view returns (TNetwork network);
 

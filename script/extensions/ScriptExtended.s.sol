@@ -6,6 +6,7 @@ import { console, Script } from "../../lib/forge-std/src/Script.sol";
 import { stdStorage, StdStorage } from "../../lib/forge-std/src/StdStorage.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
+import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
@@ -29,9 +30,9 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   modifier onNetwork(TNetwork networkType) {
-    TNetwork currentNetwork = _switchTo(networkType);
+    (TNetwork prevNetwork, uint256 prevForkId) = switchTo(networkType);
     _;
-    _switchBack(currentNetwork);
+    switchBack(prevNetwork, prevForkId);
   }
 
   constructor() {
@@ -48,6 +49,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
 
   function run(bytes calldata callData, string calldata command) public virtual {
     CONFIG.resolveCommand(command);
+
+    IRuntimeConfig.Option memory runtimeConfig = CONFIG.getRuntimeConfig();
+    switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
 
@@ -57,9 +62,12 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     }
 
     console.log("\n>> Postchecking...".yellow());
+    uint256 start = vm.unixTime();
     CONFIG.setPostCheckingStatus({ status: true });
     _postCheck();
     CONFIG.setPostCheckingStatus({ status: false });
+    uint256 end = vm.unixTime();
+    console.log("Postchecking completed in", vm.toString(end - start), "seconds.");
   }
 
   function network() public view virtual returns (TNetwork) {
@@ -116,13 +124,26 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
   }
 
-  function _switchTo(TNetwork networkType) private returns (TNetwork currentNetwork) {
-    currentNetwork = network();
-    CONFIG.createFork(networkType);
-    CONFIG.switchTo(networkType);
+  function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
+    (currNetwork, currForkId) = switchTo(networkType, 0);
   }
 
-  function _switchBack(TNetwork currentNetwork) private {
-    CONFIG.switchTo(currentNetwork);
+  function switchTo(TNetwork networkType, uint256 forkBlockNumber)
+    public
+    virtual
+    returns (TNetwork prevNetwork, uint256 prevForkId)
+  {
+    prevForkId = forkId();
+    prevNetwork = network();
+
+    CONFIG.createFork(networkType, forkBlockNumber);
+    CONFIG.switchTo(networkType, forkBlockNumber);
+  }
+
+  function switchBack(TNetwork prevNetwork, uint256 prevForkId) public virtual {
+    try CONFIG.switchTo(prevForkId) { }
+    catch {
+      CONFIG.switchTo(prevNetwork);
+    }
   }
 }
