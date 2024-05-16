@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
-import { console2 as console } from "../lib/forge-std/src/console2.sol";
+import { console } from "../lib/forge-std/src/console.sol";
 import { ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { BaseGeneralConfig } from "./BaseGeneralConfig.sol";
 import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
