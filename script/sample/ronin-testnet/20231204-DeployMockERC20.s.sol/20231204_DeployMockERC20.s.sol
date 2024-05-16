@@ -5,8 +5,8 @@ import { console } from "forge-std/console.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "../../utils/Contract.sol";
 import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
-import { Token } from "../../../../src/Token.sol";
-import { WNT } from "../../../../src/WNT.sol";
+import { Token } from "../../../../src/mocks/Token.sol";
+import { WNT } from "../../../../src/mocks/WNT.sol";
 
 contract Migration__20231204_DeployMockERC20 is SampleMigration {
   function _sharedArguments() internal virtual override returns (bytes memory args) {

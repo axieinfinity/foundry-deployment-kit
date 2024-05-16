@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Sample } from "src/Sample.sol";
+import { Sample } from "src/mocks/Sample.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument, SampleMigration } from "../SampleMigration.s.sol";
 

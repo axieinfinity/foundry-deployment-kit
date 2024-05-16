@@ -7,10 +7,10 @@ import {
 } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
- * @title Proxy
+ * @title LegacyTransparentProxy
  * @dev A contract that acts as a proxy for transparent upgrades.
  */
-contract Proxy is TransparentUpgradeableProxy {
+contract LegacyTransparentProxy is TransparentUpgradeableProxy {
   /**
    * @dev Initializes the Proxy contract.
    * @param _logic The address of the logic contract.

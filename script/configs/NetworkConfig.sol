@@ -13,7 +13,8 @@ abstract contract NetworkConfig is INetworkConfig {
   using StdStyle for *;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
-  IGeneralConfig private constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
+  IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);
+  
   uint256 private constant NULL_FORK_ID = uint256(keccak256("NULL_FORK_ID"));
 
   string private _deploymentRoot;
