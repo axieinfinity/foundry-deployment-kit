@@ -10,7 +10,7 @@ interface ISharedArgument is IGeneralConfig {
     address mFactory;
     address testnetFactory;
     bytes32 mPairCodeHash;
-    bytes32 testnetpairCodeHash;
+    bytes32 testnetPairCodeHash;
     address mWRON;
     address mSLP;
     address mAXS;

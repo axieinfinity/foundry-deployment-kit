@@ -47,7 +47,7 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function getContractTypeFromCurrentNetwok(address contractAddr) public view virtual returns (TContract contractType) {
+  function getContractTypeFromCurrentNetwork(address contractAddr) public view virtual returns (TContract contractType) {
     return getContractTypeByRawData(block.chainid, contractAddr);
   }
 
