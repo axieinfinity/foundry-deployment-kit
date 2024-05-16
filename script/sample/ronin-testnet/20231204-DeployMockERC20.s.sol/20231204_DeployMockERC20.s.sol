@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "../../utils/Contract.sol";
 import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
 import { Token } from "../../../../src/Token.sol";
