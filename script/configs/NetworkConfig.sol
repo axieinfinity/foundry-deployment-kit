@@ -19,8 +19,8 @@ abstract contract NetworkConfig is INetworkConfig {
   string private _deploymentRoot;
   bool private _isForkModeEnabled;
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
-  mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
   mapping(uint256 chainId => TNetwork network) internal _networkMap;
+  mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
 
   constructor(string memory deploymentRoot) {
     _deploymentRoot = deploymentRoot;
@@ -48,13 +48,9 @@ abstract contract NetworkConfig is INetworkConfig {
     string memory privateKeyEnvLabel,
     string memory explorer
   ) public virtual {
-    _forkMap[_networkMap[chainId]][0] = NULL_FORK_ID;
-    _networkDataMap[_networkMap[chainId]].forkId = NULL_FORK_ID;
-
     _networkMap[chainId] = network;
-    _networkDataMap[network] = NetworkData(
-      tryCreateFork(chainAlias, chainId, 0), chainId, chainAlias, deploymentDir, privateKeyEnvLabel, explorer
-    );
+    _forkMap[_networkMap[chainId]][0] = tryCreateFork(chainAlias, chainId, 0);
+    _networkDataMap[network] = NetworkData(chainId, chainAlias, deploymentDir, privateKeyEnvLabel, explorer);
   }
 
   function getExplorer(TNetwork network) public view virtual returns (string memory link) {
@@ -67,7 +63,11 @@ abstract contract NetworkConfig is INetworkConfig {
   }
 
   function getForkId(TNetwork network) public view virtual returns (uint256 forkId) {
-    forkId = _networkDataMap[network].forkId;
+    forkId = getForkId({ network: network, forkBlockNumber: 0 });
+  }
+
+  function getForkId(TNetwork network, uint256 forkBlockNumber) public view virtual returns (uint256 forkId) {
+    forkId = _forkMap[network][forkBlockNumber];
   }
 
   function createFork(TNetwork network) public returns (uint256 forkId) {
@@ -78,13 +78,8 @@ abstract contract NetworkConfig is INetworkConfig {
     setForkMode({ shouldEnable: true });
 
     NetworkData memory networkData = _networkDataMap[network];
-    forkId = tryCreateFork(networkData.chainAlias, networkData.chainId, forkBlockNumber);
-
-    if (forkBlockNumber == 0) {
-      _networkDataMap[network].forkId = forkId;
-    } else {
-      _forkMap[network][forkBlockNumber] = forkId;
-    }
+    forkId =
+      _forkMap[network][forkBlockNumber] = tryCreateFork(networkData.chainAlias, networkData.chainId, forkBlockNumber);
   }
 
   function tryCreateFork(string memory chainAlias, uint256 chainId, uint256 forkBlockNumber)
@@ -104,9 +99,7 @@ abstract contract NetworkConfig is INetworkConfig {
     // return NULL_FORK_ID if fork mode is not enabled
     if (!_isForkModeEnabled) return NULL_FORK_ID;
 
-    uint256 id = forkBlockNumber == 0
-      ? _networkDataMap[_networkMap[chainId]].forkId
-      : _forkMap[_networkMap[chainId]][forkBlockNumber];
+    uint256 id = _forkMap[_networkMap[chainId]][forkBlockNumber];
 
     if (id != NULL_FORK_ID) {
       // return if fork id is not NULL_FORK_ID and fork id != 0
@@ -123,13 +116,7 @@ abstract contract NetworkConfig is INetworkConfig {
 
     if (forkBlockNumber == 0) {
       try vm.createFork(rpcUrl) returns (uint256 forkId) {
-        console.log(
-          string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:").blue(),
-          forkId,
-          "Fork Block Number:",
-          forkBlockNumber
-        );
-
+        console.log(string.concat("NetworkConfig: ".blue(), chainAlias, " fork created with forkId:"), forkId);
         return forkId;
       } catch {
         console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), rpcUrl);
@@ -138,7 +125,7 @@ abstract contract NetworkConfig is INetworkConfig {
     } else {
       try vm.createFork(rpcUrl, forkBlockNumber) returns (uint256 forkId) {
         console.log(
-          string.concat("NetworkConfig: ", chainAlias, " fork created with forkId:").blue(),
+          string.concat("NetworkConfig: ".blue(), chainAlias, " fork created with forkId:").blue(),
           forkId,
           "Fork Block Number:",
           forkBlockNumber
@@ -157,19 +144,7 @@ abstract contract NetworkConfig is INetworkConfig {
   }
 
   function switchTo(TNetwork network, uint256 forkBlockNumber) public virtual {
-    console.log(
-      string.concat(
-        "\n>>".blue(),
-        " Switching to: ",
-        _networkDataMap[network].chainAlias.yellow(),
-        " - Fork Block Number ".blue(),
-        vm.toString(forkBlockNumber),
-        "\n"
-      )
-    );
-
-    uint256 forkId = forkBlockNumber == 0 ? _networkDataMap[network].forkId : _forkMap[network][forkBlockNumber];
-
+    uint256 forkId = _forkMap[network][forkBlockNumber];
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
 
     vm.selectFork(forkId);
@@ -211,32 +186,15 @@ abstract contract NetworkConfig is INetworkConfig {
   function _logCurrentForkInfo(string memory chainAlias) internal view {
     console.log(
       string.concat(
-        "\n>>".blue(),
-        " Switching to: ",
+        "Switching to: ".blue(),
         chainAlias.yellow(),
-        " - Fork Block Number ".blue(),
+        " - Block Number ".blue(),
         vm.toString(vm.getBlockNumber()),
-        "\n"
+        " - Timestamp ".blue(),
+        vm.toString(vm.getBlockTimestamp()),
+        " - Chain ID ".blue(),
+        vm.toString(block.chainid)
       )
     );
-
-    console.log(
-      string.concat(
-        "Block Number: ",
-        vm.toString(vm.getBlockNumber()),
-        " | ",
-        "Timestamp: ",
-        vm.toString(vm.getBlockTimestamp()),
-        " | ",
-        "Gas Price: ",
-        vm.toString(tx.gasprice),
-        " | ",
-        "Block Gas Limit: ",
-        vm.toString(block.gaslimit),
-        "\n"
-      ).yellow()
-    );
-
-    CONFIG.logSenderInfo();
   }
 }

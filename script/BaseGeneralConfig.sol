@@ -124,10 +124,9 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
 
   function logSenderInfo() public view {
     console.log(
-      "GeneralConfig:".cyan(),
       "Sender:",
       vm.getLabel(getSender()),
-      string.concat("| Balance: ", vm.toString(getSender().balance / 1 ether), " ETHER\n").magenta()
+      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER\n")
     );
   }
 
@@ -135,12 +134,10 @@ contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, Netwo
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
-      console.log("GeneralConfig:", vm.getLabel(_trezorSender), "Enabled!");
     } else {
       string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
       _loadENVAccount(envLabel);
       label(block.chainid, _envSender, "ENVSender");
-      console.log("GeneralConfig:", vm.getLabel(_envSender), "Enabled!");
     }
   }
 }

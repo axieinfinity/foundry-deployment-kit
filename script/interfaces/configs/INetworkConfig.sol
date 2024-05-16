@@ -5,7 +5,6 @@ import { TNetwork } from "../../types/Types.sol";
 
 interface INetworkConfig {
   struct NetworkData {
-    uint256 forkId;
     uint256 chainId;
     string chainAlias;
     string deploymentDir;

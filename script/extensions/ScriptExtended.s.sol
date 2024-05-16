@@ -30,9 +30,9 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   modifier onNetwork(TNetwork networkType) {
-    (TNetwork currNetwork, uint256 currForkId) = switchTo(networkType);
+    (TNetwork prevNetwork, uint256 prevForkId) = switchTo(networkType);
     _;
-    switchBack(currNetwork, currForkId);
+    switchBack(prevNetwork, prevForkId);
   }
 
   constructor() {
@@ -62,9 +62,12 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     }
 
     console.log("\n>> Postchecking...".yellow());
+    uint256 start = vm.unixTime();
     CONFIG.setPostCheckingStatus({ status: true });
     _postCheck();
     CONFIG.setPostCheckingStatus({ status: false });
+    uint256 end = vm.unixTime();
+    console.log("Postchecking completed in", vm.toString(end - start), "seconds.");
   }
 
   function network() public view virtual returns (TNetwork) {
@@ -128,10 +131,10 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   function switchTo(TNetwork networkType, uint256 forkBlockNumber)
     public
     virtual
-    returns (TNetwork currNetwork, uint256 currForkId)
+    returns (TNetwork prevNetwork, uint256 prevForkId)
   {
-    currForkId = forkId();
-    currNetwork = network();
+    prevForkId = forkId();
+    prevNetwork = network();
 
     CONFIG.createFork(networkType, forkBlockNumber);
     CONFIG.switchTo(networkType, forkBlockNumber);

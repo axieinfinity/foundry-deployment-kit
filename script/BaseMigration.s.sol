@@ -50,6 +50,8 @@ abstract contract BaseMigration is ScriptExtended {
     _storeRawSharedArguments();
     // Should rebuild runtime config
     CONFIG.buildRuntimeConfig();
+    // Log Sender Info of current network
+    CONFIG.logSenderInfo();
   }
 
   function _storeRawSharedArguments() internal virtual {
