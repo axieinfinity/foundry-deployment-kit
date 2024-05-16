@@ -70,7 +70,6 @@ fi
 calldata=$(cast calldata 'run()')
 start_time=$(date +%s)
 
-echo ${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
 ${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
 
 # Check if the command was successful
