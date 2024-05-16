@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { EnumerableSet } from "../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import { Vm, VmSafe } from "../../lib/forge-std/src/Vm.sol";
-import { console2 as console } from "../../lib/forge-std/src/console2.sol";
+import { console } from "../../lib/forge-std/src/console.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
@@ -47,7 +47,7 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function getContractTypeFromCurrentNetwok(address contractAddr) public view virtual returns (TContract contractType) {
+  function getContractTypeFromCurrentNetwork(address contractAddr) public view virtual returns (TContract contractType) {
     return getContractTypeByRawData(block.chainid, contractAddr);
   }
 

@@ -238,7 +238,7 @@ abstract contract BaseMigration is ScriptExtended {
           } else {
             console.log(
               StdStyle.yellow(
-                "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args..."
+                "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with empty args..."
               )
             );
             vm.prank(owner);
@@ -283,7 +283,7 @@ abstract contract BaseMigration is ScriptExtended {
             }
           } else {
             console.log(
-              "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with emty args...".yellow()
+              "`ProxyAdmin:upgrade` failed!. Retrying with `ProxyAdmin:upgradeAndCall` with empty args...".yellow()
             );
             if (owner.code.length != 0) {
               _cheatUpgradeAndCall(owner, wProxyAdmin, iProxy, logic, args);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
 import { Sample, SampleDeploy } from "../../contracts/SampleDeploy.s.sol";
 import { SampleProxy, SampleProxyDeploy } from "../../contracts/SampleProxyDeploy.s.sol";

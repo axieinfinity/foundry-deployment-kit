@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { Vm } from "../../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console2 as console } from "../../lib/forge-std/src/console2.sol";
+import { console } from "../../lib/forge-std/src/console.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
