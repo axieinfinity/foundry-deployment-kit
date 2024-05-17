@@ -7,6 +7,7 @@ import { console } from "../lib/forge-std/src/console.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
+import { UserDefinedConfig } from "./configs/UserDefinedConfig.sol";
 import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
 import { EnumerableSet, TContract, ContractConfig } from "./configs/ContractConfig.sol";
 import { ISharedParameter } from "./interfaces/configs/ISharedParameter.sol";
@@ -14,7 +15,14 @@ import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
 
-contract BaseGeneralConfig is RuntimeConfig, WalletConfig, ContractConfig, NetworkConfig, MigrationConfig {
+contract BaseGeneralConfig is
+  RuntimeConfig,
+  WalletConfig,
+  ContractConfig,
+  NetworkConfig,
+  MigrationConfig,
+  UserDefinedConfig
+{
   using StdStyle for *;
   using EnumerableSet for EnumerableSet.AddressSet;
 
