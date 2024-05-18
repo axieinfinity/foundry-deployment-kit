@@ -62,7 +62,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     _postCheck();
     vme.setPostCheckingStatus({ status: false });
     uint256 end = vm.unixTime();
-    console.log("Postchecking completed in", vm.toString(end - start), "seconds.");
+    console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
   }
 
   function _requireOn(TNetwork networkType) private view {

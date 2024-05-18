@@ -1,3 +1,5 @@
+source ./export-address.sh
+
 verify_arg=""
 extra_argument=""
 
