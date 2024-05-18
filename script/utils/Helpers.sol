@@ -31,12 +31,14 @@ function logDecodedError(bytes memory returnOrRevertData) {
   }
 }
 
-function sendRawTransaction(address to, uint256 gas, uint256 value, bytes calldata callData) {
+function sendRawTransaction(address from, address to, uint256 gas, uint256 callValue, bytes memory callData) {
   bool success;
   bytes memory returnOrRevertData;
 
+  prankOrBroadcast(from);
+
   (success, returnOrRevertData) =
-    gas == 0 ? to.call{ value: value }(callData) : to.call{ value: value, gas: gas }(callData);
+    gas == 0 ? to.call{ value: callValue }(callData) : to.call{ value: callValue, gas: gas }(callData);
 
   if (!success) {
     if (returnOrRevertData.length != 0) {
@@ -44,8 +46,6 @@ function sendRawTransaction(address to, uint256 gas, uint256 value, bytes callda
     } else {
       console.log(StdStyle.red("Evm Error!"));
     }
-  } else {
-    console.log(StdStyle.green("OnchainExecutor: Call Executed Successfully!"));
   }
 }
 
@@ -53,7 +53,7 @@ function logInnerCall(string memory fnName) view {
   console.log("> ", fnName.blue(), "...");
 }
 
-function cheatBroadcast(address from, address to, bytes memory callData) {
+function cheatBroadcast(address from, address to, uint256 callValue, bytes memory callData) {
   string[] memory commandInputs = new string[](3);
   commandInputs[0] = "cast";
   commandInputs[1] = "4byte-decode";
@@ -62,7 +62,9 @@ function cheatBroadcast(address from, address to, bytes memory callData) {
 
   console.log("\n");
   console.log("--------------------------- Call Detail ---------------------------");
+  console.log(StdStyle.cyan("From:"), vm.getLabel(from));
   console.log(StdStyle.cyan("To:"), vm.getLabel(to));
+  console.log(StdStyle.cyan("Value:"), vm.toString(callValue));
   console.log(
     StdStyle.cyan("Raw Calldata Data (Please double check using `cast pretty-calldata {raw_bytes}`):\n"),
     string.concat(" - ", vm.toString(callData))
@@ -71,8 +73,16 @@ function cheatBroadcast(address from, address to, bytes memory callData) {
   console.log("--------------------------------------------------------------------");
 
   vm.prank(from);
-  (bool success, bytes memory returnOrRevertData) = to.call(callData);
+  (bool success, bytes memory returnOrRevertData) = to.call{ value: callValue }(callData);
   success.handleRevert(bytes4(callData), returnOrRevertData);
+}
+
+function decodeData(bytes memory data) returns (string memory decodedData) {
+  string[] memory commandInputs = new string[](3);
+  commandInputs[0] = "cast";
+  commandInputs[1] = "4byte-decode";
+  commandInputs[2] = vm.toString(data);
+  decodedData = string(vm.ffi(commandInputs));
 }
 
 function loadContract(TContract contractType) view returns (address payable contractAddr) {

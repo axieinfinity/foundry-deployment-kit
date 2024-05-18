@@ -2,17 +2,25 @@
 pragma solidity ^0.8.19;
 
 import { TransparentProxyV2 } from "../../src/TransparentProxyV2.sol";
-import { LegacyTransparentProxy } from "../../src/LegacyTransparentProxy.sol";
-
+import { TransparentProxyOZv4_9_5 } from "../../src/TransparentProxyOZv4_9_5.sol";
+import { ITransparentUpgradeableProxy } from
+  "../../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "../../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console } from "../../lib/forge-std/src/console.sol";
 import { vm, vme } from "../utils/Constants.sol";
-import { prankOrBroadcast } from "../utils/Helpers.sol";
+import { prankOrBroadcast, sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
 import { LibProxy } from "./LibProxy.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
 import { ArtifactInfo } from "./LibArtifact.sol";
 
-struct DeploymentInfo {
+enum ProxyInterface {
+  Transparent,
+  Beacon,
+  UUPS
+}
+
+struct DeployInfo {
   string absolutePath;
   string contractName;
   string artifactName;
@@ -21,29 +29,40 @@ struct DeploymentInfo {
   address by;
 }
 
-using LibDeploy for DeploymentInfo global;
+struct UpgradeInfo {
+  address proxy;
+  address logic;
+  uint256 callValue;
+  bytes callData;
+  ProxyInterface proxyInterface;
+  function() external upgradeCallback;
+  bool shouldUseCallback;
+}
+
+using LibDeploy for DeployInfo global;
+using LibDeploy for UpgradeInfo global;
 
 library LibDeploy {
   using StdStyle for string;
   using LibProxy for address;
+  using LibProxy for address payable;
 
-  function upgradeTransparentProxy(address proxy, address logic, uint256 callValue, bytes memory callData) internal {
-    require(
-      logic != address(0x0), "LibDeploy: upgradeTransparentProxy(address,address,uint256,bytes): Logic address is 0x0."
-    );
+  modifier validateUpgrade(address proxy, address newImpl) {
+    require(newImpl != address(0x0), "LibDeploy: Logic address is 0x0.");
 
+    address prevProxyAdmin = proxy.getProxyAdmin();
     address prevImpl = proxy.getProxyImplementation();
 
-    if (prevImpl.codehash == logic.codehash) {
+    if (prevImpl.codehash == newImpl.codehash) {
       string memory answer = vm.prompt(
         string.concat(
           "Proxy: ",
           vm.getLabel(proxy),
-          " current implementation ",
+          "\nCurrent implementation ",
           vm.toString(prevImpl),
           " is same as new implementation ",
-          vm.toString(logic),
-          " Do you want to continue? (y/n)"
+          vm.toString(newImpl),
+          "\nDo you want to continue? (y/n)"
         )
       );
 
@@ -51,58 +70,153 @@ library LibDeploy {
         console.log(string.concat("Cancel upgrade for ", vm.getLabel(proxy)).yellow());
         return;
       }
+    }
 
-      address proxyAdmin = proxy.getProxyAdmin();
+    _;
 
-      revert("Unimplemented");
+    address currProxyAdmin = proxy.getProxyAdmin();
+    address currImpl = proxy.getProxyImplementation();
+
+    require(currImpl != address(0x0), "LibDeploy: Null Implementation");
+    require(currProxyAdmin != address(0x0), "LibDeploy: Null ProxyAdmin");
+    require(currProxyAdmin == prevProxyAdmin, "LibDeploy: ProxyAdmin changed");
+  }
+
+  function upgrade(UpgradeInfo memory info) internal {
+    if (info.proxyInterface == ProxyInterface.Transparent) {
+      upgradeTransparentProxy(
+        info.proxy, info.logic, info.callValue, info.callData, info.upgradeCallback, info.shouldUseCallback
+      );
+    } else {
+      revert("LibDeploy: Unsupported proxy interface for now.");
     }
   }
 
-  function deployImplementation(DeploymentInfo memory implInfo) internal returns (address payable impl) {
-    require(implInfo.callValue == 0, "LibDeploy: deployImplementation(DeploymentInfo): Value must be 0.");
+  function upgradeTransparentProxy(
+    address proxy,
+    address logic,
+    uint256 callValue,
+    bytes memory callData,
+    function() external upgradeCallback,
+    bool shouldUseCallback
+  ) internal validateUpgrade(proxy, logic) {
+    if (shouldUseCallback) {
+      upgradeCallback();
+    } else {
+      _tryUpgradeTransparentProxy(proxy, logic, callValue, callData);
+    }
+  }
+
+  function _tryUpgradeTransparentProxy(address proxy, address logic, uint256 callValue, bytes memory callData) private {
+    (address auth, address interactTo) = findHierarchyAdminOfProxy(proxy);
+    bool isViaAuxiliary = auth != proxy;
+    bytes memory data;
+
+    if (isViaAuxiliary) {
+      data = callData.length == 0
+        ? abi.encodeCall(ProxyAdmin.upgrade, (ITransparentUpgradeableProxy(proxy), logic))
+        : abi.encodeCall(ProxyAdmin.upgradeAndCall, (ITransparentUpgradeableProxy(proxy), logic, callData));
+    } else {
+      data = callData.length == 0
+        ? abi.encodeCall(ITransparentUpgradeableProxy.upgradeTo, (logic))
+        : abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (logic, callData));
+    }
+
+    bool shouldCheatCall = auth.code.length != 0;
+    if (shouldCheatCall) {
+      console.log(
+        string.concat(
+          "LibDeploy: upgradeTransparentProxy(address,address,uint256,bytes): ",
+          "Cannot upgrade proxy ",
+          vm.getLabel(proxy),
+          " because it is managed by an admin contract."
+        )
+      );
+
+      cheatBroadcast({ from: auth, to: interactTo, callValue: callValue, callData: callData });
+    } else {
+      sendRawTransaction({ from: auth, to: interactTo, callValue: callValue, callData: callData, gas: 0 });
+    }
+  }
+
+  function findHierarchyAdminOfProxy(address proxy) internal view returns (address auth, address interactTo) {
+    interactTo = proxy;
+    auth = proxy.getProxyAdmin();
+
+    while (true) {
+      if (auth.code.length == 0) return (auth, interactTo);
+
+      try ProxyAdmin(auth).owner() returns (address owner) {
+        if (owner == address(0x0)) return (auth, interactTo);
+
+        interactTo = auth;
+        auth = owner;
+      } catch {
+        return (auth, interactTo);
+      }
+    }
+  }
+
+  function deployImplementation(DeployInfo memory implInfo) internal returns (address payable impl) {
+    require(implInfo.callValue == 0, "LibDeploy: deployImplementation(DeployInfo): Value must be 0.");
     implInfo.artifactName = string.concat(implInfo.artifactName, "Logic");
     return deployFromArtifact(implInfo);
   }
 
   function deployTransparentProxy(
-    DeploymentInfo memory implInfo,
+    DeployInfo memory implInfo,
     uint256 callValue,
     address proxyAdmin,
     bytes memory callData
   ) internal returns (address payable proxy) {
+    require(proxyAdmin != address(0x0), "BaseMigration: Null ProxyAdmin");
+
     address impl = deployImplementation(implInfo);
 
-    DeploymentInfo memory proxyInfo;
+    DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentUpgradeableProxyV4_9_5";
-    proxyInfo.absolutePath = "TransparentUpgradeableProxyV4_9_5.sol:TransparentUpgradeableProxyV4_9_5";
+    proxyInfo.contractName = type(TransparentProxyOZv4_9_5).name;
+    proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
 
-    return deployFromArtifact(proxyInfo);
+    proxy = deployFromArtifact(proxyInfo);
+
+    // validate proxy admin
+    address actualProxyAdmin = proxy.getProxyAdmin();
+    require(
+      actualProxyAdmin == proxyAdmin,
+      string.concat(
+        "LibDeploy: Invalid proxy admin\n",
+        "Actual: ",
+        vm.toString(actualProxyAdmin),
+        "\nExpected: ",
+        vm.toString(proxyAdmin)
+      )
+    );
   }
 
   function deployTransparentProxyV2(
-    DeploymentInfo memory implInfo,
+    DeployInfo memory implInfo,
     uint256 callValue,
     address proxyAdmin,
     bytes memory callData
   ) internal returns (address payable proxy) {
     address impl = deployImplementation(implInfo);
 
-    DeploymentInfo memory proxyInfo;
+    DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentUpgradeableProxyV2";
-    proxyInfo.contractName = "TransparentUpgradeableProxyV2.sol:TransparentUpgradeableProxyV2";
+    proxyInfo.contractName = type(TransparentProxyV2).name;
+    proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
 
     return deployFromArtifact(proxyInfo);
   }
 
-  function deployFromArtifact(DeploymentInfo memory info) internal returns (address payable deployed) {
+  function deployFromArtifact(DeployInfo memory info) internal returns (address payable deployed) {
     deployed = deployFromBytecode(
       info.absolutePath,
       info.contractName,
@@ -152,6 +266,6 @@ library LibDeploy {
   function _precompileProxyContracts() private pure {
     bytes memory dummy;
     dummy = type(TransparentProxyV2).creationCode;
-    dummy = type(LegacyTransparentProxy).creationCode;
+    dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }
