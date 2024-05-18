@@ -252,12 +252,18 @@ abstract contract BaseMigration is ScriptExtended {
       callValue: 0,
       callData: args,
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.emptyFn,
+      upgradeCallback: this.upgradeCallback,
       shouldUseCallback: false
     }).upgrade();
   }
 
-  function emptyFn() external { }
+  function upgradeCallback(
+    address, /* proxy */
+    address, /* logic */
+    uint256, /* callValue */
+    bytes memory, /* callData */
+    ProxyInterface /* proxyInterface */
+  ) external virtual { }
 
   function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal virtual {
     _setDependencyDeployScript(contractType, address(deployScript));

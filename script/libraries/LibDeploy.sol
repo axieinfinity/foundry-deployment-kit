@@ -35,7 +35,7 @@ struct UpgradeInfo {
   uint256 callValue;
   bytes callData;
   ProxyInterface proxyInterface;
-  function() external upgradeCallback;
+  function(address,address,uint256,bytes memory,ProxyInterface) external upgradeCallback;
   bool shouldUseCallback;
 }
 
@@ -97,11 +97,11 @@ library LibDeploy {
     address logic,
     uint256 callValue,
     bytes memory callData,
-    function() external upgradeCallback,
+    function(address,address,uint256,bytes memory,ProxyInterface) external upgradeCallback,
     bool shouldUseCallback
   ) internal validateUpgrade(proxy, logic) {
     if (shouldUseCallback) {
-      upgradeCallback();
+      upgradeCallback(proxy, logic, callValue, callData, ProxyInterface.Transparent);
     } else {
       _tryUpgradeTransparentProxy(proxy, logic, callValue, callData);
     }

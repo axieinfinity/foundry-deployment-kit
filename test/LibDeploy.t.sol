@@ -110,5 +110,11 @@ contract LibDeployTest is Test {
     info.upgrade();
   }
 
-  function emptyFn() external { }
+  function emptyFn(
+    address, /* proxy */
+    address, /* logic */
+    uint256, /* callValue */
+    bytes memory, /* callData */
+    ProxyInterface /* proxyInterface */
+  ) external { }
 }
