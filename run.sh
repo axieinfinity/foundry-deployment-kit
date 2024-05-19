@@ -4,7 +4,7 @@ usage() {
 
     echo ""
     echo "\033[33mFoundry Script Usage:\033[0m"
-    echo "Usage: $0 [forge_options] --no-postcheck --sender {sender_address}"
+    echo "Usage: $0 [forge_options] --no-postcheck --sender {sender_address} --force-generate-artifact"
     echo "Options:"
     echo " --no-postcheck: Disable post-check"
     echo " --sender: Specify the default sender address"
