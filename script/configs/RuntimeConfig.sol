@@ -50,6 +50,11 @@ abstract contract RuntimeConfig is IRuntimeConfig {
         } else if (args[i].startsWith("fork-block-number")) {
           string memory blockNumber = vm.split(args[i], ".")[1];
           _option.forkBlockNumber = vm.parseUint(blockNumber);
+        } else if (args[i].startsWith("sender")) {
+          string memory sender = vm.split(args[i], ".")[1];
+          _option.sender = vm.parseAddress(sender);
+        } else {
+          console.log("Invalid command: %s", args[i]);
         }
       }
     }

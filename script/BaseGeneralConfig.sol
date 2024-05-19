@@ -139,6 +139,14 @@ contract BaseGeneralConfig is
   }
 
   function buildRuntimeConfig() public virtual override {
+    if (_option.sender != address(0x0)) {
+      _envSender = _option.sender;
+      _trezorSender = _option.sender;
+
+      label(block.chainid, _option.sender, "OverrideSender");
+
+      return;
+    }
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
