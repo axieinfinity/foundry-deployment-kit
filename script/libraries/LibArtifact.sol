@@ -77,6 +77,14 @@ library LibArtifact {
     json.serialize("metadata", parsedArtifact.at('"rawMetadata"').value());
     json.serialize("storageLayout", parsedArtifact.at('"storageLayout"').value());
     json.serialize("bytecode", parsedArtifact.at('"bytecode"').at('"object"').value());
+    string memory deployedBytecode = parsedArtifact.at('"deployedBytecode"').at('"object"').value();
+
+    require(
+      info.addr.codehash == keccak256(vm.parseBytes(deployedBytecode.decodeString())),
+      "LibArtifact: Deployed bytecode hash mismatch"
+    );
+
+    json.serialize("deployedBytecode", deployedBytecode);
 
     json = json.serialize("deployedBytecode", parsedArtifact.at('"deployedBytecode"').at('"object"').value());
   }
