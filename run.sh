@@ -77,6 +77,7 @@ export_address() {
 }
 
 export_address
+forge build # Ensure the contracts are compiled before running the script
 
 index=0
 
