@@ -8,6 +8,7 @@ usage() {
     echo "Options:"
     echo " --no-postcheck: Disable post-check"
     echo " --sender: Specify the default sender address"
+    echo " --force-generate-artifact: Force generate artifact"
 
     exit 1
 }
@@ -126,7 +127,7 @@ for arg in "$@"; do
         ;;
     --help)
         usage
-        exist 0
+        exist 1
         ;;
     *) ;;
     esac
