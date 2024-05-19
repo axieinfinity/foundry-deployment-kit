@@ -25,6 +25,7 @@ op_command=""
 network_name=""
 is_broadcast=false
 should_verify=false
+force_generate_artifact=false
 
 export_address() {
     index=0
@@ -77,6 +78,8 @@ export_address() {
 }
 
 export_address
+
+echo "\033[33mTrying to compile contracts ...\033[0m"
 forge build # Ensure the contracts are compiled before running the script
 
 index=0
@@ -116,6 +119,11 @@ for arg in "$@"; do
         sender=${@:index+2:1}
         extra_argument+="sender.${sender}@"
         ;;
+    --force-generate-artifact)
+        force_generate_artifact=true
+
+        set -- "${@/#--force-generate-artifact/}"
+        ;;
     --help)
         usage
         exist 0
@@ -127,7 +135,11 @@ done
 
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
-if [[ $should_verify == true ]]; then
+if [[ $force_generate_artifact == true ]]; then
+    extra_argument+=generate-artifact@
+fi
+
+if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
     extra_argument+=generate-artifact@
 fi
 
@@ -149,10 +161,9 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
     fi
 fi
 
-calldata=$(cast calldata 'run()')
 start_time=$(date +%s)
 
-${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
+${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
 
 # Check if the command was successful
 if [ $? -eq 0 ]; then

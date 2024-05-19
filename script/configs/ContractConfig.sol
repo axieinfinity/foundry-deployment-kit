@@ -149,7 +149,14 @@ abstract contract ContractConfig is IContractConfig {
 
     for (uint256 i; i < deployments.length; ++i) {
       uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
-      string memory exportedAddress = vm.readFile(string.concat(deployments[i].path, "/exported_address"));
+      string memory exportedAddress;
+      try vm.readFile(string.concat(deployments[i].path, "/exported_address")) returns (string memory data) {
+        exportedAddress = data;
+      } catch {
+        console.log("ContractConfig:", "No exported_address file found for folder", deployments[i].path, "skip loading");
+        continue;
+      }
+
       if (bytes(exportedAddress).length == 0) continue;
 
       string[] memory entries = exportedAddress.split("\n");
