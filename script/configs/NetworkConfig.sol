@@ -14,7 +14,7 @@ abstract contract NetworkConfig is INetworkConfig {
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
   IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);
-  
+
   uint256 private constant NULL_FORK_ID = uint256(keccak256("NULL_FORK_ID"));
 
   string private _deploymentRoot;
@@ -92,10 +92,10 @@ abstract contract NetworkConfig is INetworkConfig {
 
     try vm.activeFork() returns (uint256 forkId) {
       currentFork = forkId;
-    } catch { }
 
-    // return current fork if chainId is the same as the current chain id
-    if (chainId == block.chainid) return currentFork;
+      // return current fork if chainId is the same as the current chain id
+      if (chainId == block.chainid) return currentFork;
+    } catch { }
 
     // return NULL_FORK_ID if fork mode is not enabled
     if (!_isForkModeEnabled) return NULL_FORK_ID;

@@ -37,6 +37,7 @@ struct UpgradeInfo {
   ProxyInterface proxyInterface;
   function(address,address,uint256,bytes memory,ProxyInterface) external upgradeCallback;
   bool shouldUseCallback;
+  bool shouldPrompt;
 }
 
 using LibDeploy for DeployInfo global;
@@ -47,13 +48,13 @@ library LibDeploy {
   using LibProxy for address;
   using LibProxy for address payable;
 
-  modifier validateUpgrade(address proxy, address newImpl) {
+  modifier validateUpgrade(address proxy, address newImpl, bool shouldPrompt) {
     require(newImpl != address(0x0), "LibDeploy: Logic address is 0x0.");
 
     address prevProxyAdmin = proxy.getProxyAdmin();
     address prevImpl = proxy.getProxyImplementation();
 
-    if (prevImpl.codehash == newImpl.codehash) {
+    if (prevImpl.codehash == newImpl.codehash && shouldPrompt) {
       string memory answer = vm.prompt(
         string.concat(
           "Proxy: ",
@@ -85,7 +86,13 @@ library LibDeploy {
   function upgrade(UpgradeInfo memory info) internal {
     if (info.proxyInterface == ProxyInterface.Transparent) {
       upgradeTransparentProxy(
-        info.proxy, info.logic, info.callValue, info.callData, info.upgradeCallback, info.shouldUseCallback
+        info.proxy,
+        info.logic,
+        info.callValue,
+        info.callData,
+        info.shouldPrompt,
+        info.upgradeCallback,
+        info.shouldUseCallback
       );
     } else {
       revert("LibDeploy: Unsupported proxy interface for now.");
@@ -97,9 +104,10 @@ library LibDeploy {
     address logic,
     uint256 callValue,
     bytes memory callData,
+    bool shouldPrompt,
     function(address,address,uint256,bytes memory,ProxyInterface) external upgradeCallback,
     bool shouldUseCallback
-  ) internal validateUpgrade(proxy, logic) {
+  ) internal validateUpgrade(proxy, logic, shouldPrompt) {
     if (shouldUseCallback) {
       upgradeCallback(proxy, logic, callValue, callData, ProxyInterface.Transparent);
     } else {
@@ -109,15 +117,14 @@ library LibDeploy {
 
   function _tryUpgradeTransparentProxy(address proxy, address logic, uint256 callValue, bytes memory callData) private {
     (address auth, address interactTo) = findHierarchyAdminOfProxy(proxy);
-    bool isViaAuxiliary = auth != proxy;
-    bytes memory data;
+    bool isViaAuxiliary = interactTo != proxy;
 
     if (isViaAuxiliary) {
-      data = callData.length == 0
+      callData = callData.length == 0
         ? abi.encodeCall(ProxyAdmin.upgrade, (ITransparentUpgradeableProxy(proxy), logic))
         : abi.encodeCall(ProxyAdmin.upgradeAndCall, (ITransparentUpgradeableProxy(proxy), logic, callData));
     } else {
-      data = callData.length == 0
+      callData = callData.length == 0
         ? abi.encodeCall(ITransparentUpgradeableProxy.upgradeTo, (logic))
         : abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (logic, callData));
     }

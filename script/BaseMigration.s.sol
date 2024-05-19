@@ -26,6 +26,20 @@ abstract contract BaseMigration is ScriptExtended {
     _injectDependencies();
   }
 
+  function upgradeCallback(
+    address, /* proxy */
+    address, /* logic */
+    uint256, /* callValue */
+    bytes memory, /* callData */
+    ProxyInterface /* proxyInterface */
+  ) external virtual { }
+
+  function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
+
+  function _injectDependencies() internal virtual { }
+
+  function _defaultArguments() internal virtual returns (bytes memory) { }
+
   function switchTo(TNetwork networkType, uint256 forkBlockNumber)
     public
     virtual
@@ -54,12 +68,6 @@ abstract contract BaseMigration is ScriptExtended {
   function _storeRawSharedArguments() internal virtual {
     vme.setRawSharedArguments(_sharedArguments());
   }
-
-  function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
-
-  function _injectDependencies() internal virtual { }
-
-  function _defaultArguments() internal virtual returns (bytes memory) { }
 
   function overrideArgs(bytes memory args) public virtual returns (IMigrationScript) {
     _overriddenArgs = args;
@@ -251,19 +259,12 @@ abstract contract BaseMigration is ScriptExtended {
       logic: logic,
       callValue: 0,
       callData: args,
+      shouldPrompt: true,
       proxyInterface: ProxyInterface.Transparent,
       upgradeCallback: this.upgradeCallback,
       shouldUseCallback: false
     }).upgrade();
   }
-
-  function upgradeCallback(
-    address, /* proxy */
-    address, /* logic */
-    uint256, /* callValue */
-    bytes memory, /* callData */
-    ProxyInterface /* proxyInterface */
-  ) external virtual { }
 
   function _setDependencyDeployScript(TContract contractType, IScriptExtended deployScript) internal virtual {
     _setDependencyDeployScript(contractType, address(deployScript));
