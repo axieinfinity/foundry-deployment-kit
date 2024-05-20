@@ -33,7 +33,7 @@ function chainId(DefaultNetwork defaultNetwork) pure returns (uint256) {
 }
 
 function blockTime(DefaultNetwork defaultNetwork) pure returns (uint256) {
-  if (defaultNetwork == DefaultNetwork.Local) return 1;
+  if (defaultNetwork == DefaultNetwork.Local) return 3;
   if (defaultNetwork == DefaultNetwork.RoninMainnet) return 3;
   if (defaultNetwork == DefaultNetwork.RoninTestnet) return 3;
   revert("DefaultNetwork: Unknown block time");
