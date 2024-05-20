@@ -11,7 +11,7 @@ contract TransparentProxyV2 is TransparentUpgradeableProxy {
    * @param admin The address of the admin contract.
    * @param data The initialization data.
    */
-  constructor(address logic, address admin, bytes memory data) TransparentUpgradeableProxy(logic, admin, data) { }
+  constructor(address logic, address admin, bytes memory data) payable TransparentUpgradeableProxy(logic, admin, data) { }
 
   /**
    * @dev Calls a function from the current implementation as specified by `data`, which should be an encoded function call.
