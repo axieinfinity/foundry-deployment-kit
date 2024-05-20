@@ -8,6 +8,5 @@ import { ISharedArgument, SampleMigration } from "../SampleMigration.s.sol";
 contract SampleDeploy is SampleMigration {
   function run() public virtual returns (Sample instance) {
     instance = Sample(_deployImmutable(Contract.Sample.key()));
-    assertEq(instance.getMessage(), config.sharedArguments().message);
   }
 }

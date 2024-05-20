@@ -51,7 +51,7 @@ function envLabel(DefaultNetwork defaultNetwork) pure returns (string memory) {
 }
 
 function chainAlias(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "local";
+  if (defaultNetwork == DefaultNetwork.Local) return "localhost";
   if (defaultNetwork == DefaultNetwork.RoninTestnet) return "ronin-testnet";
   if (defaultNetwork == DefaultNetwork.RoninMainnet) return "ronin-mainnet";
   revert("DefaultNetwork: Unknown network alias");

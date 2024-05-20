@@ -8,6 +8,7 @@ import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork } from "../types/Types.sol";
+import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 
 abstract contract RuntimeConfig is IRuntimeConfig {
   using LibString for string;
@@ -33,6 +34,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
 
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
+
+    _option.network = DefaultNetwork.Local.key();
+
     if (bytes(command).length != 0) {
       string[] memory args = command.split("@");
       uint256 length = args.length;

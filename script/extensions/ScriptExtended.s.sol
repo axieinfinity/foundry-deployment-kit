@@ -46,7 +46,13 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     vme.resolveCommand(command);
 
     IRuntimeConfig.Option memory runtimeConfig = vme.getRuntimeConfig();
-    switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+
+    console.log("Current network", network().networkName());
+    console.log("Runtime network", runtimeConfig.network.networkName());
+
+    if (runtimeConfig.network != network()) {
+      switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+    }
 
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);

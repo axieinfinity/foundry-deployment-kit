@@ -151,9 +151,14 @@ contract BaseGeneralConfig is
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
     } else {
-      string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
-      _loadENVAccount(envLabel);
-      label(block.chainid, _envSender, "ENVSender");
+      if (getCurrentNetwork() == DefaultNetwork.Local.key()) {
+        _envSender = DEFAULT_SENDER;
+        label(block.chainid, _envSender, "DefaultLocalSender");
+      } else {
+        string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
+        _loadENVAccount(envLabel);
+        label(block.chainid, _envSender, "ENVSender");
+      }
     }
   }
 }
