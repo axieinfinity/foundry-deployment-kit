@@ -58,7 +58,7 @@ export_address() {
                     # Check if contractName and address are not empty
                     if [ -n "$contractName" ]; then
                         # Write to file the contractName and address
-                        echo "$contractName@$contractAddress" >>"$folder"/exported_address
+                        echo "$contractName.json@$contractAddress" >>"$folder"/exported_address
                     else
                         echo "Error: Missing contractName or address in $file"
                     fi
