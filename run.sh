@@ -27,11 +27,11 @@ network_name=""
 is_broadcast=false
 should_verify=false
 force_generate_artifact=false
+# Define the deployments folder by concatenating it with the child folder
+root="deployments/"
 
 export_address() {
     index=0
-    # Define the deployments folder by concatenating it with the child folder
-    root="deployments/"
 
     start_time=$(date +%s)
 
@@ -171,7 +171,7 @@ if [ $? -eq 0 ]; then
     if [[ $should_verify == true ]]; then
         if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
             echo "Verifying contract..."
-            op run --env-file="./.env" -- yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
         fi
     fi
 fi
