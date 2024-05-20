@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { VmSafe } from "../../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console, Script } from "../../lib/forge-std/src/Script.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
@@ -35,7 +36,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   }
 
   constructor() {
-    setUp();
+    if (vm.isContext(VmSafe.ForgeContext.Test)) setUp();
   }
 
   function setUp() public virtual {

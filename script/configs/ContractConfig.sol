@@ -161,7 +161,6 @@ abstract contract ContractConfig is IContractConfig {
       string[] memory entries = exportedAddress.split("\n");
 
       for (uint256 j; j < entries.length; ++j) {
-        // string memory path = entries[j].path;
         string[] memory data = entries[j].split("@");
         if (data.length != 2) continue;
 
