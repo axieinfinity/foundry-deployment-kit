@@ -9,7 +9,7 @@ import { ProxyAdmin } from "../../lib/openzeppelin-contracts/contracts/proxy/tra
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console } from "../../lib/forge-std/src/console.sol";
 import { vm, vme } from "../utils/Constants.sol";
-import { prankOrBroadcast, sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
+import { sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
 import { LibProxy } from "./LibProxy.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
 import { ArtifactInfo } from "./LibArtifact.sol";
@@ -47,6 +47,18 @@ library LibDeploy {
   using StdStyle for string;
   using LibProxy for address;
   using LibProxy for address payable;
+
+  modifier prankOrBroadcast(address by) {
+    if (vme.isPostChecking()) {
+      vm.startPrank(by);
+      _;
+      vm.stopPrank();
+    } else {
+      vm.startBroadcast(by);
+      _;
+      vm.stopBroadcast();
+    }
+  }
 
   modifier validateUpgrade(address proxy, address newImpl, bool shouldPrompt) {
     require(newImpl != address(0x0), "LibDeploy: Logic address is 0x0.");
@@ -248,11 +260,7 @@ library LibDeploy {
 
     bytecode = abi.encodePacked(bytecode, constructorArgs);
 
-    prankOrBroadcast(by);
-
-    assembly ("memory-safe") {
-      deployed := create(callValue, add(bytecode, 0x20), mload(bytecode))
-    }
+    deployed = _deployRaw(callValue, bytecode, by);
 
     require(deployed != address(0x0), "LibDeploy: deployFromBytecode(bytes,bytes,uint256,address): Deployment failed.");
 
@@ -268,6 +276,16 @@ library LibDeploy {
       contractName: contractName,
       constructorArgs: constructorArgs
     }).generateArtifact();
+  }
+
+  function _deployRaw(uint256 callValue, bytes memory bytecode, address by)
+    private
+    prankOrBroadcast(by)
+    returns (address payable deployed)
+  {
+    assembly ("memory-safe") {
+      deployed := create(callValue, add(bytecode, 0x20), mload(bytecode))
+    }
   }
 
   function _precompileProxyContracts() private pure {
