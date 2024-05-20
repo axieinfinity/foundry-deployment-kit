@@ -169,7 +169,7 @@ abstract contract ContractConfig is IContractConfig {
         string memory contractName = data[0];
         address contractAddr = vm.parseAddress(data[1]);
 
-        string memory suffix = contractName.endsWith("Proxy") ? "Proxy" : "";
+        string memory suffix = contractName.endsWith("Proxy.json") ? "Proxy.json" : ".json";
 
         // remove suffix
         contractName = vm.replace(contractName, suffix, "");

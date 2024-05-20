@@ -66,8 +66,8 @@ library LibDeploy {
     address prevProxyAdmin = proxy.getProxyAdmin();
     address prevImpl = proxy.getProxyImplementation();
 
-    if (prevImpl.codehash == newImpl.codehash && shouldPrompt) {
-      string memory answer = vm.prompt(
+    if (prevImpl.codehash == newImpl.codehash && shouldPrompt && !vme.isPostChecking()) {
+      try vm.prompt(
         string.concat(
           "Proxy: ",
           vm.getLabel(proxy),
@@ -77,11 +77,17 @@ library LibDeploy {
           vm.toString(newImpl),
           "\nDo you want to continue? (y/n)"
         )
-      );
-
-      if (keccak256(bytes(answer)) != keccak256("y")) {
-        console.log(string.concat("Cancel upgrade for ", vm.getLabel(proxy)).yellow());
-        return;
+      ) returns (string memory answer) {
+        if (keccak256(bytes(answer)) != keccak256("y")) {
+          console.log(string.concat("Cancel upgrade for ", vm.getLabel(proxy)).yellow());
+          return;
+        }
+      } catch {
+        console.log(
+          string.concat(
+            "WARNING: Re-upgrading contract with similar logic as current implementation ", vm.getLabel(proxy)
+          ).yellow()
+        );
       }
     }
 
