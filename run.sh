@@ -100,11 +100,15 @@ for arg in "$@"; do
         ;;
     -f | --fork-url)
         network_name=${@:index+2:1}
-        extra_argument+="network.${network_name}@"
+        # skip if network_name is localhost
+        if [[ $network_name != "localhost" ]]; then
+            extra_argument+="network.${network_name}@"
 
-        set -- "${@/#-f/}"
-        set -- "${@/#--fork-url/}"
-        set -- "${@/#$network_name/}"
+            set -- "${@/#-f/}"
+            set -- "${@/#--fork-url/}"
+            set -- "${@/#$network_name/}"
+        fi
+
         ;;
     --fork-block-number)
         fork_block_number=${@:index+2:1}

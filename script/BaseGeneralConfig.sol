@@ -54,30 +54,9 @@ contract BaseGeneralConfig is
   function _setUpSender() internal virtual { }
 
   function _setUpDefaultNetworks() private {
-    setNetworkInfo(
-      DefaultNetwork.Local.chainId(),
-      DefaultNetwork.Local.key(),
-      DefaultNetwork.Local.chainAlias(),
-      DefaultNetwork.Local.deploymentDir(),
-      DefaultNetwork.Local.envLabel(),
-      DefaultNetwork.Local.explorer()
-    );
-    setNetworkInfo(
-      DefaultNetwork.RoninTestnet.chainId(),
-      DefaultNetwork.RoninTestnet.key(),
-      DefaultNetwork.RoninTestnet.chainAlias(),
-      DefaultNetwork.RoninTestnet.deploymentDir(),
-      DefaultNetwork.RoninTestnet.envLabel(),
-      DefaultNetwork.RoninTestnet.explorer()
-    );
-    setNetworkInfo(
-      DefaultNetwork.RoninMainnet.chainId(),
-      DefaultNetwork.RoninMainnet.key(),
-      DefaultNetwork.RoninMainnet.chainAlias(),
-      DefaultNetwork.RoninMainnet.deploymentDir(),
-      DefaultNetwork.RoninMainnet.envLabel(),
-      DefaultNetwork.RoninMainnet.explorer()
-    );
+    setNetworkInfo(DefaultNetwork.Local.data());
+    setNetworkInfo(DefaultNetwork.RoninTestnet.data());
+    setNetworkInfo(DefaultNetwork.RoninMainnet.data());
 
     _setUpNetworks();
   }

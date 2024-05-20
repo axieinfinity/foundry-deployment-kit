@@ -5,21 +5,16 @@ import { TNetwork } from "../../types/Types.sol";
 
 interface INetworkConfig {
   struct NetworkData {
+    TNetwork network;
     uint256 chainId;
+    uint256 blockTime;
     string chainAlias;
     string deploymentDir;
     string privateKeyEnvLabel;
     string explorer;
   }
 
-  function setNetworkInfo(
-    uint256 chainId,
-    TNetwork network,
-    string calldata chainAlias,
-    string calldata deploymentDir,
-    string calldata privateKeyEnvLabel,
-    string calldata explorer
-  ) external;
+  function setNetworkInfo(NetworkData memory networkData) external;
 
   function setForkMode(bool shouldEnable) external;
 
@@ -44,6 +39,16 @@ interface INetworkConfig {
     returns (uint256);
 
   function switchTo(uint256 forkId) external;
+
+  function logCurrentForkInfo() external view;
+
+  function rollUpTo(uint256 tilBlockNumber) external;
+
+  function roll(uint256 numBlock) external;
+
+  function warp(uint256 numSecond) external;
+
+  function warpUpTo(uint256 tilTimestamp) external;
 
   function getDeploymentDirectory(TNetwork network) external view returns (string memory dirPath);
 
