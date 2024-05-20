@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { TransparentUpgradeableProxy } from
-  "lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+  "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract TransparentProxyV2 is TransparentUpgradeableProxy {
   /**
