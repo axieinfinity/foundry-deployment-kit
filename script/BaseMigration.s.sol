@@ -10,6 +10,7 @@ import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { ProxyInterface, LibDeploy, DeployInfo, UpgradeInfo } from "./libraries/LibDeploy.sol";
+import { cheatBroadcast } from "./utils/Helpers.sol";
 import { TContract, TNetwork } from "./types/Types.sol";
 
 abstract contract BaseMigration is ScriptExtended {
@@ -76,6 +77,10 @@ abstract contract BaseMigration is ScriptExtended {
 
   function arguments() public virtual returns (bytes memory args) {
     args = _overriddenArgs.length == 0 ? _defaultArguments() : _overriddenArgs;
+  }
+
+  function _cheatBroadcast(address from, address to, bytes memory callData) internal virtual {
+    cheatBroadcast(from, to, 0, callData);
   }
 
   function _getProxyAdmin() internal virtual returns (address payable proxyAdmin) {
