@@ -51,6 +51,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     if (runtimeConfig.network != network()) {
       switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
     } else {
+      vm.warp(_bound(vm.getBlockTimestamp(), vm.unixTime() / 1_000, type(uint40).max));
       if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
       vme.logSenderInfo();
       vme.logCurrentForkInfo();

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { StdStorage, stdStorage } from "../../lib/forge-std/src/StdStorage.sol";
 import { stdJson } from "../../lib/forge-std/src/StdJson.sol";
 import { console } from "../../lib/forge-std/src/console.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
@@ -19,6 +20,34 @@ using stdJson for string;
 using LibErrorHandler for bool;
 using JSONParserLib for string;
 using JSONParserLib for JSONParserLib.Item;
+using stdStorage for StdStorage;
+
+// // Set the balance of an account for any ERC20 token
+// // Use the alternative signature to update `totalSupply`
+// function deal(address token, address to, uint256 give) {
+//   deal(token, to, give, false);
+// }
+
+// function deal(address token, address to, uint256 give, bool adjust) {
+//   // get current balance
+//   (, bytes memory balData) = token.staticcall(abi.encodeWithSelector(0x70a08231, to));
+//   uint256 prevBal = abi.decode(balData, (uint256));
+
+//   // update balance
+//   stdstore.target(token).sig(0x70a08231).with_key(to).checked_write(give);
+
+//   // update total supply
+//   if (adjust) {
+//     (, bytes memory totSupData) = token.staticcall(abi.encodeWithSelector(0x18160ddd));
+//     uint256 totSup = abi.decode(totSupData, (uint256));
+//     if (give < prevBal) {
+//       totSup -= (prevBal - give);
+//     } else {
+//       totSup += (give - prevBal);
+//     }
+//     stdstore.target(token).sig(0x18160ddd).checked_write(totSup);
+//   }
+// }
 
 function logDecodedError(bytes memory returnOrRevertData) {
   if (returnOrRevertData.length != 0) {
