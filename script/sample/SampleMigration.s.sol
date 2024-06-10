@@ -7,7 +7,7 @@ import { SampleGeneralConfig } from "./SampleGeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
 
 contract SampleMigration is BaseMigration {
-  ISharedArgument public constant config = ISharedArgument(address(CONFIG));
+  ISharedArgument public constant config = ISharedArgument(address(vme));
 
   function _configByteCode() internal virtual override returns (bytes memory) {
     return abi.encodePacked(type(SampleGeneralConfig).creationCode);

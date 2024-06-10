@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { TNetwork } from "../types/Types.sol";
+import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 
 enum DefaultNetwork {
   Local,
@@ -10,13 +11,32 @@ enum DefaultNetwork {
   RoninMainnet
 }
 
-using { key, name, chainId, chainAlias, envLabel, deploymentDir, explorer } for DefaultNetwork global;
+using { key, name, chainId, chainAlias, envLabel, deploymentDir, explorer, data } for DefaultNetwork global;
+
+function data(DefaultNetwork defaultNetwork) pure returns (INetworkConfig.NetworkData memory) {
+  return INetworkConfig.NetworkData({
+    network: key(defaultNetwork),
+    chainId: chainId(defaultNetwork),
+    blockTime: blockTime(defaultNetwork),
+    chainAlias: chainAlias(defaultNetwork),
+    deploymentDir: deploymentDir(defaultNetwork),
+    privateKeyEnvLabel: envLabel(defaultNetwork),
+    explorer: explorer(defaultNetwork)
+  });
+}
 
 function chainId(DefaultNetwork defaultNetwork) pure returns (uint256) {
   if (defaultNetwork == DefaultNetwork.Local) return 31337;
   if (defaultNetwork == DefaultNetwork.RoninMainnet) return 2020;
   if (defaultNetwork == DefaultNetwork.RoninTestnet) return 2021;
   revert("DefaultNetwork: Unknown chain id");
+}
+
+function blockTime(DefaultNetwork defaultNetwork) pure returns (uint256) {
+  if (defaultNetwork == DefaultNetwork.Local) return 3;
+  if (defaultNetwork == DefaultNetwork.RoninMainnet) return 3;
+  if (defaultNetwork == DefaultNetwork.RoninTestnet) return 3;
+  revert("DefaultNetwork: Unknown block time");
 }
 
 function explorer(DefaultNetwork defaultNetwork) pure returns (string memory link) {
@@ -51,7 +71,7 @@ function envLabel(DefaultNetwork defaultNetwork) pure returns (string memory) {
 }
 
 function chainAlias(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "local";
+  if (defaultNetwork == DefaultNetwork.Local) return "localhost";
   if (defaultNetwork == DefaultNetwork.RoninTestnet) return "ronin-testnet";
   if (defaultNetwork == DefaultNetwork.RoninMainnet) return "ronin-mainnet";
   revert("DefaultNetwork: Unknown network alias");

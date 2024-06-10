@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { VmSafe } from "../../lib/forge-std/src/Vm.sol";
 import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
 import { console, Script } from "../../lib/forge-std/src/Script.sol";
-import { stdStorage, StdStorage } from "../../lib/forge-std/src/StdStorage.sol";
 import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
-import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
+import { IVme } from "../interfaces/IVme.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
-import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
+import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { TContract } from "../types/Types.sol";
+import { TContract } from "../types/TContract.sol";
+import { TNetwork } from "../types/TNetwork.sol";
+import { logInnerCall, deploySharedAddress } from "../utils/Helpers.sol";
+import { BaseScriptExtended } from "./BaseScriptExtended.s.sol";
 
-abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
+abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, IScriptExtended {
   using StdStyle for *;
   using LibErrorHandler for bool;
 
-  bytes public constant EMPTY_ARGS = "";
-  IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
-
   modifier logFn(string memory fnName) {
-    _logFn(fnName);
+    logInnerCall(fnName);
     _;
   }
 
@@ -36,92 +36,51 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
   }
 
   constructor() {
-    setUp();
+    if (vm.isContext(VmSafe.ForgeContext.Test)) setUp();
   }
 
   function setUp() public virtual {
-    deploySharedAddress(address(CONFIG), _configByteCode(), "GeneralConfig");
+    deploySharedAddress(address(vme), _configByteCode(), "VME");
   }
 
-  function _configByteCode() internal virtual returns (bytes memory);
-
-  function _postCheck() internal virtual { }
-
   function run(bytes calldata callData, string calldata command) public virtual {
-    CONFIG.resolveCommand(command);
+    vme.resolveCommand(command);
 
-    IRuntimeConfig.Option memory runtimeConfig = CONFIG.getRuntimeConfig();
-    switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+    IRuntimeConfig.Option memory runtimeConfig = vme.getRuntimeConfig();
+
+    if (runtimeConfig.network != network()) {
+      switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+    } else {
+      vm.warp(_bound(vm.getBlockTimestamp(), vm.unixTime() / 1_000, type(uint40).max));
+      if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
+      vme.logSenderInfo();
+      vme.logCurrentForkInfo();
+    }
 
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
 
-    if (CONFIG.getRuntimeConfig().disablePostcheck) {
+    if (vme.getRuntimeConfig().disablePostcheck) {
       console.log("\nPostchecking is disabled.".yellow());
       return;
     }
 
     console.log("\n>> Postchecking...".yellow());
     uint256 start = vm.unixTime();
-    CONFIG.setPostCheckingStatus({ status: true });
+    vme.setPostCheckingStatus({ status: true });
     _postCheck();
-    CONFIG.setPostCheckingStatus({ status: false });
+    vme.setPostCheckingStatus({ status: false });
     uint256 end = vm.unixTime();
-    console.log("Postchecking completed in", vm.toString(end - start), "seconds.");
+    console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
   }
 
-  function network() public view virtual returns (TNetwork) {
-    return CONFIG.getCurrentNetwork();
-  }
-
-  function forkId() public view virtual returns (uint256) {
-    return CONFIG.getForkId(network());
-  }
-
-  function sender() public view virtual returns (address payable) {
-    return CONFIG.getSender();
-  }
-
-  function fail() internal override {
-    super.fail();
-    revert("ScriptExtended: Got failed assertion");
-  }
-
-  function deploySharedAddress(address where, bytes memory bytecode, string memory label) public {
-    if (where.code.length == 0) {
-      vm.makePersistent(where);
-      vm.allowCheatcodes(where);
-      deployCodeTo(bytecode, where);
-      if (bytes(label).length != 0) vm.label(where, label);
-    }
+  function _requireOn(TNetwork networkType) private view {
+    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType)));
   }
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
     deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
-  }
-
-  function deployCodeTo(bytes memory creationCode, address where) internal {
-    deployCodeTo(EMPTY_ARGS, creationCode, 0, where);
-  }
-
-  function deployCodeTo(bytes memory creationCode, uint256 value, address where) internal {
-    deployCodeTo(EMPTY_ARGS, creationCode, value, where);
-  }
-
-  function deployCodeTo(bytes memory args, bytes memory creationCode, uint256 value, address where) internal {
-    vm.etch(where, abi.encodePacked(creationCode, args));
-    (bool success, bytes memory runtimeBytecode) = where.call{ value: value }("");
-    assertTrue(success, "ScriptExtended: Failed to create runtime bytecode.");
-    vm.etch(where, runtimeBytecode);
-  }
-
-  function _logFn(string memory fnName) private view {
-    console.log("> ", StdStyle.blue(fnName), "...");
-  }
-
-  function _requireOn(TNetwork networkType) private view {
-    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
   }
 
   function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
@@ -136,14 +95,31 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     prevForkId = forkId();
     prevNetwork = network();
 
-    CONFIG.createFork(networkType, forkBlockNumber);
-    CONFIG.switchTo(networkType, forkBlockNumber);
+    vme.createFork(networkType, forkBlockNumber);
+    vme.switchTo(networkType, forkBlockNumber);
   }
 
   function switchBack(TNetwork prevNetwork, uint256 prevForkId) public virtual {
-    try CONFIG.switchTo(prevForkId) { }
+    try vme.switchTo(prevForkId) { }
     catch {
-      CONFIG.switchTo(prevNetwork);
+      vme.switchTo(prevNetwork);
     }
   }
+
+  function fail() internal override {
+    super.fail();
+    revert("ScriptExtended: Got failed assertion");
+  }
+
+  function prankOrBroadcast(address to) internal virtual {
+    if (vme.isPostChecking()) {
+      vm.prank(to);
+    } else {
+      vm.broadcast(to);
+    }
+  }
+
+  function _configByteCode() internal virtual returns (bytes memory);
+
+  function _postCheck() internal virtual { }
 }

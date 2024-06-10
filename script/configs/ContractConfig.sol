@@ -12,7 +12,7 @@ import { TContract } from "../types/Types.sol";
 
 abstract contract ContractConfig is IContractConfig {
   using LibString for *;
-  using StdStyle for string;
+  using StdStyle for *;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
@@ -123,6 +123,8 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function _storeDeploymentData(string memory deploymentRoot) internal virtual {
+    uint256 start = vm.unixTime();
+
     VmSafe.DirEntry[] memory deployments;
     try vm.exists(deploymentRoot) returns (bool exists) {
       if (!exists) {
@@ -145,39 +147,43 @@ abstract contract ContractConfig is IContractConfig {
       return;
     }
 
-    for (uint256 i; i < deployments.length;) {
-      VmSafe.DirEntry[] memory entries = vm.readDir(deployments[i].path);
+    for (uint256 i; i < deployments.length; ++i) {
       uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
-
-      for (uint256 j; j < entries.length;) {
-        string memory path = entries[j].path;
-
-        if (path.endsWith(".json")) {
-          string[] memory splitteds = path.split("/");
-          string memory contractName = splitteds[splitteds.length - 1];
-          string memory suffix = path.endsWith("Proxy.json") ? "Proxy.json" : ".json";
-          // remove suffix
-          contractName = contractName.replace(suffix, "");
-          string memory json = vm.readFile(path);
-          address contractAddr = vm.parseJsonAddress(json, ".address");
-          label(chainId, contractAddr, contractName);
-
-          // filter out logic deployments
-          if (!path.endsWith("Logic.json")) {
-            _contractAddrSet[chainId].add(contractAddr);
-            _contractAddrMap[chainId][contractName] = contractAddr;
-            _contractTypeMap[chainId][contractAddr] = TContract.wrap(contractName.packOne());
-          }
-        }
-
-        unchecked {
-          ++j;
-        }
+      string memory exportedAddress;
+      try vm.readFile(string.concat(deployments[i].path, "/exported_address")) returns (string memory data) {
+        exportedAddress = data;
+        if (bytes(exportedAddress).length == 0) continue;
+      } catch {
+        console.log("ContractConfig:", "No exported_address file found for folder", deployments[i].path, "skip loading");
+        continue;
       }
 
-      unchecked {
-        ++i;
+      string[] memory entries = exportedAddress.split("\n");
+
+      for (uint256 j; j < entries.length; ++j) {
+        string[] memory data = entries[j].split("@");
+        if (data.length != 2) continue;
+
+        string memory contractName = data[0];
+        address contractAddr = vm.parseAddress(data[1]);
+
+        string memory suffix = contractName.endsWith("Proxy.json") ? "Proxy.json" : ".json";
+
+        // remove suffix
+        contractName = vm.replace(contractName, suffix, "");
+
+        label(chainId, contractAddr, contractName);
+
+        // filter out logic deployments
+        if (!contractName.endsWith("Logic")) {
+          _contractAddrSet[chainId].add(contractAddr);
+          _contractAddrMap[chainId][contractName] = contractAddr;
+          _contractTypeMap[chainId][contractAddr] = TContract.wrap(contractName.packOne());
+        }
       }
     }
+
+    uint256 end = vm.unixTime();
+    console.log("ContractConfig:".blue(), "Deployment data loaded in", vm.toString(end - start), "milliseconds");
   }
 }

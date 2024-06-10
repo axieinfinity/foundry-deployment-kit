@@ -7,6 +7,7 @@ interface IRuntimeConfig {
   struct Option {
     bool trezor;
     TNetwork network;
+    address sender;
     bool generateArtifact;
     bool disablePostcheck;
     uint256 forkBlockNumber;

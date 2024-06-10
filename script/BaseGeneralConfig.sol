@@ -54,30 +54,9 @@ contract BaseGeneralConfig is
   function _setUpSender() internal virtual { }
 
   function _setUpDefaultNetworks() private {
-    setNetworkInfo(
-      DefaultNetwork.Local.chainId(),
-      DefaultNetwork.Local.key(),
-      DefaultNetwork.Local.chainAlias(),
-      DefaultNetwork.Local.deploymentDir(),
-      DefaultNetwork.Local.envLabel(),
-      DefaultNetwork.Local.explorer()
-    );
-    setNetworkInfo(
-      DefaultNetwork.RoninTestnet.chainId(),
-      DefaultNetwork.RoninTestnet.key(),
-      DefaultNetwork.RoninTestnet.chainAlias(),
-      DefaultNetwork.RoninTestnet.deploymentDir(),
-      DefaultNetwork.RoninTestnet.envLabel(),
-      DefaultNetwork.RoninTestnet.explorer()
-    );
-    setNetworkInfo(
-      DefaultNetwork.RoninMainnet.chainId(),
-      DefaultNetwork.RoninMainnet.key(),
-      DefaultNetwork.RoninMainnet.chainAlias(),
-      DefaultNetwork.RoninMainnet.deploymentDir(),
-      DefaultNetwork.RoninMainnet.envLabel(),
-      DefaultNetwork.RoninMainnet.explorer()
-    );
+    setNetworkInfo(DefaultNetwork.Local.data());
+    setNetworkInfo(DefaultNetwork.RoninTestnet.data());
+    setNetworkInfo(DefaultNetwork.RoninMainnet.data());
 
     _setUpNetworks();
   }
@@ -142,10 +121,20 @@ contract BaseGeneralConfig is
     if (_option.trezor) {
       _loadTrezorAccount();
       label(block.chainid, _trezorSender, "TrezorSender");
+    } else if (_option.sender != address(0x0)) {
+      _envSender = _option.sender;
+      _trezorSender = _option.sender;
+
+      label(block.chainid, _option.sender, "OverrideSender");
     } else {
-      string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
-      _loadENVAccount(envLabel);
-      label(block.chainid, _envSender, "ENVSender");
+      if (getCurrentNetwork() == DefaultNetwork.Local.key()) {
+        _envSender = DEFAULT_SENDER;
+        label(block.chainid, _envSender, "DefaultLocalSender");
+      } else {
+        string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
+        _loadENVAccount(envLabel);
+        label(block.chainid, _envSender, "ENVSender");
+      }
     }
   }
 }

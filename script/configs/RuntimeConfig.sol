@@ -8,6 +8,7 @@ import { LibString } from "../../lib/solady/src/utils/LibString.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork } from "../types/Types.sol";
+import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 
 abstract contract RuntimeConfig is IRuntimeConfig {
   using LibString for string;
@@ -33,6 +34,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
 
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
+
+    _option.network = DefaultNetwork.Local.key();
+
     if (bytes(command).length != 0) {
       string[] memory args = command.split("@");
       uint256 length = args.length;
@@ -50,6 +54,11 @@ abstract contract RuntimeConfig is IRuntimeConfig {
         } else if (args[i].startsWith("fork-block-number")) {
           string memory blockNumber = vm.split(args[i], ".")[1];
           _option.forkBlockNumber = vm.parseUint(blockNumber);
+        } else if (args[i].startsWith("sender")) {
+          string memory sender = vm.split(args[i], ".")[1];
+          _option.sender = vm.parseAddress(sender);
+        } else {
+          console.log("Invalid command: %s", args[i]);
         }
       }
     }

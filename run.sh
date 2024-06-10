@@ -1,3 +1,23 @@
+# Function to display script usage
+usage() {
+    forge script --help
+
+    echo ""
+    echo "\033[33mFoundry Script Usage:\033[0m"
+    echo "Usage: $0 [forge_options] --no-postcheck --sender {sender_address} --force-generate-artifact"
+    echo "Options:"
+    echo " --no-postcheck: Disable post-check"
+    echo " --sender: Specify the default sender address"
+    echo " --force-generate-artifact: Force generate artifact"
+
+    exit 1
+}
+
+# Check if command-line arguments are provided
+if [ "$#" -eq 0 ]; then
+    usage
+fi
+
 verify_arg=""
 extra_argument=""
 
@@ -6,6 +26,64 @@ op_command=""
 network_name=""
 is_broadcast=false
 should_verify=false
+force_generate_artifact=false
+# Define the deployments folder by concatenating it with the child folder
+root="deployments/"
+
+export_address() {
+    index=0
+
+    start_time=$(date +%s)
+
+    for folder in "$root"/*; do
+        # If exported_address.toml exists, delete it
+        if [ -f "$folder"/exported_address ]; then
+            rm "$folder"/exported_address
+        fi
+
+        # Create a new exported_address file
+        touch "$folder"/exported_address
+
+        for file in "$folder"/*.json; do
+
+            # Check if the file exists and is a regular file
+            if [ -f "$file" ] && [ "$(basename "$file")" != ".chainId" ] && [ "$(basename "$file")" != "exported_address" ]; then
+                ((index++))
+                (
+                    # Extract address from the JSON file
+                    contractAddress=$(jq -r '.address' "$file")
+                    # Extract contractName from file name without the extension
+                    contractName=$(basename "$file" .json)
+
+                    # Check if contractName and address are not empty
+                    if [ -n "$contractName" ]; then
+                        # Write to file the contractName and address
+                        echo "$contractName.json@$contractAddress" >>"$folder"/exported_address
+                    else
+                        echo "Error: Missing contractName or address in $file"
+                    fi
+                ) &
+            fi
+
+            # Check if index is a multiple of 10, then wait
+            if [ $((index % 10)) -eq 0 ]; then
+                wait
+            fi
+        done
+    done
+
+    wait
+
+    end_time=$(date +%s)
+    echo "Export address in deployment folder: $((end_time - start_time)) seconds"
+}
+
+export_address
+
+echo "\033[33mTrying to compile contracts ...\033[0m"
+forge build # Ensure the contracts are compiled before running the script
+
+index=0
 
 for arg in "$@"; do
     case $arg in
@@ -22,11 +100,15 @@ for arg in "$@"; do
         ;;
     -f | --fork-url)
         network_name=${@:index+2:1}
-        extra_argument+="network.${network_name}@"
+        # skip if network_name is localhost
+        if [[ $network_name != "localhost" ]]; then
+            extra_argument+="network.${network_name}@"
 
-        set -- "${@/#-f/}"
-        set -- "${@/#--fork-url/}"
-        set -- "${@/#$network_name/}"
+            set -- "${@/#-f/}"
+            set -- "${@/#--fork-url/}"
+            set -- "${@/#$network_name/}"
+        fi
+
         ;;
     --fork-block-number)
         fork_block_number=${@:index+2:1}
@@ -38,6 +120,19 @@ for arg in "$@"; do
     --broadcast)
         is_broadcast=true
         ;;
+    --sender)
+        sender=${@:index+2:1}
+        extra_argument+="sender.${sender}@"
+        ;;
+    --force-generate-artifact)
+        force_generate_artifact=true
+
+        set -- "${@/#--force-generate-artifact/}"
+        ;;
+    --help)
+        usage
+        exist 1
+        ;;
     *) ;;
     esac
     index=$((index + 1))
@@ -45,7 +140,11 @@ done
 
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
-if [[ $should_verify == true ]]; then
+if [[ $force_generate_artifact == true ]]; then
+    extra_argument+=generate-artifact@
+fi
+
+if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
     extra_argument+=generate-artifact@
 fi
 
@@ -67,17 +166,16 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
     fi
 fi
 
-calldata=$(cast calldata 'run()')
 start_time=$(date +%s)
 
-${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
+${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
 
 # Check if the command was successful
 if [ $? -eq 0 ]; then
     if [[ $should_verify == true ]]; then
         if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
             echo "Verifying contract..."
-            ${op_command} yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
         fi
     fi
 fi
