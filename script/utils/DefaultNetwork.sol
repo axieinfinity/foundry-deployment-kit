@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { TNetwork } from "../types/Types.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 
@@ -57,10 +58,7 @@ function name(DefaultNetwork defaultNetwork) pure returns (string memory) {
 }
 
 function deploymentDir(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "local/";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "ronin-testnet/";
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "ronin-mainnet/";
-  revert("DefaultNetwork: Unknown network deployment directory");
+  return string.concat(chainAlias(defaultNetwork), "/");
 }
 
 function envLabel(DefaultNetwork defaultNetwork) pure returns (string memory) {

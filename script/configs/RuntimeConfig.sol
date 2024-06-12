@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork } from "../types/Types.sol";

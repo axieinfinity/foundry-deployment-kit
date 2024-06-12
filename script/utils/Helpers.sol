@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { StdStorage, stdStorage } from "../../lib/forge-std/src/StdStorage.sol";
-import { stdJson } from "../../lib/forge-std/src/StdJson.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
+import { StdStorage, stdStorage } from "../../dependencies/forge-std-1.8.2/src/StdStorage.sol";
+import { stdJson } from "../../dependencies/forge-std-1.8.2/src/StdJson.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
-import { JSONParserLib } from "../../lib/solady/src/utils/JSONParserLib.sol";
+import { LibErrorHandler } from "../../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { JSONParserLib } from "../../dependencies/solady-0.0.206/src/utils/JSONParserLib.sol";
 import { TContract } from "../types/TContract.sol";
 
 import { EMPTY_ARGS, vm, vme } from "./Constants.sol";
@@ -130,11 +131,11 @@ function loadContract(TContract contractType, bool shouldRevert) view returns (a
   }
 }
 
-function prankOrBroadcast(address account) {
+function prankOrBroadcast(address by) {
   if (vme.isPostChecking()) {
-    vm.prank(account);
+    vm.prank(by);
   } else {
-    vm.broadcast(account);
+    vm.broadcast(by);
   }
 }
 

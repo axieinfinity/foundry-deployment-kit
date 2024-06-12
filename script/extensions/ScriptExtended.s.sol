@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { VmSafe } from "../../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console, Script } from "../../lib/forge-std/src/Script.sol";
-import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
+import { VmSafe } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console, Script } from "../../dependencies/forge-std-1.8.2/src/Script.sol";
+import { StdAssertions } from "../../dependencies/forge-std-1.8.2/src/StdAssertions.sol";
 import { IVme } from "../interfaces/IVme.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
-import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "../../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";
@@ -36,7 +37,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   }
 
   constructor() {
-    if (vm.isContext(VmSafe.ForgeContext.Test)) setUp();
+    try vm.isContext(VmSafe.ForgeContext.Test) {
+      setUp();
+    } catch {
+      // Do nothing
+    }
   }
 
   function setUp() public virtual {
@@ -84,7 +89,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   }
 
   function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
-    (currNetwork, currForkId) = switchTo(networkType, 0);
+    (currNetwork, currForkId) = switchTo({ networkType: networkType, forkBlockNumber: 0 });
   }
 
   function switchTo(TNetwork networkType, uint256 forkBlockNumber)
@@ -111,11 +116,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function prankOrBroadcast(address to) internal virtual {
+  function prankOrBroadcast(address by) internal virtual {
     if (vme.isPostChecking()) {
-      vm.prank(to);
+      vm.prank(by);
     } else {
-      vm.broadcast(to);
+      vm.broadcast(by);
     }
   }
 

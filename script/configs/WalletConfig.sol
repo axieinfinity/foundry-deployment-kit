@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { CommonBase } from "../../lib/forge-std/src/Base.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { CommonBase } from "../../dependencies/forge-std-1.8.2/src/Base.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { IWalletConfig } from "../interfaces/configs/IWalletConfig.sol";
 
 abstract contract WalletConfig is CommonBase, IWalletConfig {
@@ -122,6 +123,14 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     commandInput[8] = filePath;
 
     sig = vm.ffi(commandInput);
+  }
+
+  function loadTrezorAccount() external {
+    _loadTrezorAccount();
+  }
+
+  function loadENVAccount(string calldata envLabel) external {
+    _loadENVAccount(envLabel);
   }
 
   function _loadTrezorAccount() internal {

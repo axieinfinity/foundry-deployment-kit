@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { TContract } from "../types/Types.sol";
 
 enum DefaultContract {

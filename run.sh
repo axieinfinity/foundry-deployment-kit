@@ -4,7 +4,7 @@ usage() {
 
     echo ""
     echo "\033[33mFoundry Script Usage:\033[0m"
-    echo "Usage: $0 [forge_options] --no-postcheck --sender {sender_address} --force-generate-artifact"
+    echo "Usage: $0 [forge_options] --no-postcheck|--np --sender {sender_address} --force-generate-artifact"
     echo "Options:"
     echo " --no-postcheck: Disable post-check"
     echo " --sender: Specify the default sender address"
@@ -78,19 +78,14 @@ export_address() {
     echo "Export address in deployment folder: $((end_time - start_time)) seconds"
 }
 
-export_address
-
-echo "\033[33mTrying to compile contracts ...\033[0m"
-forge build # Ensure the contracts are compiled before running the script
-
 index=0
 
 for arg in "$@"; do
     case $arg in
-    --trezor)
+    -t | --trezor)
         extra_argument+=trezor@
         ;;
-    --no-postcheck)
+    --np | --no-postcheck)
         set -- "${@/#--no-postcheck/}"
         extra_argument+=no-postcheck@
         ;;
@@ -129,7 +124,7 @@ for arg in "$@"; do
 
         set -- "${@/#--force-generate-artifact/}"
         ;;
-    --help)
+    -h | --help)
         usage
         exist 1
         ;;
@@ -137,6 +132,11 @@ for arg in "$@"; do
     esac
     index=$((index + 1))
 done
+
+export_address
+
+echo "\033[33mTrying to compile contracts ...\033[0m"
+forge build # Ensure the contracts are compiled before running the script
 
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
@@ -159,11 +159,17 @@ extra_argument="${extra_argument%%@}"
 
 ## Check if the private key is stored in the .env file
 if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]]; then
-    source .env
+    # Check if the .env file exists
+    if [ -f .env ]; then
+        source .env
 
-    if [[ $MAINNET_PK == op* ]] || [[ $TESTNET_PK == op* ]] || [[ $LOCAL_PK == op* ]]; then
-        op_command="op run --env-file="./.env" --"
+        if [[ $MAINNET_PK == op* ]] || [[ $TESTNET_PK == op* ]] || [[ $LOCAL_PK == op* ]]; then
+            op_command="op run --env-file="./.env" --"
+        fi
+    else
+        echo "WARNING: .env file not found"
     fi
+
 fi
 
 start_time=$(date +%s)

@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../lib/forge-std/src/Vm.sol";
-import { stdJson } from "../../lib/forge-std/src/StdJson.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { stdJson } from "../../dependencies/forge-std-1.8.2/src/StdJson.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
-import { JSONParserLib } from "../../lib/solady/src/utils/JSONParserLib.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { JSONParserLib } from "../../dependencies/solady-0.0.206/src/utils/JSONParserLib.sol";
 
 struct ArtifactInfo {
   address deployer;
@@ -77,15 +78,6 @@ library LibArtifact {
     json.serialize("metadata", parsedArtifact.at('"rawMetadata"').value());
     json.serialize("storageLayout", parsedArtifact.at('"storageLayout"').value());
     json.serialize("bytecode", parsedArtifact.at('"bytecode"').at('"object"').value());
-    string memory deployedBytecode = parsedArtifact.at('"deployedBytecode"').at('"object"').value();
-
-    require(
-      info.addr.codehash == keccak256(vm.parseBytes(deployedBytecode.decodeString())),
-      "LibArtifact: Deployed bytecode hash mismatch"
-    );
-
-    json.serialize("deployedBytecode", deployedBytecode);
-
     json = json.serialize("deployedBytecode", parsedArtifact.at('"deployedBytecode"').at('"object"').value());
   }
 

@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
-import { console } from "../lib/forge-std/src/console.sol";
+import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
 import { ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { BaseGeneralConfig } from "./BaseGeneralConfig.sol";
 import { sendRawTransaction } from "./utils/Helpers.sol";
-import { LibErrorHandler } from "../lib/contract-libs/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
 
 contract OnchainExecutor is ScriptExtended {
   using LibErrorHandler for bool;

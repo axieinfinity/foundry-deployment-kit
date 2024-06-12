@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../lib/forge-std/src/Vm.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
 
 library LibProxy {

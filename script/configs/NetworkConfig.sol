@@ -1,15 +1,17 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdChains } from "../../dependencies/forge-std-1.8.2/src/StdChains.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
 
-abstract contract NetworkConfig is INetworkConfig {
+abstract contract NetworkConfig is StdChains, INetworkConfig {
   using StdStyle for *;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
@@ -19,6 +21,7 @@ abstract contract NetworkConfig is INetworkConfig {
 
   string private _deploymentRoot;
   bool private _isForkModeEnabled;
+  TNetwork private _currentNetwork;
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
   mapping(uint256 chainId => TNetwork network) internal _networkMap;
   mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
@@ -141,7 +144,7 @@ abstract contract NetworkConfig is INetworkConfig {
         console.log(string.concat("NetworkConfig: ".blue(), chainAlias, " fork created with forkId:"), forkId);
         return forkId;
       } catch {
-        console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), rpcUrl);
+        console.log(StdStyle.red("NetworkConfig: Cannot create fork"), chainAlias, "with url:", rpcUrl);
         return NULL_FORK_ID;
       }
     } else {
@@ -155,7 +158,7 @@ abstract contract NetworkConfig is INetworkConfig {
 
         return forkId;
       } catch {
-        console.log(StdStyle.red("NetworkConfig: Cannot create fork with url:"), rpcUrl);
+        console.log(StdStyle.red("NetworkConfig: Cannot create fork"), chainAlias, "with url:", rpcUrl);
         return NULL_FORK_ID;
       }
     }
@@ -170,6 +173,7 @@ abstract contract NetworkConfig is INetworkConfig {
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
 
     vm.selectFork(forkId);
+    _currentNetwork = network;
 
     require(
       _networkDataMap[network].chainId == block.chainid,
@@ -187,18 +191,21 @@ abstract contract NetworkConfig is INetworkConfig {
   function switchTo(uint256 forkId) public virtual {
     vm.selectFork(forkId);
 
-    TNetwork currNetwork = _networkMap[block.chainid];
+    TNetwork currNetwork = getCurrentNetwork();
 
     _logCurrentForkInfo(_networkDataMap[currNetwork].chainAlias);
   }
 
   function getPrivateKeyEnvLabel(TNetwork network) public view virtual returns (string memory privateKeyEnvLabel) {
     privateKeyEnvLabel = _networkDataMap[network].privateKeyEnvLabel;
-    require(bytes(privateKeyEnvLabel).length != 0, "Network Config: ENV label not found");
+    require(
+      bytes(privateKeyEnvLabel).length != 0,
+      string.concat("Network Config: ENV label ", network.networkName(), " not found")
+    );
   }
 
   function getCurrentNetwork() public view virtual returns (TNetwork network) {
-    network = _networkMap[block.chainid];
+    network = _currentNetwork;
   }
 
   function getNetworkByChainId(uint256 chainId) public view virtual returns (TNetwork network) {
@@ -206,22 +213,22 @@ abstract contract NetworkConfig is INetworkConfig {
   }
 
   function logCurrentForkInfo() public view virtual {
-    TNetwork currNetwork = _networkMap[block.chainid];
-    _logCurrentForkInfo(_networkDataMap[currNetwork].chainAlias);
+    _logCurrentForkInfo(_networkDataMap[_currentNetwork].chainAlias);
   }
 
   function _logCurrentForkInfo(string memory chainAlias) internal view {
-    console.log(
-      string.concat(
-        "Network: ".blue(),
-        chainAlias.yellow(),
-        " - Block Number ".blue(),
-        vm.toString(vm.getBlockNumber()),
-        " - Timestamp ".blue(),
-        vm.toString(vm.getBlockTimestamp()),
-        " - Chain ID ".blue(),
-        vm.toString(block.chainid)
-      )
+    string memory log = string.concat(
+      "Network: ".blue(),
+      chainAlias.yellow(),
+      " - Block Number ".blue(),
+      vm.toString(vm.getBlockNumber()),
+      " - Timestamp ".blue(),
+      vm.toString(vm.getBlockTimestamp()),
+      " - Chain ID ".blue(),
+      vm.toString(block.chainid),
+      " - Gas Price ",
+      vm.toString(tx.gasprice)
     );
+    console.log(log);
   }
 }

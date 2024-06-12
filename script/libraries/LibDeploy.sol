@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 import { TransparentProxyV2 } from "../../src/TransparentProxyV2.sol";
 import { TransparentProxyOZv4_9_5 } from "../../src/TransparentProxyOZv4_9_5.sol";
 import { ITransparentUpgradeableProxy } from
-  "../../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import { ProxyAdmin } from "../../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
+  "../../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "../../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/ProxyAdmin.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
 import { vm, vme } from "../utils/Constants.sol";
 import { sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
 import { LibProxy } from "./LibProxy.sol";

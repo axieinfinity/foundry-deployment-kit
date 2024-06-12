@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import { ERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "../../dependencies/@openzeppelin-contracts-4.9.3//token/ERC20/ERC20.sol";
 import { IWNT } from "./interfaces/IWNT.sol";
-import { LibNativeTransfer } from "../../lib/contract-libs/src/transfers/LibNativeTransfer.sol";
+import { LibNativeTransfer } from "../../dependencies/contract-libs-0.1.1/src/transfers/LibNativeTransfer.sol";
 
 /// @notice Minimalist and modern Wrapped Ether implementation.
 /// @author Solmate
