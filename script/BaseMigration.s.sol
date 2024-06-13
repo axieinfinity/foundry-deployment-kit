@@ -51,8 +51,10 @@ abstract contract BaseMigration is ScriptExtended {
     (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
     // Should rebuild the shared arguments since different chain may have different shared arguments
     _storeRawSharedArguments();
-    // Should rebuild runtime config
+    // Should rebuild runtime config since different chain may have different runtime config
     vme.buildRuntimeConfig();
+    // Should rebuild the contract data since different chain may have different contract data
+    vme.setUpDefaultContracts();
     // Log Sender Info of current network
     vme.logSenderInfo();
   }

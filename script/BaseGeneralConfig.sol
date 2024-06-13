@@ -48,6 +48,10 @@ contract BaseGeneralConfig is
     _storeDeploymentData(deploymentRoot);
   }
 
+  function setUpDefaultContracts() public {
+    _setUpDefaultContracts();
+  }
+
   function _setUpNetworks() internal virtual { }
 
   function _setUpContracts() internal virtual { }
@@ -58,7 +62,6 @@ contract BaseGeneralConfig is
     setNetworkInfo(DefaultNetwork.Local.data());
     setNetworkInfo(DefaultNetwork.RoninTestnet.data());
     setNetworkInfo(DefaultNetwork.RoninMainnet.data());
-    setNetworkInfo(DefaultNetwork.RoninMainnetShadow.data());
 
     _setUpNetworks();
   }
@@ -142,7 +145,7 @@ contract BaseGeneralConfig is
         _envSender = DEFAULT_SENDER;
         _trezorSender = DEFAULT_SENDER;
         label(block.chainid, _envSender, "MockSender");
-      } 
+      }
 
       return;
     }

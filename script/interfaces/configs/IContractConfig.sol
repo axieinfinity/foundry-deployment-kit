@@ -6,6 +6,8 @@ import { TContract } from "../../types/TContract.sol";
 import { TNetwork } from "../../types/TNetwork.sol";
 
 interface IContractConfig {
+  function setUpDefaultContracts() external;
+
   function getContractTypeByRawData(TNetwork network, address contractAddr)
     external
     view

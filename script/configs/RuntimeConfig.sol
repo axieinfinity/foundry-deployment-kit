@@ -20,6 +20,7 @@ abstract contract RuntimeConfig is IRuntimeConfig {
   Option internal _option;
   string internal _rawCommand;
   bool internal _isPostChecking;
+  bool internal _isPreChecking;
 
   function getCommand() public view virtual returns (string memory) {
     return _rawCommand;
