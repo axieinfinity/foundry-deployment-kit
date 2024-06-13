@@ -4,9 +4,10 @@ usage() {
 
     echo ""
     echo "\033[33mFoundry Script Usage:\033[0m"
-    echo "Usage: $0 [forge_options] --no-postcheck|--np --sender {sender_address} --force-generate-artifact"
+    echo "Usage: $0 [forge_options] --no-postcheck|--npo --no-precheck|--npr --sender {sender_address} --force-generate-artifact"
     echo "Options:"
     echo " --no-postcheck: Disable post-check"
+    echo " --no-precheck: Disable pre-check"
     echo " --sender: Specify the default sender address"
     echo " --force-generate-artifact: Force generate artifact"
 
@@ -88,6 +89,10 @@ for arg in "$@"; do
     --np | --no-postcheck)
         set -- "${@/#--no-postcheck/}"
         extra_argument+=no-postcheck@
+        ;;
+    --npr | --no-precheck)
+        set -- "${@/#--no-precheck/}"
+        extra_argument+=no-precheck@
         ;;
     --verify)
         should_verify=true

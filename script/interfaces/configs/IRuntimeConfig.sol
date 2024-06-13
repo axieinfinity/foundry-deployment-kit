@@ -10,13 +10,18 @@ interface IRuntimeConfig {
     TNetwork network;
     address sender;
     bool generateArtifact;
+    bool disablePrecheck;
     bool disablePostcheck;
     uint256 forkBlockNumber;
   }
 
   function isPostChecking() external view returns (bool);
 
+  function isPreChecking() external view returns (bool);
+
   function setPostCheckingStatus(bool status) external;
+
+  function setPreCheckingStatus(bool status) external;
 
   function getCommand() external view returns (string memory);
 

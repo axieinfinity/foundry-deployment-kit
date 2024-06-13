@@ -34,6 +34,14 @@ abstract contract RuntimeConfig is IRuntimeConfig {
     _isPostChecking = status;
   }
 
+  function isPreChecking() public view virtual returns (bool) {
+    return _isPreChecking;
+  }
+
+  function setPreCheckingStatus(bool status) public virtual {
+    _isPreChecking = status;
+  }
+
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
 
@@ -50,6 +58,8 @@ abstract contract RuntimeConfig is IRuntimeConfig {
           _option.trezor = true;
         } else if (args[i].eq("no-postcheck")) {
           _option.disablePostcheck = true;
+        } else if (args[i].eq("no-precheck")) {
+          _option.disablePrecheck = true;
         } else if (args[i].startsWith("network")) {
           string memory network = vm.split(args[i], ".")[1];
           _option.network = TNetwork.wrap(LibString.packOne(network));

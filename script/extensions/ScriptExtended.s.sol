@@ -62,21 +62,35 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
       vme.logCurrentForkInfo();
     }
 
+    uint256 start;
+    uint256 end;
+
+    if (runtimeConfig.disablePrecheck) {
+      console.log("\nPrechecking is disabled.".yellow());
+    } else {
+      console.log("\n>> Prechecking...".yellow());
+      start = vm.unixTime();
+      vme.setPreCheckingStatus({ status: true });
+      _preCheck();
+      vme.setPreCheckingStatus({ status: false });
+      end = vm.unixTime();
+      console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.");
+    }
+
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
 
     if (vme.getRuntimeConfig().disablePostcheck) {
       console.log("\nPostchecking is disabled.".yellow());
-      return;
+    } else {
+      console.log("\n>> Postchecking...".yellow());
+      start = vm.unixTime();
+      vme.setPostCheckingStatus({ status: true });
+      _postCheck();
+      vme.setPostCheckingStatus({ status: false });
+      end = vm.unixTime();
+      console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
     }
-
-    console.log("\n>> Postchecking...".yellow());
-    uint256 start = vm.unixTime();
-    vme.setPostCheckingStatus({ status: true });
-    _postCheck();
-    vme.setPostCheckingStatus({ status: false });
-    uint256 end = vm.unixTime();
-    console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
   }
 
   function _requireOn(TNetwork networkType) private view {
@@ -127,4 +141,6 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   function _configByteCode() internal virtual returns (bytes memory);
 
   function _postCheck() internal virtual { }
+
+  function _preCheck() internal virtual { }
 }
