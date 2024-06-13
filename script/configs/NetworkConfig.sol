@@ -42,20 +42,34 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
     vm.roll(numSecond / blockTime);
   }
 
-  function rollUpTo(uint256 tilBlockNumber) public virtual {
+  function rollUpTo(uint256 untilBlockNumber) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
-    uint256 newBlockTime = vm.getBlockTimestamp() + blockTime * (tilBlockNumber - vm.getBlockNumber());
+    uint256 currBlockNumber = vm.getBlockNumber();
+    uint256 newBlockTime;
+    
+    if (untilBlockNumber <= currBlockNumber) {
+      newBlockTime = vm.getBlockTimestamp() - blockTime * (currBlockNumber - untilBlockNumber);
+    } else {
+      newBlockTime = vm.getBlockTimestamp() + blockTime * (untilBlockNumber - currBlockNumber);
+    }
 
-    vm.roll(tilBlockNumber);
+    vm.roll(untilBlockNumber);
     vm.warp(newBlockTime);
   }
 
-  function warpUpTo(uint256 tilTimestamp) public virtual {
+  function warpUpTo(uint256 untilTimestamp) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
-    uint256 numBlock = (tilTimestamp - vm.getBlockTimestamp()) / blockTime;
+    uint256 currTimestamp = vm.getBlockTimestamp();
+    uint256 newBlock;
 
-    vm.roll(numBlock);
-    vm.warp(tilTimestamp);
+    if (untilTimestamp <= currTimestamp) {
+      newBlock = vm.getBlockNumber() - (currTimestamp - untilTimestamp) / blockTime;
+    } else {
+      newBlock = vm.getBlockNumber() + (untilTimestamp - currTimestamp) / blockTime;
+    }
+
+    vm.roll(newBlock);
+    vm.warp(untilTimestamp);
   }
 
   function setForkMode(bool shouldEnable) public virtual {

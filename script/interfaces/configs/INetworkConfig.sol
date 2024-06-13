@@ -43,13 +43,13 @@ interface INetworkConfig {
 
   function logCurrentForkInfo() external view;
 
-  function rollUpTo(uint256 tilBlockNumber) external;
+  function rollUpTo(uint256 untilBlockNumber) external;
 
   function roll(uint256 numBlock) external;
 
   function warp(uint256 numSecond) external;
 
-  function warpUpTo(uint256 tilTimestamp) external;
+  function warpUpTo(uint256 untilTimestamp) external;
 
   function getDeploymentDirectory(TNetwork network) external view returns (string memory dirPath);
 
