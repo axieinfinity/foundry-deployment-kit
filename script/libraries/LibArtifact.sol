@@ -43,6 +43,10 @@ library LibArtifact {
       return;
     }
 
+    console.log(string.concat("By: ", vm.getLabel(info.deployer), ", nonce: ", vm.toString(info.nonce), "\n"));
+    if (!vm.exists("logs")) vm.createDir("logs", true);
+    vm.writeLine("logs/deployed-contracts", info.artifactName);
+
     string memory dirPath = vme.getDeploymentDirectory(vme.getCurrentNetwork());
 
     _tryCreateDir(dirPath);
@@ -81,7 +85,7 @@ library LibArtifact {
     json = json.serialize("deployedBytecode", parsedArtifact.at('"deployedBytecode"').at('"object"').value());
   }
 
-  function _logDeployment(ArtifactInfo memory info) internal {
+  function _logDeployment(ArtifactInfo memory info) internal view {
     console.log(
       string.concat(
         vm.getLabel(info.addr),
@@ -91,9 +95,6 @@ library LibArtifact {
         info.addr.toHexString().cyan()
       ).green()
     );
-    console.log(string.concat("By: ", vm.getLabel(info.deployer), ", nonce: ", vm.toString(info.nonce), "\n"));
-    if (!vm.exists("logs")) vm.createDir("logs", true);
-    vm.writeLine("logs/deployed-contracts", info.artifactName);
   }
 
   function _tryCreateDir(string memory dirPath) private {

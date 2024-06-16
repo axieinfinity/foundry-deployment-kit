@@ -206,8 +206,6 @@ if [ $? -eq 0 ]; then
                 yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
             done <./logs/deployed-contracts
 
-            # Remove the deployed-contracts file
-            rm ./logs/deployed-contracts
             # Restore the .env content
             echo $env_data >.env
         fi
@@ -216,4 +214,6 @@ fi
 
 end_time=$(date +%s)
 
+# Remove the deployed-contracts file
+rm -rf ./logs/deployed-contracts
 echo "Execution time: $((end_time - start_time))s"

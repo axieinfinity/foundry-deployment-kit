@@ -270,6 +270,7 @@ library LibDeploy {
     deployed = _deployRaw(callValue, bytecode, by);
 
     require(deployed != address(0x0), "LibDeploy: deployFromBytecode(bytes,bytes,uint256,address): Deployment failed.");
+    require(deployed.code.length > 0, "LibDeploy: deployFromBytecode(bytes,bytes,uint256,address): Empty code.");
 
     vme.label(vme.getCurrentNetwork(), deployed, artifactName);
 
