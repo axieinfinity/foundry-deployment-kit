@@ -39,7 +39,7 @@ contract SampleProxyV2Deploy is SampleMigration {
   {
     string memory contractName = vme.getContractName(contractType);
 
-    deployed = LibDeploy.deployTransparentProxy({
+    deployed = LibDeploy.deployTransparentProxyV2({
       implInfo: DeployInfo({
         callValue: 0,
         by: by,
