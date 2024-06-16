@@ -8,12 +8,18 @@ import { TNetwork } from "../../types/TNetwork.sol";
 interface IContractConfig {
   function setUpDefaultContracts() external;
 
+  function setAddress(TNetwork network, TContract contractType, address contractAddr) external;
+
+  function getAddress(TNetwork network, TContract contractType) external view returns (address payable);
+
+  function getAllAddresses(TNetwork network) external view returns (address payable[] memory);
+
   function getContractTypeByRawData(TNetwork network, address contractAddr)
     external
     view
     returns (TContract contractType);
 
-  function label(uint256 chainId, address contractAddr, string memory contractName) external;
+  function label(TNetwork network, address contractAddr, string memory contractName) external;
 
   function getContractTypeFromCurrentNetwork(address contractAddr) external view returns (TContract contractType);
 

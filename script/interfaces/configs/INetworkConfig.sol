@@ -2,16 +2,13 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { TNetwork } from "../../types/Types.sol";
+import { TNetwork } from "../../types/TNetwork.sol";
 
 interface INetworkConfig {
   struct NetworkData {
     TNetwork network;
-    uint256 chainId;
     uint256 blockTime;
     string chainAlias;
-    string deploymentDir;
-    string privateKeyEnvLabel;
     string explorer;
   }
 
@@ -35,7 +32,7 @@ interface INetworkConfig {
 
   function switchTo(TNetwork network, uint256 forkBlockNumber) external;
 
-  function tryCreateFork(string calldata chainAlias, uint256 chainId, uint256 forkBlockNumber)
+  function tryCreateFork(string calldata chainAlias, TNetwork network, uint256 forkBlockNumber)
     external
     returns (uint256);
 
@@ -54,8 +51,4 @@ interface INetworkConfig {
   function getDeploymentDirectory(TNetwork network) external view returns (string memory dirPath);
 
   function getCurrentNetwork() external view returns (TNetwork network);
-
-  function getPrivateKeyEnvLabel(TNetwork network) external view returns (string memory privateKeyEnvLabel);
-
-  function getNetworkByChainId(uint256 chainId) external view returns (TNetwork network);
 }

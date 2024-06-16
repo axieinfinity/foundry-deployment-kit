@@ -25,8 +25,8 @@ struct ArtifactInfo {
 using LibArtifact for ArtifactInfo global;
 
 library LibArtifact {
+  using StdStyle for *;
   using stdJson for string;
-  using StdStyle for string;
   using LibString for string;
   using LibString for address;
   using JSONParserLib for string;
@@ -36,7 +36,7 @@ library LibArtifact {
   IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);
 
   function generateArtifact(ArtifactInfo memory info) internal {
-    _logDeployment(info.addr, info.nonce);
+    _logDeployment(info.deployer, info.addr, info.nonce);
 
     if (!vme.getRuntimeConfig().generateArtifact || vme.isPostChecking()) {
       console.log("Skipping artifact generation for:", vm.getLabel(info.addr), "\n");
@@ -81,18 +81,17 @@ library LibArtifact {
     json = json.serialize("deployedBytecode", parsedArtifact.at('"deployedBytecode"').at('"object"').value());
   }
 
-  function _logDeployment(address addr, uint256 nonce) internal view {
+  function _logDeployment(address by, address addr, uint256 nonce) internal view {
     console.log(
       string.concat(
-        "Deployed ",
         vm.getLabel(addr),
         " at: ",
-        vme.getExplorer(vme.getCurrentNetwork()),
-        "address/",
-        addr.toHexString()
-      ).green(),
-      string.concat("(nonce: ", vm.toString(nonce), ")")
+        vme.getExplorer(vme.getCurrentNetwork()).cyan(),
+        "address/".cyan(),
+        addr.toHexString().cyan()
+      ).green()
     );
+    console.log(string.concat("By: ", vm.getLabel(by), ", nonce: ", vm.toString(nonce), "\n"));
   }
 
   function _tryCreateDir(string memory dirPath) private {

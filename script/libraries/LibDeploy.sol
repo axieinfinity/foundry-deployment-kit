@@ -271,7 +271,7 @@ library LibDeploy {
 
     require(deployed != address(0x0), "LibDeploy: deployFromBytecode(bytes,bytes,uint256,address): Deployment failed.");
 
-    vme.label(block.chainid, deployed, artifactName);
+    vme.label(vme.getCurrentNetwork(), deployed, artifactName);
 
     ArtifactInfo({
       deployer: by,

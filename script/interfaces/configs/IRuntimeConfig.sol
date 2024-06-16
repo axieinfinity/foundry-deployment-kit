@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { TNetwork } from "../../types/Types.sol";
+import { TNetwork } from "../../types/TNetwork.sol";
 
 interface IRuntimeConfig {
   struct Option {

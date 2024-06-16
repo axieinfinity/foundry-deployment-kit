@@ -56,9 +56,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     if (runtimeConfig.network != network()) {
       switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
     } else {
-      vm.warp(_bound(vm.getBlockTimestamp(), vm.unixTime() / 1_000, type(uint40).max));
+      if (vm.getBlockTimestamp() == 0) vm.warp(vm.unixTime() / 1_000);
       if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
+
       vme.logSenderInfo();
+      vme.setUpDefaultContracts();
       vme.logCurrentForkInfo();
     }
 
@@ -69,12 +71,12 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
       console.log("\nPrechecking is disabled.".yellow());
     } else {
       console.log("\n>> Prechecking...".yellow());
-      start = vm.unixTime();
       vme.setPreCheckingStatus({ status: true });
+      start = vm.unixTime();
       _preCheck();
-      vme.setPreCheckingStatus({ status: false });
       end = vm.unixTime();
-      console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.");
+      vme.setPreCheckingStatus({ status: false });
+      console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.\n");
     }
 
     (bool success, bytes memory data) = address(this).delegatecall(callData);
@@ -84,11 +86,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
       console.log("\nPostchecking is disabled.".yellow());
     } else {
       console.log("\n>> Postchecking...".yellow());
-      start = vm.unixTime();
       vme.setPostCheckingStatus({ status: true });
+      start = vm.unixTime();
       _postCheck();
-      vme.setPostCheckingStatus({ status: false });
       end = vm.unixTime();
+      vme.setPostCheckingStatus({ status: false });
       console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
     }
   }
@@ -99,7 +101,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
+    deploySharedAddress(where, bytecode, string.concat(contractType.name(), "Deploy"));
   }
 
   function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {

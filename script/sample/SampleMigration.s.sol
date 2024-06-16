@@ -25,7 +25,7 @@ contract SampleMigration is BaseMigration {
       param.message = "Sample Ronin Mainnet";
       param.proxyMessage = "Sample Proxy Ronin Mainnet";
     }
-    if (network() == DefaultNetwork.Local.key()) {
+    if (network() == DefaultNetwork.LocalHost.key()) {
       param.message = "Sample Anvil";
       param.proxyMessage = "Sample Proxy Anvil";
     }

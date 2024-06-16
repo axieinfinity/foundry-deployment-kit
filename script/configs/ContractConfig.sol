@@ -43,10 +43,8 @@ abstract contract ContractConfig is IContractConfig {
   {
     contractType = _contractTypeMap[network][contractAddr];
     require(
-      TContract.unwrap(contractType) != bytes32(0x0),
-      string.concat(
-        "ContractConfig(getContractTypeByRawData): ContractType not found (", contractType.contractName(), ")"
-      )
+      TContract.unwrap(contractType) != 0x0,
+      string.concat("ContractConfig(getContractTypeByRawData): ContractType not found (", contractType.name(), ")")
     );
   }
 
@@ -59,7 +57,7 @@ abstract contract ContractConfig is IContractConfig {
   }
 
   function getContractName(TContract contractType) public view virtual returns (string memory name) {
-    string memory contractTypeName = contractType.contractName();
+    string memory contractTypeName = contractType.name();
     name = _contractNameMap[contractType];
     name = keccak256(bytes(contractTypeName)) == keccak256(bytes(name)) ? name : contractTypeName;
     require(
@@ -88,9 +86,7 @@ abstract contract ContractConfig is IContractConfig {
     string memory contractName = getContractName(contractType);
     require(
       bytes(contractName).length != 0,
-      string.concat(
-        "ContractConfig(getAddressFromCurrentNetwork): Contract Type not found (", contractType.contractName(), ")"
-      )
+      string.concat("ContractConfig(getAddressFromCurrentNetwork): Contract Type not found (", contractType.name(), ")")
     );
     return getAddressByRawData(vme.getCurrentNetwork(), contractName);
   }
@@ -118,10 +114,18 @@ abstract contract ContractConfig is IContractConfig {
     }
   }
 
-  function label(uint256 chainId, address contractAddr, string memory contractName) public virtual {
+  function label(TNetwork network, address contractAddr, string memory contractName) public virtual {
     vm.label(
       contractAddr,
-      string.concat("(", vm.toString(chainId).blue(), ")", contractName.yellow(), "[", vm.toString(contractAddr), "]")
+      string.concat(
+        "(",
+        bytes32(TNetwork.unwrap(network)).unpackOne().blue(),
+        ")",
+        contractName.yellow(),
+        "[",
+        vm.toString(contractAddr),
+        "]"
+      )
     );
   }
 
@@ -152,8 +156,7 @@ abstract contract ContractConfig is IContractConfig {
 
     for (uint256 i; i < deployments.length; ++i) {
       string[] memory s = vm.split(deployments[i].path, "/");
-      TNetwork network = TNetwork.wrap(LibString.packOne(s[s.length - 1]));
-      uint256 chainId = vm.parseUint(vm.readFile(string.concat(deployments[i].path, "/.chainId")));
+      TNetwork network = TNetwork.wrap(bytes20(LibString.packOne(s[s.length - 1])));
 
       string memory exportedAddress;
       try vm.readFile(string.concat(deployments[i].path, "/exported_address")) returns (string memory data) {
@@ -178,7 +181,7 @@ abstract contract ContractConfig is IContractConfig {
         // remove suffix
         contractName = vm.replace(contractName, suffix, "");
 
-        label(chainId, contractAddr, contractName);
+        label(network, contractAddr, contractName);
 
         // filter out logic deployments
         if (!contractName.endsWith("Logic")) {

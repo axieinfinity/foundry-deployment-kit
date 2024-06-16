@@ -124,7 +124,7 @@ function loadContract(TContract contractType, bool shouldRevert) view returns (a
     contractAddr = res;
   } catch {
     if (shouldRevert) {
-      revert(string.concat("Utils: loadContract(TContract,bool): Contract not found. ", contractType.contractName()));
+      revert(string.concat("Utils: loadContract(TContract,bool): Contract not found. ", contractType.name()));
     } else {
       contractAddr = payable(address(0x0));
     }

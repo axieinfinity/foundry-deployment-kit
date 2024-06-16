@@ -3,15 +3,15 @@ pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { StdChains } from "../../dependencies/forge-std-1.8.2/src/StdChains.sol";
 import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
 import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
+import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 
-abstract contract NetworkConfig is StdChains, INetworkConfig {
+abstract contract NetworkConfig is INetworkConfig {
   using StdStyle for *;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
@@ -23,7 +23,6 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
   bool private _isForkModeEnabled;
   TNetwork private _currentNetwork;
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
-  mapping(uint256 chainId => TNetwork network) internal _networkMap;
   mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
 
   constructor(string memory deploymentRoot) {
@@ -46,7 +45,7 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
     uint256 currBlockNumber = vm.getBlockNumber();
     uint256 newBlockTime;
-    
+
     if (untilBlockNumber <= currBlockNumber) {
       newBlockTime = vm.getBlockTimestamp() - blockTime * (currBlockNumber - untilBlockNumber);
     } else {
@@ -81,14 +80,13 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
   }
 
   function getDeploymentDirectory(TNetwork network) public view virtual returns (string memory dirPath) {
-    string memory dirName = _networkDataMap[network].deploymentDir;
+    string memory dirName = network.dir();
     require(bytes(dirName).length != 0, "NetworkConfig: Deployment directory not found");
     dirPath = string.concat(_deploymentRoot, dirName);
   }
 
   function setNetworkInfo(NetworkData memory networkData) public virtual {
-    _networkMap[networkData.chainId] = networkData.network;
-    _forkMap[_networkMap[networkData.chainId]][0] = tryCreateFork(networkData.chainAlias, networkData.chainId, 0);
+    _forkMap[networkData.network][0] = tryCreateFork(networkData.chainAlias, networkData.network, 0);
     _networkDataMap[networkData.network] = networkData;
   }
 
@@ -118,10 +116,10 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
 
     NetworkData memory networkData = _networkDataMap[network];
     forkId =
-      _forkMap[network][forkBlockNumber] = tryCreateFork(networkData.chainAlias, networkData.chainId, forkBlockNumber);
+      _forkMap[network][forkBlockNumber] = tryCreateFork(networkData.chainAlias, networkData.network, forkBlockNumber);
   }
 
-  function tryCreateFork(string memory chainAlias, uint256 chainId, uint256 forkBlockNumber)
+  function tryCreateFork(string memory chainAlias, TNetwork network, uint256 forkBlockNumber)
     public
     virtual
     returns (uint256)
@@ -131,14 +129,14 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
     try vm.activeFork() returns (uint256 forkId) {
       currentFork = forkId;
 
-      // return current fork if chainId is the same as the current chain id
-      if (chainId == block.chainid) return currentFork;
+      // return current fork if current network is the same as the given `network`
+      if (getCurrentNetwork() == network) return currentFork;
     } catch { }
 
     // return NULL_FORK_ID if fork mode is not enabled
     if (!_isForkModeEnabled) return NULL_FORK_ID;
 
-    uint256 id = _forkMap[_networkMap[chainId]][forkBlockNumber];
+    uint256 id = _forkMap[network][forkBlockNumber];
 
     if (id != NULL_FORK_ID) {
       // return if fork id is not NULL_FORK_ID and fork id != 0
@@ -189,49 +187,25 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
     vm.selectFork(forkId);
     _currentNetwork = network;
 
-    require(
-      _networkDataMap[network].chainId == block.chainid,
-      string.concat(
-        "NetworkConfig: Switch chain failed. Expected: ",
-        vm.toString(_networkDataMap[network].chainId),
-        " Got: ",
-        vm.toString(block.chainid)
-      )
-    );
-
     _logCurrentForkInfo(_networkDataMap[network].chainAlias);
   }
 
   function switchTo(uint256 forkId) public virtual {
     vm.selectFork(forkId);
-
-    TNetwork currNetwork = getCurrentNetwork();
-
-    _logCurrentForkInfo(_networkDataMap[currNetwork].chainAlias);
-  }
-
-  function getPrivateKeyEnvLabel(TNetwork network) public view virtual returns (string memory privateKeyEnvLabel) {
-    privateKeyEnvLabel = _networkDataMap[network].privateKeyEnvLabel;
-    require(
-      bytes(privateKeyEnvLabel).length != 0,
-      string.concat("Network Config: ENV label ", network.networkName(), " not found")
-    );
+    this.logCurrentForkInfo();
   }
 
   function getCurrentNetwork() public view virtual returns (TNetwork network) {
     network = _currentNetwork;
-  }
-
-  function getNetworkByChainId(uint256 chainId) public view virtual returns (TNetwork network) {
-    network = _networkMap[chainId];
+    if (network == TNetwork.wrap(0x0)) network = DefaultNetwork.LocalHost.key();
   }
 
   function logCurrentForkInfo() public view virtual {
-    _logCurrentForkInfo(_networkDataMap[_currentNetwork].chainAlias);
+    _logCurrentForkInfo(_networkDataMap[getCurrentNetwork()].chainAlias);
   }
 
   function _logCurrentForkInfo(string memory chainAlias) internal view {
-    string memory log = string.concat(
+    string memory logA = string.concat(
       "Network: ".blue(),
       chainAlias.yellow(),
       " - Block Number ".blue(),
@@ -239,10 +213,16 @@ abstract contract NetworkConfig is StdChains, INetworkConfig {
       " - Timestamp ".blue(),
       vm.toString(vm.getBlockTimestamp()),
       " - Chain ID ".blue(),
-      vm.toString(block.chainid),
-      " - Gas Price ",
-      vm.toString(tx.gasprice)
+      vm.toString(block.chainid)
     );
+    string memory logB = string.concat(
+      " - Gas Price ".blue(),
+      vm.toString(tx.gasprice / 1 gwei),
+      " GWEI",
+      " - Explorer ".blue(),
+      _networkDataMap[getCurrentNetwork()].explorer
+    );
+    string memory log = string.concat(logA, logB);
     console.log(log);
   }
 }

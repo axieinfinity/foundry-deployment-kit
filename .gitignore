@@ -22,3 +22,4 @@ yarn-error.log
 .yarnrc.yml
 deployments/**/exported_address
 dependencies
+deployments

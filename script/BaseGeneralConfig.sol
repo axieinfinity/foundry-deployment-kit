@@ -59,7 +59,7 @@ contract BaseGeneralConfig is
   function _setUpSender() internal virtual { }
 
   function _setUpDefaultNetworks() private {
-    setNetworkInfo(DefaultNetwork.Local.data());
+    setNetworkInfo(DefaultNetwork.LocalHost.data());
     setNetworkInfo(DefaultNetwork.RoninTestnet.data());
     setNetworkInfo(DefaultNetwork.RoninMainnet.data());
 
@@ -69,6 +69,7 @@ contract BaseGeneralConfig is
   function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
     _contractNameMap[DefaultContract.Multicall3.key()] = DefaultContract.Multicall3.name();
+    setAddress(DefaultNetwork.LocalHost.key(), DefaultContract.ProxyAdmin.key(), address(0xdead));
     setAddress(
       DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
@@ -91,16 +92,22 @@ contract BaseGeneralConfig is
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
-    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.Local.key()) sender = payable(DEFAULT_SENDER);
+    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.LocalHost.key()) {
+      sender = payable(DEFAULT_SENDER);
+    }
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }
 
   function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
-    uint256 chainId = _networkDataMap[network].chainId;
     string memory contractName = getContractName(contractType);
-    require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
+    require(
+      network != TNetwork.wrap(0x0) && bytes(contractName).length != 0,
+      string.concat(
+        "GeneralConfig: Network or Contract Key not found. Network: ", network.chainAlias(), " Contract: ", contractName
+      )
+    );
 
-    label(chainId, contractAddr, contractName);
+    label(network, contractAddr, contractName);
     _contractAddrSet[network].add(contractAddr);
     _contractTypeMap[network][contractAddr] = contractType;
     _contractAddrMap[network][contractName] = contractAddr;
@@ -118,34 +125,36 @@ contract BaseGeneralConfig is
     console.log(
       "Sender:",
       vm.getLabel(getSender()),
-      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER\n")
+      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER")
     );
   }
 
   function buildRuntimeConfig() public virtual override {
+    TNetwork currNetwork = getCurrentNetwork();
+
     if (_option.trezor) {
       _loadTrezorAccount();
-      label(block.chainid, _trezorSender, "TrezorSender");
+      label(currNetwork, _trezorSender, "TrezorSender");
 
       return;
     }
 
     if (_option.sender == address(0x0)) {
-      TNetwork currNetwork = getCurrentNetwork();
-      if (currNetwork == DefaultNetwork.Local.key() || currNetwork == TNetwork.wrap(0x0)) {
+      try this.loadENVAccount(currNetwork.env()) {
+        label(currNetwork, _envSender, "ENVSender");
+        return;
+      } catch { }
+
+      if (currNetwork == DefaultNetwork.LocalHost.key() || currNetwork == TNetwork.wrap(0x0)) {
         _envSender = DEFAULT_SENDER;
-        label(block.chainid, _envSender, "DefaultLocalSender");
+        label(currNetwork, _envSender, "DefaultLocalSender");
 
         return;
       }
 
-      try this.loadENVAccount(this.getPrivateKeyEnvLabel(currNetwork)) {
-        label(block.chainid, _envSender, "ENVSender");
-      } catch {
-        _envSender = DEFAULT_SENDER;
-        _trezorSender = DEFAULT_SENDER;
-        label(block.chainid, _envSender, "MockSender");
-      }
+      _envSender = address(0xdead);
+      _trezorSender = address(0xdead);
+      label(currNetwork, _envSender, "MockSender");
 
       return;
     }
@@ -153,6 +162,6 @@ contract BaseGeneralConfig is
     _envSender = _option.sender;
     _trezorSender = _option.sender;
 
-    label(block.chainid, _option.sender, "OverrideSender");
+    label(currNetwork, _option.sender, "OverrideSender");
   }
 }

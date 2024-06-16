@@ -172,7 +172,7 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
             op_command="op run --env-file="./.env" --"
         fi
     else
-        echo "WARNING: .env file not found"
+        echo "\033[33mWARNING: .env file not found\033[0m"
     fi
 
 fi
