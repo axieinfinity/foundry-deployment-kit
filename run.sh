@@ -167,10 +167,19 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
     # Check if the .env file exists
     if [ -f .env ]; then
         source .env
-        # Check if op:// is present in .env file
-        if grep -q "op://" .env; then
-            echo "\033[32mFound 'op://' in .env file\033[0m"
+        # Convert network name to uppercase
+        account_label=$(echo $network_name | tr '[:lower:]' '[:upper:]')
+        # Replace "-" with "_"
+        account_label=$(echo $account_label | tr '-' '_')
+        # Add "_PK" prefix
+        account_label="${account_label}_PK"
+        
+        # Check if the private key is stored in the .env file
+        if [[ $(eval "echo \$$account_label") == *"op://"* ]]; then
+            echo "\033[32mFound 'op://' in ${account_label}\033[0m"
             op_command="op run --env-file="./.env" --"
+        elif [[ $(eval "echo \$$account_label") == *""* ]]; then
+            echo "\033[33mWARNING: Not found private key in ${account_label}\033[0m"
         fi
     else
         echo "\033[33mWARNING: .env file not found\033[0m"
@@ -194,7 +203,7 @@ if [ $? -eq 0 ]; then
             while IFS=',' read -r deployed; do
                 yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
             done <./logs/deployed-contracts
-            
+
             # Remove the deployed-contracts file
             rm ./logs/deployed-contracts
             # Restore the .env content
