@@ -194,8 +194,10 @@ if [ $? -eq 0 ]; then
             while IFS=',' read -r deployed; do
                 yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
             done <./logs/deployed-contracts
-
+            
+            # Remove the deployed-contracts file
             rm ./logs/deployed-contracts
+            # Restore the .env content
             echo $env_data >.env
         fi
     fi
