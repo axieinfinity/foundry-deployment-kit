@@ -167,13 +167,15 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
     # Check if the .env file exists
     if [ -f .env ]; then
         source .env
+        # If network_name is empty, set it to localhost
+        network_name=${network_name:-localhost}
         # Convert network name to uppercase
         account_label=$(echo $network_name | tr '[:lower:]' '[:upper:]')
         # Replace "-" with "_"
         account_label=$(echo $account_label | tr '-' '_')
         # Add "_PK" prefix
         account_label="${account_label}_PK"
-        
+
         # Check if the private key is stored in the .env file
         if [[ $(eval "echo \$$account_label") == *"op://"* ]]; then
             echo "\033[32mFound 'op://' in ${account_label}\033[0m"
