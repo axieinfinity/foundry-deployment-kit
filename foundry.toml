@@ -24,7 +24,7 @@ ronin-mainnet = "https://api-partner.roninchain.com/rpc"
 ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 localhost = "http://localhost:8545"
 
-[profile.dependencies]
+[dependencies]
 forge-std = { version = "1.8.2" }
 solady = { version = "0.0.206" }
 "@openzeppelin-contracts" = { version = "4.9.3" }
