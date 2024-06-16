@@ -17,7 +17,8 @@ function chainAlias(TNetwork network) pure returns (string memory) {
 }
 
 function env(TNetwork network) pure returns (string memory) {
-  return string.concat(Vm(LibSharedAddress.VM).toUppercase(chainAlias(network)), "_PK");
+  Vm vm = Vm(LibSharedAddress.VM);
+  return string.concat(vm.toUppercase(vm.replace(chainAlias(network), "-", "_")), "_PK");
 }
 
 function dir(TNetwork network) pure returns (string memory) {

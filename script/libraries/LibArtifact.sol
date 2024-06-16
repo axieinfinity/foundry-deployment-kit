@@ -36,7 +36,7 @@ library LibArtifact {
   IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);
 
   function generateArtifact(ArtifactInfo memory info) internal {
-    _logDeployment(info.deployer, info.addr, info.nonce);
+    _logDeployment(info);
 
     if (!vme.getRuntimeConfig().generateArtifact || vme.isPostChecking()) {
       console.log("Skipping artifact generation for:", vm.getLabel(info.addr), "\n");
@@ -81,17 +81,19 @@ library LibArtifact {
     json = json.serialize("deployedBytecode", parsedArtifact.at('"deployedBytecode"').at('"object"').value());
   }
 
-  function _logDeployment(address by, address addr, uint256 nonce) internal view {
+  function _logDeployment(ArtifactInfo memory info) internal {
     console.log(
       string.concat(
-        vm.getLabel(addr),
+        vm.getLabel(info.addr),
         " at: ",
         vme.getExplorer(vme.getCurrentNetwork()).cyan(),
         "address/".cyan(),
-        addr.toHexString().cyan()
+        info.addr.toHexString().cyan()
       ).green()
     );
-    console.log(string.concat("By: ", vm.getLabel(by), ", nonce: ", vm.toString(nonce), "\n"));
+    console.log(string.concat("By: ", vm.getLabel(info.deployer), ", nonce: ", vm.toString(info.nonce), "\n"));
+    if (!vm.exists("logs")) vm.createDir("logs", true);
+    vm.writeLine("logs/deployed-contracts", info.artifactName);
   }
 
   function _tryCreateDir(string memory dirPath) private {

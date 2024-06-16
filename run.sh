@@ -167,8 +167,9 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
     # Check if the .env file exists
     if [ -f .env ]; then
         source .env
-
-        if [[ $MAINNET_PK == op* ]] || [[ $TESTNET_PK == op* ]] || [[ $LOCAL_PK == op* ]]; then
+        # Check if op:// is present in .env file
+        if grep -q "op://" .env; then
+            echo "\033[32mFound 'op://' in .env file\033[0m"
             op_command="op run --env-file="./.env" --"
         fi
     else
@@ -186,7 +187,16 @@ if [ $? -eq 0 ]; then
     if [[ $should_verify == true ]]; then
         if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
             echo "Verifying contract..."
-            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+            # Remove .env content
+            env_data=$(cat .env)
+            >.env
+
+            while IFS=',' read -r deployed; do
+                yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
+            done <./logs/deployed-contracts
+
+            rm ./logs/deployed-contracts
+            echo $env_data >.env
         fi
     fi
 fi

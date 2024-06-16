@@ -123,7 +123,6 @@ contract BaseGeneralConfig is
 
   function logSenderInfo() public view {
     console.log(
-      "Sender:",
       vm.getLabel(getSender()),
       string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER")
     );
@@ -134,34 +133,32 @@ contract BaseGeneralConfig is
 
     if (_option.trezor) {
       _loadTrezorAccount();
-      label(currNetwork, _trezorSender, "TrezorSender");
+      label(currNetwork, _trezorSender, "trezor-sender");
 
       return;
     }
 
     if (_option.sender == address(0x0)) {
-      try this.loadENVAccount(currNetwork.env()) {
-        label(currNetwork, _envSender, "ENVSender");
+      string memory env = currNetwork.env();
+      try this.loadENVAccount(env) {
+        label(currNetwork, _envSender, "env-sender");
         return;
       } catch { }
 
       if (currNetwork == DefaultNetwork.LocalHost.key() || currNetwork == TNetwork.wrap(0x0)) {
         _envSender = DEFAULT_SENDER;
-        label(currNetwork, _envSender, "DefaultLocalSender");
+        label(currNetwork, _envSender, "default-local-sender");
 
         return;
       }
 
       _envSender = address(0xdead);
-      _trezorSender = address(0xdead);
-      label(currNetwork, _envSender, "MockSender");
+      label(currNetwork, _envSender, "mock-sender");
 
       return;
     }
 
     _envSender = _option.sender;
-    _trezorSender = _option.sender;
-
-    label(currNetwork, _option.sender, "OverrideSender");
+    label(currNetwork, _option.sender, "override-sender");
   }
 }

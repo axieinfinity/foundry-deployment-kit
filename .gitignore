@@ -23,3 +23,4 @@ yarn-error.log
 deployments/**/exported_address
 dependencies
 deployments
+logs/deployed-contracts
