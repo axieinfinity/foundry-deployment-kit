@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { VmSafe } from "../../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console, Script } from "../../lib/forge-std/src/Script.sol";
-import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
+import { VmSafe } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console, Script } from "../../dependencies/forge-std-1.8.2/src/Script.sol";
+import { StdAssertions } from "../../dependencies/forge-std-1.8.2/src/StdAssertions.sol";
 import { IVme } from "../interfaces/IVme.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
-import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "../../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";
@@ -36,7 +37,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   }
 
   constructor() {
-    if (vm.isContext(VmSafe.ForgeContext.Test)) setUp();
+    try vm.isContext(VmSafe.ForgeContext.Test) {
+      setUp();
+    } catch {
+      // Do nothing
+    }
   }
 
   function setUp() public virtual {
@@ -51,10 +56,27 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     if (runtimeConfig.network != network()) {
       switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
     } else {
-      vm.warp(_bound(vm.getBlockTimestamp(), vm.unixTime() / 1_000, type(uint40).max));
+      if (vm.getBlockTimestamp() == 0) vm.warp(vm.unixTime() / 1_000);
       if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
+
       vme.logSenderInfo();
+      vme.setUpDefaultContracts();
       vme.logCurrentForkInfo();
+    }
+
+    uint256 start;
+    uint256 end;
+
+    if (runtimeConfig.disablePrecheck) {
+      console.log("\nPrechecking is disabled.".yellow());
+    } else {
+      console.log("\n>> Prechecking...".yellow());
+      vme.setPreCheckingStatus({ status: true });
+      start = vm.unixTime();
+      _preCheck();
+      end = vm.unixTime();
+      vme.setPreCheckingStatus({ status: false });
+      console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.\n");
     }
 
     (bool success, bytes memory data) = address(this).delegatecall(callData);
@@ -62,16 +84,15 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
     if (vme.getRuntimeConfig().disablePostcheck) {
       console.log("\nPostchecking is disabled.".yellow());
-      return;
+    } else {
+      console.log("\n>> Postchecking...".yellow());
+      vme.setPostCheckingStatus({ status: true });
+      start = vm.unixTime();
+      _postCheck();
+      end = vm.unixTime();
+      vme.setPostCheckingStatus({ status: false });
+      console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
     }
-
-    console.log("\n>> Postchecking...".yellow());
-    uint256 start = vm.unixTime();
-    vme.setPostCheckingStatus({ status: true });
-    _postCheck();
-    vme.setPostCheckingStatus({ status: false });
-    uint256 end = vm.unixTime();
-    console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
   }
 
   function _requireOn(TNetwork networkType) private view {
@@ -80,11 +101,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
   function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
     where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
+    deploySharedAddress(where, bytecode, string.concat(contractType.name(), "Deploy"));
   }
 
   function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
-    (currNetwork, currForkId) = switchTo(networkType, 0);
+    (currNetwork, currForkId) = switchTo({ networkType: networkType, forkBlockNumber: 0 });
   }
 
   function switchTo(TNetwork networkType, uint256 forkBlockNumber)
@@ -111,15 +132,17 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function prankOrBroadcast(address to) internal virtual {
+  function prankOrBroadcast(address by) internal virtual {
     if (vme.isPostChecking()) {
-      vm.prank(to);
+      vm.prank(by);
     } else {
-      vm.broadcast(to);
+      vm.broadcast(by);
     }
   }
 
   function _configByteCode() internal virtual returns (bytes memory);
 
   function _postCheck() internal virtual { }
+
+  function _preCheck() internal virtual { }
 }

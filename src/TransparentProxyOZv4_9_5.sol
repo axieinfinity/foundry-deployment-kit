@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {
   ITransparentUpgradeableProxy,
   TransparentUpgradeableProxy
-} from "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+} from "../dependencies/@openzeppelin-contracts-4.9.3//proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title TransparentProxyOZv4_9_5

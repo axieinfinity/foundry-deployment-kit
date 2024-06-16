@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "../lib/solady/src/utils/LibString.sol";
-import { console } from "../lib/forge-std/src/console.sol";
-import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
+import { LibString } from "../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
+import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
 import { ScriptExtended, IScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
@@ -50,8 +51,10 @@ abstract contract BaseMigration is ScriptExtended {
     (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
     // Should rebuild the shared arguments since different chain may have different shared arguments
     _storeRawSharedArguments();
-    // Should rebuild runtime config
+    // Should rebuild runtime config since different chain may have different runtime config
     vme.buildRuntimeConfig();
+    // Should rebuild the contract data since different chain may have different contract data
+    vme.setUpDefaultContracts();
     // Log Sender Info of current network
     vme.logSenderInfo();
   }

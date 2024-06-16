@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm, VmSafe } from "../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../lib/forge-std/src/StdStyle.sol";
-import { console } from "../lib/forge-std/src/console.sol";
+import { Vm, VmSafe } from "../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
@@ -47,6 +48,10 @@ contract BaseGeneralConfig is
     _storeDeploymentData(deploymentRoot);
   }
 
+  function setUpDefaultContracts() public {
+    _setUpDefaultContracts();
+  }
+
   function _setUpNetworks() internal virtual { }
 
   function _setUpContracts() internal virtual { }
@@ -54,7 +59,7 @@ contract BaseGeneralConfig is
   function _setUpSender() internal virtual { }
 
   function _setUpDefaultNetworks() private {
-    setNetworkInfo(DefaultNetwork.Local.data());
+    setNetworkInfo(DefaultNetwork.LocalHost.data());
     setNetworkInfo(DefaultNetwork.RoninTestnet.data());
     setNetworkInfo(DefaultNetwork.RoninMainnet.data());
 
@@ -64,6 +69,7 @@ contract BaseGeneralConfig is
   function _setUpDefaultContracts() private {
     _contractNameMap[DefaultContract.ProxyAdmin.key()] = DefaultContract.ProxyAdmin.name();
     _contractNameMap[DefaultContract.Multicall3.key()] = DefaultContract.Multicall3.name();
+    setAddress(DefaultNetwork.LocalHost.key(), DefaultContract.ProxyAdmin.key(), address(0xdead));
     setAddress(
       DefaultNetwork.RoninTestnet.key(), DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7
     );
@@ -86,55 +92,73 @@ contract BaseGeneralConfig is
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
-    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.Local.key()) sender = payable(DEFAULT_SENDER);
+    if (sender == address(0x0) && getCurrentNetwork() == DefaultNetwork.LocalHost.key()) {
+      sender = payable(DEFAULT_SENDER);
+    }
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }
 
   function setAddress(TNetwork network, TContract contractType, address contractAddr) public virtual {
-    uint256 chainId = _networkDataMap[network].chainId;
     string memory contractName = getContractName(contractType);
-    require(chainId != 0 && bytes(contractName).length != 0, "GeneralConfig: Network or Contract Key not found");
+    require(
+      network != TNetwork.wrap(0x0) && bytes(contractName).length != 0,
+      string.concat(
+        "GeneralConfig: Network or Contract Key not found. Network: ", network.chainAlias(), " Contract: ", contractName
+      )
+    );
 
-    label(chainId, contractAddr, contractName);
-    _contractAddrSet[chainId].add(contractAddr);
-    _contractTypeMap[chainId][contractAddr] = contractType;
-    _contractAddrMap[chainId][contractName] = contractAddr;
+    label(network, contractAddr, contractName);
+    _contractAddrSet[network].add(contractAddr);
+    _contractTypeMap[network][contractAddr] = contractType;
+    _contractAddrMap[network][contractName] = contractAddr;
   }
 
   function getAddress(TNetwork network, TContract contractType) public view virtual returns (address payable) {
-    return getAddressByRawData(_networkDataMap[network].chainId, getContractName(contractType));
+    return getAddressByRawData(network, getContractName(contractType));
   }
 
   function getAllAddresses(TNetwork network) public view virtual returns (address payable[] memory) {
-    return getAllAddressesByRawData(_networkDataMap[network].chainId);
+    return getAllAddressesByRawData(network);
   }
 
   function logSenderInfo() public view {
     console.log(
-      "Sender:",
       vm.getLabel(getSender()),
-      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER\n")
+      string.concat("| Balance: ".magenta(), vm.toString(getSender().balance / 1 ether), " ETHER")
     );
   }
 
   function buildRuntimeConfig() public virtual override {
+    TNetwork currNetwork = getCurrentNetwork();
+
     if (_option.trezor) {
       _loadTrezorAccount();
-      label(block.chainid, _trezorSender, "TrezorSender");
-    } else if (_option.sender != address(0x0)) {
-      _envSender = _option.sender;
-      _trezorSender = _option.sender;
+      label(currNetwork, _trezorSender, "trezor-sender");
 
-      label(block.chainid, _option.sender, "OverrideSender");
-    } else {
-      if (getCurrentNetwork() == DefaultNetwork.Local.key()) {
-        _envSender = DEFAULT_SENDER;
-        label(block.chainid, _envSender, "DefaultLocalSender");
-      } else {
-        string memory envLabel = getPrivateKeyEnvLabel(getCurrentNetwork());
-        _loadENVAccount(envLabel);
-        label(block.chainid, _envSender, "ENVSender");
-      }
+      return;
     }
+
+    if (_option.sender == address(0x0)) {
+      string memory env = currNetwork.env();
+      try this.loadENVAccount(env) {
+        label(currNetwork, _envSender, "env-sender");
+        return;
+      } catch { }
+
+      if (currNetwork == DefaultNetwork.LocalHost.key() || currNetwork == TNetwork.wrap(0x0)) {
+        _envSender = DEFAULT_SENDER;
+        label(currNetwork, _envSender, "default-local-sender");
+
+        return;
+      }
+
+      _envSender = address(0xdead);
+      label(currNetwork, _envSender, "mock-sender");
+
+      return;
+    }
+
+    _envSender = _option.sender;
+    label(currNetwork, _option.sender, "override-sender");
   }
 }

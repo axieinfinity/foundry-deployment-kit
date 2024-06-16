@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 import { ProxyInterface, UpgradeInfo, DeployInfo, LibDeploy, LibProxy } from "script/libraries/LibDeploy.sol";
 import { vme } from "script/utils/Constants.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";
-import { Test } from "../lib/forge-std/src/Test.sol";
-import { console } from "../lib/forge-std/src/console.sol";
+import { Test } from "../dependencies/forge-std-1.8.2/src/Test.sol";
+import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
 import { TransparentProxyOZv4_9_5 } from "src/TransparentProxyOZv4_9_5.sol";
-import { MockERC721 } from "../lib/forge-std/src/mocks/MockERC721.sol";
-import { MockERC20 } from "../lib/forge-std/src/mocks/MockERC20.sol";
-import { ProxyAdmin } from "../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
+import { MockERC721 } from "../dependencies/forge-std-1.8.2/src/mocks/MockERC721.sol";
+import { MockERC20 } from "../dependencies/forge-std-1.8.2/src/mocks/MockERC20.sol";
+import { ProxyAdmin } from "../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/ProxyAdmin.sol";
 
 contract LibDeployTest is Test {
   using LibProxy for *;
@@ -18,7 +18,7 @@ contract LibDeployTest is Test {
     deployCodeTo("BaseGeneralConfig.sol:BaseGeneralConfig", abi.encode("", "deployments/"), 0, address(vme));
   }
 
-  function test_Upgrade_ProxyWithAdminIsEOA() public {
+  function testConcrete_Upgrade_ProxyWithAdminIsEOA() public {
     address eoa = makeAddr("eoa");
     address logic = address(new MockERC721());
     vm.label(logic, "Logic");
@@ -39,7 +39,7 @@ contract LibDeployTest is Test {
     info.upgrade();
   }
 
-  function test_Upgrade_ProxyWithAdminIsProxyAdmin() public {
+  function testConcrete_Upgrade_ProxyWithAdminIsProxyAdmin() public {
     address owner = makeAddr("owner");
     vm.prank(owner);
     address proxyAdmin = address(new ProxyAdmin());
@@ -64,7 +64,7 @@ contract LibDeployTest is Test {
     info.upgrade();
   }
 
-  function test_Upgrade_ProxyWithAdminIsMultiSig() public {
+  function testConcrete_Upgrade_ProxyWithAdminIsMultiSig() public {
     address multisig = makeAddr("multisig");
     vm.etch(multisig, type(MockERC20).runtimeCode);
 
@@ -87,7 +87,7 @@ contract LibDeployTest is Test {
     info.upgrade();
   }
 
-  function test_Upgrade_ProxyWithAdminIsProxyAdmin_ButOwnerOfProxyAdminIsMultisig() external {
+  function testConcrete_Upgrade_ProxyWithAdminIsProxyAdmin_ButOwnerOfProxyAdminIsMultisig() external {
     address multisig = makeAddr("multisig");
     vm.etch(multisig, type(MockERC20).runtimeCode);
     vm.prank(multisig);

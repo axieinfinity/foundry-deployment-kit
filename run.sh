@@ -4,9 +4,10 @@ usage() {
 
     echo ""
     echo "\033[33mFoundry Script Usage:\033[0m"
-    echo "Usage: $0 [forge_options] --no-postcheck --sender {sender_address} --force-generate-artifact"
+    echo "Usage: $0 [forge_options] --no-postcheck|--npo --no-precheck|--npr --sender {sender_address} --force-generate-artifact"
     echo "Options:"
     echo " --no-postcheck: Disable post-check"
+    echo " --no-precheck: Disable pre-check"
     echo " --sender: Specify the default sender address"
     echo " --force-generate-artifact: Force generate artifact"
 
@@ -78,21 +79,20 @@ export_address() {
     echo "Export address in deployment folder: $((end_time - start_time)) seconds"
 }
 
-export_address
-
-echo "\033[33mTrying to compile contracts ...\033[0m"
-forge build # Ensure the contracts are compiled before running the script
-
 index=0
 
 for arg in "$@"; do
     case $arg in
-    --trezor)
+    -t | --trezor)
         extra_argument+=trezor@
         ;;
-    --no-postcheck)
+    --np | --no-postcheck)
         set -- "${@/#--no-postcheck/}"
         extra_argument+=no-postcheck@
+        ;;
+    --npr | --no-precheck)
+        set -- "${@/#--no-precheck/}"
+        extra_argument+=no-precheck@
         ;;
     --verify)
         should_verify=true
@@ -129,7 +129,7 @@ for arg in "$@"; do
 
         set -- "${@/#--force-generate-artifact/}"
         ;;
-    --help)
+    -h | --help)
         usage
         exist 1
         ;;
@@ -137,6 +137,11 @@ for arg in "$@"; do
     esac
     index=$((index + 1))
 done
+
+export_address
+
+echo "\033[33mTrying to compile contracts ...\033[0m"
+forge build # Ensure the contracts are compiled before running the script
 
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
@@ -159,11 +164,18 @@ extra_argument="${extra_argument%%@}"
 
 ## Check if the private key is stored in the .env file
 if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]]; then
-    source .env
-
-    if [[ $MAINNET_PK == op* ]] || [[ $TESTNET_PK == op* ]] || [[ $LOCAL_PK == op* ]]; then
-        op_command="op run --env-file="./.env" --"
+    # Check if the .env file exists
+    if [ -f .env ]; then
+        source .env
+        # Check if op:// is present in .env file
+        if grep -q "op://" .env; then
+            echo "\033[32mFound 'op://' in .env file\033[0m"
+            op_command="op run --env-file="./.env" --"
+        fi
+    else
+        echo "\033[33mWARNING: .env file not found\033[0m"
     fi
+
 fi
 
 start_time=$(date +%s)
@@ -175,7 +187,18 @@ if [ $? -eq 0 ]; then
     if [[ $should_verify == true ]]; then
         if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
             echo "Verifying contract..."
-            yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name}
+            # Remove .env content
+            env_data=$(cat .env)
+            >.env
+
+            while IFS=',' read -r deployed; do
+                yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
+            done <./logs/deployed-contracts
+            
+            # Remove the deployed-contracts file
+            rm ./logs/deployed-contracts
+            # Restore the .env content
+            echo $env_data >.env
         fi
     fi
 fi

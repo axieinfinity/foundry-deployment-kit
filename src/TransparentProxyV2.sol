@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { TransparentUpgradeableProxy } from
-  "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+  "../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract TransparentProxyV2 is TransparentUpgradeableProxy {
   /**
@@ -28,9 +28,9 @@ contract TransparentProxyV2 is TransparentUpgradeableProxy {
     address addr = _implementation();
 
     assembly ("memory-safe") {
-      let _result := delegatecall(gas(), addr, add(data, 32), mload(data), 0, 0)
+      let result := delegatecall(gas(), addr, add(data, 32), mload(data), 0, 0)
       returndatacopy(0, 0, returndatasize())
-      switch _result
+      switch result
       case 0 { revert(0, returndatasize()) }
       default { return(0, returndatasize()) }
     }

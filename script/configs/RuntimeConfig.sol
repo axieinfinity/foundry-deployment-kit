@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../lib/forge-std/src/Vm.sol";
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork } from "../types/Types.sol";
@@ -19,6 +20,7 @@ abstract contract RuntimeConfig is IRuntimeConfig {
   Option internal _option;
   string internal _rawCommand;
   bool internal _isPostChecking;
+  bool internal _isPreChecking;
 
   function getCommand() public view virtual returns (string memory) {
     return _rawCommand;
@@ -32,10 +34,18 @@ abstract contract RuntimeConfig is IRuntimeConfig {
     _isPostChecking = status;
   }
 
+  function isPreChecking() public view virtual returns (bool) {
+    return _isPreChecking;
+  }
+
+  function setPreCheckingStatus(bool status) public virtual {
+    _isPreChecking = status;
+  }
+
   function resolveCommand(string calldata command) external virtual {
     if (_resolved) return;
 
-    _option.network = DefaultNetwork.Local.key();
+    _option.network = DefaultNetwork.LocalHost.key();
 
     if (bytes(command).length != 0) {
       string[] memory args = command.split("@");
@@ -48,9 +58,11 @@ abstract contract RuntimeConfig is IRuntimeConfig {
           _option.trezor = true;
         } else if (args[i].eq("no-postcheck")) {
           _option.disablePostcheck = true;
+        } else if (args[i].eq("no-precheck")) {
+          _option.disablePrecheck = true;
         } else if (args[i].startsWith("network")) {
           string memory network = vm.split(args[i], ".")[1];
-          _option.network = TNetwork.wrap(LibString.packOne(network));
+          _option.network = TNetwork.wrap(bytes20(LibString.packOne(network)));
         } else if (args[i].startsWith("fork-block-number")) {
           string memory blockNumber = vm.split(args[i], ".")[1];
           _option.forkBlockNumber = vm.parseUint(blockNumber);

@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
@@ -24,7 +25,7 @@ contract SampleMigration is BaseMigration {
       param.message = "Sample Ronin Mainnet";
       param.proxyMessage = "Sample Proxy Ronin Mainnet";
     }
-    if (network() == DefaultNetwork.Local.key()) {
+    if (network() == DefaultNetwork.LocalHost.key()) {
       param.message = "Sample Anvil";
       param.proxyMessage = "Sample Proxy Anvil";
     }

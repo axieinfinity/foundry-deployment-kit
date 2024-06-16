@@ -1,15 +1,25 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { TContract } from "../../types/Types.sol";
+import { TContract } from "../../types/TContract.sol";
+import { TNetwork } from "../../types/TNetwork.sol";
 
 interface IContractConfig {
-  function getContractTypeByRawData(uint256 chainId, address contractAddr)
+  function setUpDefaultContracts() external;
+
+  function setAddress(TNetwork network, TContract contractType, address contractAddr) external;
+
+  function getAddress(TNetwork network, TContract contractType) external view returns (address payable);
+
+  function getAllAddresses(TNetwork network) external view returns (address payable[] memory);
+
+  function getContractTypeByRawData(TNetwork network, address contractAddr)
     external
     view
     returns (TContract contractType);
 
-  function label(uint256 chainId, address contractAddr, string memory contractName) external;
+  function label(TNetwork network, address contractAddr, string memory contractName) external;
 
   function getContractTypeFromCurrentNetwork(address contractAddr) external view returns (TContract contractType);
 
@@ -21,10 +31,10 @@ interface IContractConfig {
 
   function getAddressByString(string calldata contractName) external view returns (address payable);
 
-  function getAddressByRawData(uint256 chainId, string calldata contractName)
+  function getAddressByRawData(TNetwork network, string calldata contractName)
     external
     view
     returns (address payable addr);
 
-  function getAllAddressesByRawData(uint256 chainId) external view returns (address payable[] memory addrs);
+  function getAllAddressesByRawData(TNetwork network) external view returns (address payable[] memory addrs);
 }

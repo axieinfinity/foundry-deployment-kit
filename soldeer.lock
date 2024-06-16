@@ -1,0 +1,24 @@
+
+[[dependencies]]
+name = "forge-std"
+version = "1.8.2"
+source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_8_2_19-05-2024_18:52:07_forge-std-1.8.2.zip"
+checksum = "88a37e1d79f60b8aad08c7bd50a7a5ef973fc172b1495028d0725a17f5a4976c"
+
+[[dependencies]]
+name = "solady"
+version = "0.0.206"
+source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_206_06-06-2024_05:38:51_solady.zip"
+checksum = "acba3f4e69840ebad8c7fcf01edbf66405015418de6fea119ee46944b9294d6d"
+
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "4.9.3"
+source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9_3_22-01-2024_13:13:53_contracts.zip"
+checksum = "95886307069cf73310b41396c49df51801a73f31f18f62e7d05adfc2031e7725"
+
+[[dependencies]]
+name = "contract-libs"
+version = "0.1.1"
+source = "https://github.com/axieinfinity/contract-libs/archive/refs/tags/release-v0.1.1.zip"
+checksum = "4eab7ea5ba459b1564dd52da6413d4da2acd32e523c3fb3eac2b8309a89bf582"

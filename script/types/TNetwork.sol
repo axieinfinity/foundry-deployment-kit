@@ -1,22 +1,34 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
+import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
 
-type TNetwork is bytes32;
+type TNetwork is bytes20;
 
 using LibString for bytes32;
 
-using { networkName, networkEq as ==, networkNeq as != } for TNetwork global;
+using { chainAlias, eq as ==, neq as !=, env, dir } for TNetwork global;
 
-function networkName(TNetwork network) pure returns (string memory) {
-  return TNetwork.unwrap(network).unpackOne();
+function chainAlias(TNetwork network) pure returns (string memory) {
+  return bytes32(TNetwork.unwrap(network)).unpackOne();
 }
 
-function networkEq(TNetwork a, TNetwork b) pure returns (bool) {
+function env(TNetwork network) pure returns (string memory) {
+  Vm vm = Vm(LibSharedAddress.VM);
+  return string.concat(vm.toUppercase(vm.replace(chainAlias(network), "-", "_")), "_PK");
+}
+
+function dir(TNetwork network) pure returns (string memory) {
+  return string.concat(chainAlias(network), "/");
+}
+
+function eq(TNetwork a, TNetwork b) pure returns (bool) {
   return TNetwork.unwrap(a) == TNetwork.unwrap(b);
 }
 
-function networkNeq(TNetwork a, TNetwork b) pure returns (bool) {
+function neq(TNetwork a, TNetwork b) pure returns (bool) {
   return TNetwork.unwrap(a) != TNetwork.unwrap(b);
 }
