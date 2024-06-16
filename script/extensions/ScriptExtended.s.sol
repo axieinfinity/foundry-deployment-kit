@@ -9,7 +9,7 @@ import { StdAssertions } from "../../dependencies/forge-std-1.8.2/src/StdAsserti
 import { IVme } from "../interfaces/IVme.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
-import { LibErrorHandler } from "../../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";

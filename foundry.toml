@@ -28,4 +28,3 @@ localhost = "http://localhost:8545"
 forge-std = { version = "1.8.2" }
 solady = { version = "0.0.206" }
 "@openzeppelin-contracts" = { version = "4.9.3" }
-contract-libs = { version = "0.1.1", url = "https://github.com/axieinfinity/contract-libs/archive/refs/tags/release-v0.1.1.zip" }

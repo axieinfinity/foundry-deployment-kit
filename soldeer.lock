@@ -6,12 +6,6 @@ source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9
 checksum = "95886307069cf73310b41396c49df51801a73f31f18f62e7d05adfc2031e7725"
 
 [[dependencies]]
-name = "contract-libs"
-version = "0.1.1"
-source = "https://github.com/axieinfinity/contract-libs/archive/refs/tags/release-v0.1.1.zip"
-checksum = "4eab7ea5ba459b1564dd52da6413d4da2acd32e523c3fb3eac2b8309a89bf582"
-
-[[dependencies]]
 name = "forge-std"
 version = "1.8.2"
 source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_8_2_19-05-2024_18:52:07_forge-std-1.8.2.zip"

@@ -7,7 +7,7 @@ import { stdJson } from "../../dependencies/forge-std-1.8.2/src/StdJson.sol";
 import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
 import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { LibErrorHandler } from "../../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
 import { JSONParserLib } from "../../dependencies/solady-0.0.206/src/utils/JSONParserLib.sol";
 import { TContract } from "../types/TContract.sol";

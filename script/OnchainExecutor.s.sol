@@ -7,7 +7,7 @@ import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
 import { ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { BaseGeneralConfig } from "./BaseGeneralConfig.sol";
 import { sendRawTransaction } from "./utils/Helpers.sol";
-import { LibErrorHandler } from "../dependencies/contract-libs-0.1.1/src/LibErrorHandler.sol";
+import { LibErrorHandler } from "./libraries/LibErrorHandler.sol";
 
 contract OnchainExecutor is ScriptExtended {
   using LibErrorHandler for bool;
