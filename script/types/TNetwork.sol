@@ -6,14 +6,14 @@ import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
 
-type TNetwork is bytes20;
+type TNetwork is bytes32;
 
 using LibString for bytes32;
 
 using { chainAlias, eq as ==, neq as !=, env, dir } for TNetwork global;
 
 function chainAlias(TNetwork network) pure returns (string memory) {
-  return bytes32(TNetwork.unwrap(network)).unpackOne();
+  return TNetwork.unwrap(network).unpackOne();
 }
 
 function env(TNetwork network) pure returns (string memory) {

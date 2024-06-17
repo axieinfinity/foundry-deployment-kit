@@ -44,7 +44,7 @@ function explorer(DefaultNetwork network) pure returns (string memory link) {
 }
 
 function key(DefaultNetwork network) pure returns (TNetwork) {
-  return TNetwork.wrap(bytes20(LibString.packOne(chainAlias(network))));
+  return TNetwork.wrap(LibString.packOne(chainAlias(network)));
 }
 
 function chainAlias(DefaultNetwork network) pure returns (string memory) {

@@ -156,7 +156,7 @@ abstract contract ContractConfig is IContractConfig {
 
     for (uint256 i; i < deployments.length; ++i) {
       string[] memory s = vm.split(deployments[i].path, "/");
-      TNetwork network = TNetwork.wrap(bytes20(LibString.packOne(s[s.length - 1])));
+      TNetwork network = TNetwork.wrap(LibString.packOne(s[s.length - 1]));
 
       string memory exportedAddress;
       try vm.readFile(string.concat(deployments[i].path, "/exported_address")) returns (string memory data) {

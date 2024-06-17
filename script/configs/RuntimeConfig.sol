@@ -62,7 +62,7 @@ abstract contract RuntimeConfig is IRuntimeConfig {
           _option.disablePrecheck = true;
         } else if (args[i].startsWith("network")) {
           string memory network = vm.split(args[i], ".")[1];
-          _option.network = TNetwork.wrap(bytes20(LibString.packOne(network)));
+          _option.network = TNetwork.wrap(LibString.packOne(network));
         } else if (args[i].startsWith("fork-block-number")) {
           string memory blockNumber = vm.split(args[i], ".")[1];
           _option.forkBlockNumber = vm.parseUint(blockNumber);
