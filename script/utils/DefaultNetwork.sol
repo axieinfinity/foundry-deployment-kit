@@ -19,7 +19,8 @@ function data(DefaultNetwork network) pure returns (INetworkConfig.NetworkData m
     network: key(network),
     blockTime: blockTime(network),
     chainAlias: chainAlias(network),
-    explorer: explorer(network)
+    explorer: explorer(network),
+    chainId: chainId(network)
   });
 }
 

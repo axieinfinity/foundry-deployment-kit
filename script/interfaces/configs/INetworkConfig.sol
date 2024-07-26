@@ -8,6 +8,7 @@ interface INetworkConfig {
   struct NetworkData {
     TNetwork network;
     uint256 blockTime;
+    uint256 chainId;
     string chainAlias;
     string explorer;
   }
