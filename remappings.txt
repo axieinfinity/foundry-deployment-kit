@@ -1,7 +1,4 @@
 @fdk/=script/
-@solady-0.0.206=dependencies/solady-0.0.206
-@openzeppelin-contracts-4.9.3=dependencies/@openzeppelin-contracts-4.9.3
-@contract-libs-0.1.1=dependencies/contract-libs-0.1.1
 @forge-std-1.9.1=dependencies/@forge-std-1.9.1/src/
 @openzeppelin-4.9.3=dependencies/@openzeppelin-4.9.3
 @solady-0.0.228=dependencies/@solady-0.0.228
