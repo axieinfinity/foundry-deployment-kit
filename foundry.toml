@@ -25,6 +25,6 @@ ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 localhost = "http://localhost:8545"
 
 [dependencies]
-forge-std = { version = "1.8.2" }
-solady = { version = "0.0.206" }
-"@openzeppelin-contracts" = { version = "4.9.3" }
+"@openzeppelin" = { version = "4.9.3", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.3.zip" }
+"@forge-std" = { version = "1.9.1", url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.1.zip" }
+"@solady" = { version = "0.0.228", url = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip" }

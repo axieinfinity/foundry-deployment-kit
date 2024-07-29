@@ -2,14 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { TransparentProxyV2 } from "../../src/TransparentProxyV2.sol";
-import { TransparentProxyOZv4_9_5 } from "../../src/TransparentProxyOZv4_9_5.sol";
-import { ITransparentUpgradeableProxy } from
-  "../../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/TransparentUpgradeableProxy.sol";
-import { ProxyAdmin } from "../../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/ProxyAdmin.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
 import { vm, vme } from "../utils/Constants.sol";
+import { IEIP173 } from "../interfaces/IEIP173.sol";
 import { sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
 import { LibProxy } from "./LibProxy.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
@@ -140,12 +136,12 @@ library LibDeploy {
 
     if (isViaAuxiliary) {
       callData = callData.length == 0
-        ? abi.encodeCall(ProxyAdmin.upgrade, (ITransparentUpgradeableProxy(proxy), logic))
-        : abi.encodeCall(ProxyAdmin.upgradeAndCall, (ITransparentUpgradeableProxy(proxy), logic, callData));
+        ? abi.encodeWithSignature("upgrade(address,address)", proxy, logic)
+        : abi.encodeWithSignature("upgradeAndCall(address,address,bytes)", proxy, logic, callData);
     } else {
       callData = callData.length == 0
-        ? abi.encodeCall(ITransparentUpgradeableProxy.upgradeTo, (logic))
-        : abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (logic, callData));
+        ? abi.encodeWithSignature("upgradeTo(address)", logic)
+        : abi.encodeWithSignature("upgradeToAndCall(address,bytes)", logic, callData);
     }
 
     bool shouldCheatCall = auth.code.length != 0;
@@ -172,7 +168,7 @@ library LibDeploy {
     while (true) {
       if (auth.code.length == 0) return (auth, interactTo);
 
-      try ProxyAdmin(auth).owner() returns (address owner) {
+      try IEIP173(auth).owner() returns (address owner) {
         if (owner == address(0x0)) return (auth, interactTo);
 
         interactTo = auth;
@@ -202,7 +198,7 @@ library LibDeploy {
     DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = type(TransparentProxyOZv4_9_5).name;
+    proxyInfo.contractName = "TransparentProxyOZv4_9_5";
     proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
@@ -234,7 +230,7 @@ library LibDeploy {
     DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = type(TransparentProxyV2).name;
+    proxyInfo.contractName = "TransparentProxyV2";
     proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
@@ -294,11 +290,5 @@ library LibDeploy {
     assembly ("memory-safe") {
       deployed := create(callValue, add(bytecode, 0x20), mload(bytecode))
     }
-  }
-
-  function _precompileProxyContracts() private pure {
-    bytes memory dummy;
-    dummy = type(TransparentProxyV2).creationCode;
-    dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }

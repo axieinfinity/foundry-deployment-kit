@@ -141,7 +141,7 @@ done
 export_address
 
 echo "\033[33mTrying to compile contracts ...\033[0m"
-forge build # Ensure the contracts are compiled before running the script
+forge build --offline # Ensure the contracts are compiled before running the script
 
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
@@ -153,8 +153,12 @@ if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
     extra_argument+=generate-artifact@
 fi
 
-if [[ $should_verify == true ]] && [[ ! $network_name == "ronin-mainnet" ]] && [[ ! $network_name == "ronin-testnet" ]]; then
-    verify_arg="--verify --retries 5"
+if [[ $should_verify == true ]]; then
+    if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
+        verify_arg="--verify --retries 5 --verifier sourcify --verifier-url https://sourcify.roninchain.com/server/"
+    else
+        verify_arg="--verify --retries 5"
+    fi
 fi
 
 echo "Should Verify Contract: $should_verify"
@@ -191,29 +195,8 @@ fi
 
 start_time=$(date +%s)
 
-${op_command} forge script ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
-
-# Check if the command was successful
-if [ $? -eq 0 ]; then
-    if [[ $should_verify == true ]]; then
-        if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
-            echo "Verifying contract..."
-            # Remove .env content
-            env_data=$(cat .env)
-            >.env
-
-            while IFS=',' read -r deployed; do
-                yarn hardhat sourcify --endpoint https://sourcify.roninchain.com/server --network ${network_name} --contract-name $deployed
-            done <./logs/deployed-contracts
-
-            # Restore the .env content
-            echo $env_data >.env
-        fi
-    fi
-fi
+${op_command} forge script --offline ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
 
 end_time=$(date +%s)
 
-# Remove the deployed-contracts file
-rm -rf ./logs/deployed-contracts
 echo "Execution time: $((end_time - start_time))s"

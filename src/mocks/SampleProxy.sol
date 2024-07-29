@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Initializable } from "../../dependencies/@openzeppelin-contracts-4.9.3//proxy/utils/Initializable.sol";
+import { Initializable } from "../../dependencies/@openzeppelin-4.9.3/contracts/proxy/utils/Initializable.sol";
 
 contract SampleProxy is Initializable {
   uint256[50] private __gap;

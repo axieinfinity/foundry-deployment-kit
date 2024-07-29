@@ -2,9 +2,11 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { LibString } from "../dependencies/solady-0.0.206/src/utils/LibString.sol";
-import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
-import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { TransparentProxyV2 } from "../src/TransparentProxyV2.sol";
+import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
+import { LibString } from "../dependencies/@solady-0.0.228/src/utils/LibString.sol";
+import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
+import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
 import { ScriptExtended, IScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
@@ -283,5 +285,16 @@ abstract contract BaseMigration is ScriptExtended {
 
     vm.makePersistent(deployScript);
     vm.allowCheatcodes(deployScript);
+  }
+
+  /**
+   * @dev Cheat to force build artifact for customized TransparentProxy contract
+   *
+   * Can be disabled in child contract by overriding this function
+   */
+  function _precompileProxyContracts() internal pure virtual {
+    bytes memory dummy;
+    dummy = type(TransparentProxyV2).creationCode;
+    dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }

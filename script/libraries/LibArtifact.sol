@@ -2,14 +2,14 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { stdJson } from "../../dependencies/forge-std-1.8.2/src/StdJson.sol";
-import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
+import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { stdJson } from "../../dependencies/@forge-std-1.9.1/src/StdJson.sol";
+import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
+import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
-import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
-import { JSONParserLib } from "../../dependencies/solady-0.0.206/src/utils/JSONParserLib.sol";
+import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
+import { JSONParserLib } from "../../dependencies/@solady-0.0.228/src/utils/JSONParserLib.sol";
 
 struct ArtifactInfo {
   address deployer;
@@ -44,8 +44,6 @@ library LibArtifact {
     }
 
     console.log(string.concat("By: ", vm.getLabel(info.deployer), ", nonce: ", vm.toString(info.nonce), "\n"));
-    if (!vm.exists("logs")) vm.createDir("logs", true);
-    vm.writeLine("logs/deployed-contracts", info.artifactName);
 
     string memory dirPath = vme.getDeploymentDirectory(vme.getCurrentNetwork());
 

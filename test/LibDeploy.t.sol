@@ -4,12 +4,12 @@ pragma solidity ^0.8.19;
 import { ProxyInterface, UpgradeInfo, DeployInfo, LibDeploy, LibProxy } from "script/libraries/LibDeploy.sol";
 import { vme } from "script/utils/Constants.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";
-import { Test } from "../dependencies/forge-std-1.8.2/src/Test.sol";
-import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
+import { Test } from "../dependencies/@forge-std-1.9.1/src/Test.sol";
+import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
 import { TransparentProxyOZv4_9_5 } from "src/TransparentProxyOZv4_9_5.sol";
-import { MockERC721 } from "../dependencies/forge-std-1.8.2/src/mocks/MockERC721.sol";
-import { MockERC20 } from "../dependencies/forge-std-1.8.2/src/mocks/MockERC20.sol";
-import { ProxyAdmin } from "../dependencies/@openzeppelin-contracts-4.9.3/proxy/transparent/ProxyAdmin.sol";
+import { MockERC721 } from "../dependencies/@forge-std-1.9.1/src/mocks/MockERC721.sol";
+import { MockERC20 } from "../dependencies/@forge-std-1.9.1/src/mocks/MockERC20.sol";
+import { ProxyAdmin } from "../dependencies/@openzeppelin-4.9.3/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract LibDeployTest is Test {
   using LibProxy for *;

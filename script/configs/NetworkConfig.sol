@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
+import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
@@ -216,10 +216,12 @@ abstract contract NetworkConfig is INetworkConfig {
       vm.toString(vm.getBlockNumber()),
       " - Timestamp ".blue(),
       vm.toString(vm.getBlockTimestamp()),
-      " - Chain ID ".blue(),
-      vm.toString(block.chainid)
+      " - Period ".blue(),
+      vm.toString(vm.getBlockTimestamp() / 1 days)
     );
     string memory logB = string.concat(
+      " - Chain ID ".blue(),
+      vm.toString(block.chainid),
       " - Gas Price ".blue(),
       vm.toString(tx.gasprice / 1 gwei),
       " GWEI",

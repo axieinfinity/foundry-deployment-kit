@@ -2,11 +2,11 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { EnumerableSet } from "../../dependencies/@openzeppelin-contracts-4.9.3/utils/structs/EnumerableSet.sol";
-import { Vm, VmSafe } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { EnumerableSet } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/structs/EnumerableSet.sol";
+import { Vm, VmSafe } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
+import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { vme } from "../utils/Constants.sol";
@@ -183,12 +183,9 @@ abstract contract ContractConfig is IContractConfig {
 
         label(network, contractAddr, contractName);
 
-        // filter out logic deployments
-        if (!contractName.endsWith("Logic")) {
-          _contractAddrSet[network].add(contractAddr);
-          _contractAddrMap[network][contractName] = contractAddr;
-          _contractTypeMap[network][contractAddr] = TContract.wrap(contractName.packOne());
-        }
+        _contractAddrSet[network].add(contractAddr);
+        _contractAddrMap[network][contractName] = contractAddr;
+        _contractTypeMap[network][contractAddr] = TContract.wrap(contractName.packOne());
       }
     }
 

@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm, VmSafe } from "../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
+import { Vm, VmSafe } from "../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
 import { WalletConfig } from "./configs/WalletConfig.sol";
 import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";

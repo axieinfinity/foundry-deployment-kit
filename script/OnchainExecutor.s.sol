@@ -2,8 +2,8 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { console } from "../dependencies/forge-std-1.8.2/src/console.sol";
+import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
 import { ScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { BaseGeneralConfig } from "./BaseGeneralConfig.sol";
 import { sendRawTransaction } from "./utils/Helpers.sol";

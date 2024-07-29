@@ -1,18 +1,18 @@
 
 [[dependencies]]
-name = "forge-std"
-version = "1.8.2"
-source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_8_2_19-05-2024_18:52:07_forge-std-1.8.2.zip"
-checksum = "88a37e1d79f60b8aad08c7bd50a7a5ef973fc172b1495028d0725a17f5a4976c"
-
-[[dependencies]]
-name = "solady"
-version = "0.0.206"
-source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_206_06-06-2024_05:38:51_solady.zip"
-checksum = "acba3f4e69840ebad8c7fcf01edbf66405015418de6fea119ee46944b9294d6d"
-
-[[dependencies]]
-name = "@openzeppelin-contracts"
+name = "@openzeppelin"
 version = "4.9.3"
-source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9_3_22-01-2024_13:13:53_contracts.zip"
-checksum = "95886307069cf73310b41396c49df51801a73f31f18f62e7d05adfc2031e7725"
+source = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.3.zip"
+checksum = "94270990c32ff2d00c06a9dabaf5b7a8e36773e017254acbb39d13733eb82960"
+
+[[dependencies]]
+name = "@forge-std"
+version = "1.9.1"
+source = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.1.zip"
+checksum = "67e3523bb8bf3b085c8f28257c7c57e4b0e36eab99272437f89b408653803bb6"
+
+[[dependencies]]
+name = "@solady"
+version = "0.0.228"
+source = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip"
+checksum = "90c6c562403b67338e3fa5fbad36a80b129df333d89db6759c5fd3ed15d4f0da"

@@ -2,10 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/forge-std-1.8.2/src/Vm.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.8.2/src/StdStyle.sol";
-import { console } from "../../dependencies/forge-std-1.8.2/src/console.sol";
-import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
+import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
 import { TNetwork } from "../types/Types.sol";

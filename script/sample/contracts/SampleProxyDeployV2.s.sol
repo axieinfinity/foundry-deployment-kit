@@ -7,7 +7,7 @@ import { Contract } from "../utils/Contract.sol";
 import { TContract } from "../../types/TContract.sol";
 import { ISharedArgument, SampleMigration } from "../SampleMigration.s.sol";
 import { DeployInfo, LibDeploy } from "../../libraries/LibDeploy.sol";
-import { LibString } from "../../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { LibString } from "../../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
 
 contract SampleProxyV2Deploy is SampleMigration {
   using LibString for bytes32;

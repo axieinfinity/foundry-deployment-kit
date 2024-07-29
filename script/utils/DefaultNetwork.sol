@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../dependencies/solady-0.0.206/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
 import { TNetwork } from "../types/Types.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 
