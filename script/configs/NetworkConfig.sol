@@ -22,6 +22,7 @@ abstract contract NetworkConfig is INetworkConfig {
   string private _deploymentRoot;
   bool private _isForkModeEnabled;
   TNetwork private _currentNetwork;
+  mapping(uint256 forkId => TNetwork) internal _forkId2Network;
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
   mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
 
@@ -117,6 +118,7 @@ abstract contract NetworkConfig is INetworkConfig {
     NetworkData memory networkData = _networkDataMap[network];
     forkId =
       _forkMap[network][forkBlockNumber] = tryCreateFork(networkData.chainAlias, networkData.network, forkBlockNumber);
+    _forkId2Network[forkId] = network;
   }
 
   function tryCreateFork(string memory chainAlias, TNetwork network, uint256 forkBlockNumber)
@@ -186,12 +188,14 @@ abstract contract NetworkConfig is INetworkConfig {
 
     vm.selectFork(forkId);
     _currentNetwork = network;
+    require(network == _forkId2Network[forkId], "Network Config: Invalid fork network");
 
     _logCurrentForkInfo(_networkDataMap[network].chainAlias);
   }
 
   function switchTo(uint256 forkId) public virtual {
     vm.selectFork(forkId);
+    _currentNetwork = _forkId2Network[forkId];
     this.logCurrentForkInfo();
   }
 

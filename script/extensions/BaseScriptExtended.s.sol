@@ -22,6 +22,10 @@ abstract contract BaseScriptExtended {
     return vme.getForkId(network());
   }
 
+  function forkId(uint256 forkBlockNumber) public view virtual returns (uint256) {
+    return vme.getForkId(network(), forkBlockNumber);
+  }
+
   function sender() public view virtual returns (address payable) {
     return vme.getSender();
   }

@@ -20,6 +20,8 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   using StdStyle for *;
   using LibErrorHandler for bool;
 
+  uint256 internal _originForkBlockNumber;
+
   modifier logFn(string memory fnName) {
     logInnerCall(fnName);
     _;
@@ -52,6 +54,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     vme.resolveCommand(command);
 
     IRuntimeConfig.Option memory runtimeConfig = vme.getRuntimeConfig();
+    _originForkBlockNumber = runtimeConfig.forkBlockNumber;
 
     if (runtimeConfig.network != network()) {
       switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
@@ -114,7 +117,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     virtual
     returns (TNetwork prevNetwork, uint256 prevForkId)
   {
-    prevForkId = forkId();
+    prevForkId = forkId(_originForkBlockNumber);
     prevNetwork = network();
 
     vme.createFork(networkType, forkBlockNumber);

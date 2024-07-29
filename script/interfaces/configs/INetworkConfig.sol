@@ -27,6 +27,8 @@ interface INetworkConfig {
 
   function getForkId(TNetwork network) external view returns (uint256 forkId);
 
+  function getForkId(TNetwork, uint256 forkBlockNumber) external view returns (uint256 forkId);
+
   function getAlias(TNetwork network) external view returns (string memory networkAlias);
 
   function switchTo(TNetwork network) external;

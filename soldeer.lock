@@ -1,11 +1,5 @@
 
 [[dependencies]]
-name = "@openzeppelin-contracts"
-version = "4.9.3"
-source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9_3_22-01-2024_13:13:53_contracts.zip"
-checksum = "95886307069cf73310b41396c49df51801a73f31f18f62e7d05adfc2031e7725"
-
-[[dependencies]]
 name = "forge-std"
 version = "1.8.2"
 source = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_8_2_19-05-2024_18:52:07_forge-std-1.8.2.zip"
@@ -16,3 +10,9 @@ name = "solady"
 version = "0.0.206"
 source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_206_06-06-2024_05:38:51_solady.zip"
 checksum = "acba3f4e69840ebad8c7fcf01edbf66405015418de6fea119ee46944b9294d6d"
+
+[[dependencies]]
+name = "@openzeppelin-contracts"
+version = "4.9.3"
+source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/4_9_3_22-01-2024_13:13:53_contracts.zip"
+checksum = "95886307069cf73310b41396c49df51801a73f31f18f62e7d05adfc2031e7725"
