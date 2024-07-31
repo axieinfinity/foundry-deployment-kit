@@ -31,7 +31,7 @@ contract LibDeployTest is Test {
       callValue: 0,
       callData: abi.encodeCall(MockERC721.initialize, ("Name", "Symbol")),
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.emptyFn,
+      upgradeCallback: emptyFn,
       shouldPrompt: false,
       shouldUseCallback: false
     });
@@ -56,7 +56,7 @@ contract LibDeployTest is Test {
       callValue: 0,
       callData: abi.encodeCall(MockERC20.initialize, ("Name", "Symbol", 18)),
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.emptyFn,
+      upgradeCallback: emptyFn,
       shouldPrompt: false,
       shouldUseCallback: false
     });
@@ -79,7 +79,7 @@ contract LibDeployTest is Test {
       callValue: 0,
       callData: abi.encodeCall(MockERC20.initialize, ("Name", "Symbol", 18)),
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.emptyFn,
+      upgradeCallback: emptyFn,
       shouldPrompt: false,
       shouldUseCallback: false
     });
@@ -108,7 +108,7 @@ contract LibDeployTest is Test {
       callValue: 0,
       callData: abi.encodeCall(MockERC20.initialize, ("Name", "Symbol", 18)),
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.emptyFn,
+      upgradeCallback: emptyFn,
       shouldPrompt: false,
       shouldUseCallback: false
     });
@@ -122,5 +122,5 @@ contract LibDeployTest is Test {
     uint256, /* callValue */
     bytes memory, /* callData */
     ProxyInterface /* proxyInterface */
-  ) external { }
+  ) internal { }
 }
