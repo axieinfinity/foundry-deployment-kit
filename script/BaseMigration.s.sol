@@ -30,13 +30,13 @@ abstract contract BaseMigration is ScriptExtended {
     _injectDependencies();
   }
 
-  function upgradeCallback(
+  function _upgradeCallback(
     address, /* proxy */
     address, /* logic */
     uint256, /* callValue */
     bytes memory, /* callData */
     ProxyInterface /* proxyInterface */
-  ) external virtual { }
+  ) internal virtual { }
 
   function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
 
@@ -271,7 +271,7 @@ abstract contract BaseMigration is ScriptExtended {
       callData: args,
       shouldPrompt: true,
       proxyInterface: ProxyInterface.Transparent,
-      upgradeCallback: this.upgradeCallback,
+      upgradeCallback: _upgradeCallback,
       shouldUseCallback: false
     }).upgrade();
   }
