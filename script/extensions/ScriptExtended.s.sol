@@ -83,8 +83,12 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
       console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.\n");
     }
 
+    _beforeRunningScript();
+
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
+
+    _afterRunningScript();
 
     if (vme.getRuntimeConfig().disablePostcheck) {
       console.log("\nPostchecking is disabled.".yellow());
@@ -98,6 +102,10 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
       console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
     }
   }
+
+  function _beforeRunningScript() internal virtual;
+
+  function _afterRunningScript() internal virtual;
 
   function _requireOn(TNetwork networkType) private view {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType)));
