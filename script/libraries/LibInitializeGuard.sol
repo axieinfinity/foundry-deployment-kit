@@ -289,6 +289,7 @@ library LibInitializeGuard {
 
     if ($cache._lastInitVer[proxy] != 0) {
       // assume given proxy use `Initializable` from OpenZeppelin v5
+      // ToDo(TuDo1403): switch to `forkId` if working multichain
       bytes32 slotValue = vm.load(proxy, INITIALIZABLE_STORAGE_OZV5);
       if (slotValue != 0) {
         initSlot.found = true;
