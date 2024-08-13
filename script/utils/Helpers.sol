@@ -115,10 +115,6 @@ function decodeData(bytes memory data) returns (string memory decodedData) {
   decodedData = string(vm.ffi(commandInputs));
 }
 
-function loadContract(TContract contractType) view returns (address payable contractAddr) {
-  return loadContract({ contractType: contractType, shouldRevert: true });
-}
-
 function loadContract(TContract contractType, bool shouldRevert) view returns (address payable contractAddr) {
   try vme.getAddressFromCurrentNetwork(contractType) returns (address payable res) {
     contractAddr = res;
@@ -132,7 +128,7 @@ function loadContract(TContract contractType, bool shouldRevert) view returns (a
 }
 
 function prankOrBroadcast(address by) {
-  if (vme.isPostChecking()) {
+  if (vme.isPostChecking() || vme.isPreChecking()) {
     vm.prank(by);
   } else {
     vm.broadcast(by);

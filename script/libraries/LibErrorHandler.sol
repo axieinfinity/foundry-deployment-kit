@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 library LibErrorHandler {
   /// @dev Reserves error definition to upload to signature database.
-  error ExternalCallFailed(bytes4 msgSig, bytes4 callSig);
 
   /// @notice handle low level call revert if call failed,
   /// If external call return empty bytes, reverts with custom error.

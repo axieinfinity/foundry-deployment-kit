@@ -2,11 +2,15 @@
 pragma solidity ^0.8.19;
 
 import { Initializable } from "../../dependencies/@openzeppelin-4.9.3/contracts/proxy/utils/Initializable.sol";
+import { Initializable as InitializableV5 } from
+  "../../dependencies/@openzeppelin-v5-5.0.2/contracts/proxy/utils/Initializable.sol";
+import { Ownable } from "../../dependencies/@openzeppelin-4.9.3/contracts/access/Ownable.sol";
 
-contract SampleProxy is Initializable {
+contract SampleProxy is Ownable, InitializableV5 {
   uint256[50] private __gap;
 
   string internal _message;
+  address internal _addr;
 
   constructor() {
     _disableInitializers();
@@ -14,6 +18,16 @@ contract SampleProxy is Initializable {
 
   function initialize(string calldata message) external initializer {
     _message = message;
+  }
+
+  function initializeV2() external reinitializer(2) { }
+
+  function initializeV3(address a) external reinitializer(3) {
+    _addr = a;
+  }
+
+  function initializeV4() external {
+    _disableInitializers();
   }
 
   function setMessage(string memory message) public {
