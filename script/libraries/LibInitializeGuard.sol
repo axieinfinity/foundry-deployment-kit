@@ -73,6 +73,16 @@ library LibInitializeGuard {
   /// @dev Custom storage slot of the `StdStorage` struct
   bytes32 private constant $$_StdStorageLocation = keccak256("LibInitializeGuard.StdStorage.storage.slot");
 
+  /**
+   * @dev Validate the initialization of the proxies and logics.
+   *
+   * Requirements:
+   * - Must record `logs` via `vm.recordLogs()` before calling this function.
+   * - Must record `stateDiffs` via `vm.startStateDiffRecording()` before calling this function.
+   *
+   * @param logs The logs of the transactions.
+   * @param stateDiffs The state diffs of the transactions.
+   */
   function validate(Vm.Log[] memory logs, Vm.AccountAccess[] memory stateDiffs) internal {
     Cache storage $ = _getCacheStorage();
 
