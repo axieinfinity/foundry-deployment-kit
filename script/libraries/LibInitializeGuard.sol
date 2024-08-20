@@ -275,7 +275,7 @@ library LibInitializeGuard {
     uint256 length = allFns.length;
 
     for (uint256 i; i < length; ++i) {
-      if (allFns[i].startWith("initializeV")) count++;
+      if (allFns[i].startsWith("initialize")) count++;
     }
   }
 
