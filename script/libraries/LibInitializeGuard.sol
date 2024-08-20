@@ -2,6 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
+import { Math } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/math/Math.sol";
 import { EnumerableSet } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/structs/EnumerableSet.sol";
 import { JSONParserLib } from "../../dependencies/@solady-0.0.228/src/utils/JSONParserLib.sol";
 import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
@@ -34,13 +35,12 @@ interface IERC1967 {
  */
 library LibInitializeGuard {
   using StdStyle for *;
+  using LibString for string;
   using JSONParserLib for string;
   using JSONParserLib for JSONParserLib.Item;
-  using LibString for string;
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  struct InitializedSlot {
-    bool found;
+  struct InitLocation {
     bytes32 slot;
     uint256 bitOffset;
     uint256 nBit;
@@ -51,7 +51,7 @@ library LibInitializeGuard {
     EnumerableSet.AddressSet _proxies;
     mapping(address addr => uint256) _lastInitVer;
     mapping(address addr => Vm.ChainInfo) _chainInfo;
-    mapping(address proxy => InitializedSlot) _initSlot;
+    mapping(address proxy => InitLocation) _initSlot;
     mapping(address logic => address proxy) _logic2Proxy;
   }
 
@@ -81,7 +81,7 @@ library LibInitializeGuard {
     for (uint256 i; i < stateDiffs.length; ++i) {
       address addr = stateDiffs[i].account;
 
-      if ($._proxies.contains(addr) && !$._initSlot[addr].found) {
+      if ($._proxies.contains(addr) && $._initSlot[addr].nBit != 0) {
         // Record the chain info and initialized slot of the `addr`.
         $._chainInfo[addr] = stateDiffs[i].chainInfo;
         $._initSlot[addr] = _getInitializedSlot($, addr);
@@ -89,15 +89,16 @@ library LibInitializeGuard {
 
       if ($._logics.contains(addr) && stateDiffs[i].kind == VmSafe.AccountAccessKind.DelegateCall) {
         address proxy = $._logic2Proxy[addr];
+        InitLocation memory initLoc = $._initSlot[proxy];
         Vm.StorageAccess[] memory accs = stateDiffs[i].storageAccesses;
 
         for (uint256 j; j < accs.length; ++j) {
           // Skip if changes does not made changes to `initSlot` by `proxy` to `logic`
-          if (!(accs[j].isWrite && accs[j].account == proxy && accs[j].slot == $._initSlot[proxy].slot)) {
+          if (!(accs[j].isWrite && accs[j].account == proxy && accs[j].slot == initLoc.slot)) {
             continue;
           }
 
-          bool shouldSkip = _validateInitChanges(accs[j], $._initSlot[proxy]);
+          bool shouldSkip = _validateInitChanges(accs[j], initLoc);
           if (shouldSkip) continue;
         }
       }
@@ -117,11 +118,10 @@ library LibInitializeGuard {
 
     for (uint256 i; i < length; ++i) {
       uint256 lastInitVer = $cache._lastInitVer[logics[i]];
-      address proxy = $cache._logic2Proxy[logics[i]];
+
       require(
-        (lastInitVer == MAX_VER_V4 && $cache._initSlot[proxy].nBit == N_BIT_INIT_V4)
-          || (lastInitVer == MAX_VER_V5 && $cache._initSlot[proxy].nBit == N_BIT_INIT_V5),
-        string.concat("LibInitializeGuard: Logic ", vm.getLabel(logics[i]), " does not disable initialized version!")
+        lastInitVer == MAX_VER_V4 || lastInitVer == MAX_VER_V5,
+        string.concat("LibInitializeGuard: Logic ", vm.getLabel(logics[i]), " did not disable initialized version!")
       );
     }
   }
@@ -137,22 +137,29 @@ library LibInitializeGuard {
 
     for (uint256 i; i < length; ++i) {
       address proxy = proxies[i];
-      InitializedSlot memory slot = $cache._initSlot[proxy];
+      InitLocation memory initLoc = $cache._initSlot[proxy];
 
       require(
-        slot.found,
+        initLoc.nBit != 0,
         string.concat("LibInitializeGuard: Proxy ", vm.getLabel(proxies[i]), " does not have `_initialized` slot!")
       );
 
       uint256 lastInitVer = $cache._lastInitVer[proxy];
+      // ToDo(TuDo1403): handle multi-chain
+      uint256 actualInitVer = _getVersionFromSlotValue(vm.load(proxy, initLoc.slot), initLoc.bitOffset, initLoc.nBit);
 
       require(
-        lastInitVer != 0, string.concat("LibInitializeGuard: Proxy ", vm.getLabel(proxy), " does not initialize!")
+        lastInitVer != 0 || actualInitVer != 0,
+        string.concat("LibInitializeGuard: Proxy ", vm.getLabel(proxy), " does not initialize!".red())
       );
+      // Allow upgrade without initialization
+      require(actualInitVer >= lastInitVer, "LibInitializeGuard: `lastInitVer` > `actualInitVer`!");
+
+      actualInitVer = Math.max(lastInitVer, actualInitVer);
 
       if (
-        (lastInitVer == MAX_VER_V4 && slot.nBit == N_BIT_INIT_V4)
-          || (lastInitVer == MAX_VER_V5 && slot.nBit == N_BIT_INIT_V5)
+        (actualInitVer == MAX_VER_V4 && initLoc.nBit == N_BIT_INIT_V4)
+          || (actualInitVer == MAX_VER_V5 && initLoc.nBit == N_BIT_INIT_V5)
       ) {
         string memory ret = vm.prompt(
           string.concat(
@@ -165,20 +172,23 @@ library LibInitializeGuard {
             "to continue..."
           )
         );
-        require(keccak256(bytes(vm.toLowercase(ret))) == keccak256("yes"), "LibInitializeGuard: User aborted!");
+        require(
+          keccak256(bytes(vm.toLowercase(ret))) == keccak256("yes"),
+          "LibInitializeGuard: Aborted due to unintended disable initialization!"
+        );
 
         continue;
       }
 
       uint256 initFnCount = _getInitializeFnCount($cache, proxy);
       require(
-        lastInitVer == initFnCount,
+        actualInitVer == initFnCount,
         string.concat(
           "LibInitializeGuard: Invalid initialized version!",
           " Expected: ",
           vm.toString(initFnCount),
           " Got: ",
-          vm.toString(lastInitVer)
+          vm.toString(actualInitVer)
         )
       );
     }
@@ -188,24 +198,24 @@ library LibInitializeGuard {
    * @dev Validate the intermediate changes of the `_initialized` slot of the given `access` storage.
    *
    * @param acc The storage access of data.
-   * @param slot The initialized slot of the proxy.
+   * @param initLoc The initialized location data of the proxy.
    * @return shouldSkip Whether to skip the validation.
    */
-  function _validateInitChanges(Vm.StorageAccess memory acc, InitializedSlot memory slot)
+  function _validateInitChanges(Vm.StorageAccess memory acc, InitLocation memory initLoc)
     private
     view
     returns (bool shouldSkip)
   {
-    uint256 mask = (1 << slot.nBit) - 1;
-
-    uint256 prvVer = (uint256(acc.previousValue) >> slot.bitOffset) & mask;
-    uint256 newVer = (uint256(acc.newValue) >> slot.bitOffset) & mask;
+    uint256 prvVer = _getVersionFromSlotValue(acc.previousValue, initLoc.bitOffset, initLoc.nBit);
+    uint256 newVer = _getVersionFromSlotValue(acc.newValue, initLoc.bitOffset, initLoc.nBit);
 
     // Skip if `_initialized` bytes location in `slot` does not change
     // Assume other data in given slot is not related to initialized version
     if (prvVer == newVer) return true;
+
+    uint256 initBit = initLoc.nBit;
     // Skip if the proxy disable initialized version
-    if ((newVer == MAX_VER_V4 && slot.nBit == N_BIT_INIT_V4) || (newVer == MAX_VER_V5 && slot.nBit == N_BIT_INIT_V5)) {
+    if ((newVer == MAX_VER_V4 && initBit == N_BIT_INIT_V4) || (newVer == MAX_VER_V5 && initBit == N_BIT_INIT_V5)) {
       console.log("[INIT] %s: Disabled initialized version", vm.getLabel(acc.account));
       return true;
     }
@@ -219,25 +229,35 @@ library LibInitializeGuard {
    * @dev Record the upgrades and initializations of proxies and logics.
    */
   function _recordUpgradesAndInitializations(Cache storage $cache, Vm.Log[] memory logs) private {
-    for (uint256 i; i < logs.length; ++i) {
-      address emitter = logs[i].emitter;
-      bytes32 eventSig = logs[i].topics[0];
+    uint256 length = logs.length;
 
-      if (eventSig == InitializableOZV4.Initialized.selector) {
+    for (uint256 i; i < length; ++i) {
+      address emitter = logs[i].emitter;
+      bytes32 eventTopic = logs[i].topics[0];
+
+      if (eventTopic == InitializableOZV4.Initialized.selector) {
         $cache._lastInitVer[emitter] = abi.decode(logs[i].data, (uint8));
       }
 
-      if (eventSig == InitializableOZV5.Initialized.selector) {
+      if (eventTopic == InitializableOZV5.Initialized.selector) {
         $cache._lastInitVer[emitter] = abi.decode(logs[i].data, (uint64));
       }
 
-      if (eventSig == IERC1967.Upgraded.selector) {
+      if (eventTopic == IERC1967.Upgraded.selector) {
         address logic = address(uint160(uint256(logs[i].topics[1])));
         $cache._logics.add(logic);
         $cache._proxies.add(emitter);
         $cache._logic2Proxy[logic] = emitter;
       }
     }
+  }
+
+  /**
+   * @dev Get the version from the given `value` at the `bitOffset` and `nBit`.
+   */
+  function _getVersionFromSlotValue(bytes32 value, uint256 bitOffset, uint256 nBit) private pure returns (uint256) {
+    uint256 mask = (1 << nBit) - 1;
+    return (uint256(value) >> bitOffset) & mask;
   }
 
   /**
@@ -261,9 +281,13 @@ library LibInitializeGuard {
 
   /**
    * @dev Get `_initialized` slot of the given `proxy` by inspecting its storage layout using `forge inspect <contract_name> storage`.
-   * If the slot is not found, infer it used OpenZeppelin v5 `Initializable` extension and see if the custom storage slot has value.
+   * If the slot is not found, infer it used OpenZeppelin v5 `Initializable` extension.
    */
-  function _getInitializedSlot(Cache storage $cache, address proxy) private returns (InitializedSlot memory initSlot) {
+  function _getInitializedSlot(Cache storage $cache, address proxy) private returns (InitLocation memory initSlot) {
+    // Assume the proxy uses OpenZeppelin v5 `Initializable` extension
+    initSlot.nBit = N_BIT_INIT_V5;
+    initSlot.slot = INITIALIZABLE_STORAGE_OZV5;
+
     string[] memory inputs = new string[](4);
     inputs[0] = "forge";
     inputs[1] = "inspect";
@@ -278,24 +302,11 @@ library LibInitializeGuard {
       JSONParserLib.Item memory storageSlot = layout.at(i);
 
       if (keccak256(bytes(storageSlot.at('"label"').value().decodeString())) == keccak256("_initialized")) {
-        initSlot.found = true;
         initSlot.bitOffset = storageSlot.at('"offset"').value().parseUint() * 8;
         initSlot.nBit = N_BIT_INIT_V4;
         initSlot.slot = bytes32(vm.parseUint(storageSlot.at('"slot"').value().decodeString()));
 
         return initSlot;
-      }
-    }
-
-    if ($cache._lastInitVer[proxy] != 0) {
-      // assume given proxy use `Initializable` from OpenZeppelin v5
-      // ToDo(TuDo1403): switch to `forkId` if working multichain
-      bytes32 slotValue = vm.load(proxy, INITIALIZABLE_STORAGE_OZV5);
-      if (slotValue != 0) {
-        initSlot.found = true;
-        initSlot.bitOffset = 0;
-        initSlot.nBit = N_BIT_INIT_V5;
-        initSlot.slot = INITIALIZABLE_STORAGE_OZV5;
       }
     }
   }
