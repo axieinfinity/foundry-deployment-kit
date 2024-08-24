@@ -91,7 +91,7 @@ library LibInitializeGuard {
     for (uint256 i; i < stateDiffs.length; ++i) {
       address addr = stateDiffs[i].account;
 
-      if ($._proxies.contains(addr) && $._initSlot[addr].nBit != 0) {
+      if ($._proxies.contains(addr) && $._initSlot[addr].nBit == 0) {
         // Record the chain info and initialized slot of the `addr`.
         $._chainInfo[addr] = stateDiffs[i].chainInfo;
         $._initSlot[addr] = _getInitializedSlot($, addr);
