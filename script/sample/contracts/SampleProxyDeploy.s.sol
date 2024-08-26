@@ -16,7 +16,7 @@ contract SampleProxyDeploy is SampleMigration {
     instance = SampleProxy(_deployProxy(Contract.SampleProxy.key()));
     assertEq(instance.getMessage(), ISharedArgument(address(vme)).sharedArguments().proxyMessage);
 
-    vm.prank(sender());
-    instance.initializeV4();
+    // vm.prank(sender());
+    // instance.initializeV4();
   }
 }
