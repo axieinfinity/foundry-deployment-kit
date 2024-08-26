@@ -30,9 +30,7 @@ jobs:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly-de33b6af53005037b463318d2628b5cfcaf39916 # Latest stable version
+        uses: foundry-rs/foundry-toolchain@v1 
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
