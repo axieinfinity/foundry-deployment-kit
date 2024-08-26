@@ -327,7 +327,27 @@ library LibInitializeGuard {
   function _getContractAbsolutePath(uint256 forkId, address addr) private view returns (string memory contractName) {
     TNetwork networkType = vme.getNetworkTypeByForkId(forkId);
     TContract contractType = vme.getContractTypeByRawData(networkType, addr);
-    contractName = vme.getContractAbsolutePath(contractType);
+    string memory contractTypeName = vme.getContractName(contractType);
+    string memory contractNameMap = _getContractNameFromAbsolutePath(vme.getContractAbsolutePath(contractType));
+    contractName =
+      (keccak256(bytes(contractNameMap)) == keccak256(bytes(contractTypeName))) ? contractTypeName : contractNameMap;
+  }
+
+  function _getContractNameFromAbsolutePath(string memory path) internal pure returns (string memory contractName) {
+    bytes memory pathBytes = bytes(path);
+    uint256 length = pathBytes.length;
+    bytes memory contractNameBytes = new bytes(length - 4);
+
+    if (
+      length > 4 && pathBytes[length - 4] == "." && pathBytes[length - 3] == "s" && pathBytes[length - 2] == "o"
+        && pathBytes[length - 1] == "l"
+    ) {
+      // Create a new bytes array without the ".sol" extension
+      for (uint256 i = 0; i < length - 4; i++) {
+        contractNameBytes[i] = pathBytes[i];
+      }
+    }
+    return string(contractNameBytes);
   }
 
   /**
