@@ -277,7 +277,7 @@ library LibInitializeGuard {
     string[] memory inputs = new string[](4);
     inputs[0] = "forge";
     inputs[1] = "inspect";
-    inputs[2] = _getContractName($cache._chainInfo[proxy].forkId, proxy);
+    inputs[2] = _getContractAbsolutePath($cache._chainInfo[proxy].forkId, proxy);
     inputs[3] = "methodIdentifiers";
 
     string memory ret = vm.toLowercase(string(vm.ffi(inputs)));
@@ -301,7 +301,7 @@ library LibInitializeGuard {
     string[] memory inputs = new string[](4);
     inputs[0] = "forge";
     inputs[1] = "inspect";
-    inputs[2] = _getContractName($cache._chainInfo[proxy].forkId, proxy);
+    inputs[2] = _getContractAbsolutePath($cache._chainInfo[proxy].forkId, proxy);
     inputs[3] = "storage";
 
     string memory ret = string(vm.ffi(inputs));
@@ -322,12 +322,12 @@ library LibInitializeGuard {
   }
 
   /**
-   * @dev Get the contract name by the given `addr` and `forkId`.
+   * @dev Get the contract absolute path by the given `addr` and `forkId`.
    */
-  function _getContractName(uint256 forkId, address addr) private view returns (string memory contractName) {
+  function _getContractAbsolutePath(uint256 forkId, address addr) private view returns (string memory contractName) {
     TNetwork networkType = vme.getNetworkTypeByForkId(forkId);
     TContract contractType = vme.getContractTypeByRawData(networkType, addr);
-    contractName = vme.getContractName(contractType);
+    contractName = vme.getContractAbsolutePath(contractType);
   }
 
   /**
