@@ -31,6 +31,8 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1 
+        with:
+          version: nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
