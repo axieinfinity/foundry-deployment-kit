@@ -334,20 +334,12 @@ library LibInitializeGuard {
   }
 
   function _getContractNameFromAbsolutePath(string memory path) internal pure returns (string memory contractName) {
-    bytes memory pathBytes = bytes(path);
-    uint256 length = pathBytes.length;
-    bytes memory contractNameBytes = new bytes(length - 4);
-
-    if (
-      length > 4 && pathBytes[length - 4] == "." && pathBytes[length - 3] == "s" && pathBytes[length - 2] == "o"
-        && pathBytes[length - 1] == "l"
-    ) {
-      // Create a new bytes array without the ".sol" extension
-      for (uint256 i = 0; i < length - 4; i++) {
-        contractNameBytes[i] = pathBytes[i];
-      }
+    uint256 length = bytes(path).length;
+    // Remove ".sol"
+    if (path.endsWith(".sol")) {
+      contractName = path.slice(0, length - 4);
     }
-    return string(contractNameBytes);
+    return string(contractName);
   }
 
   /**
