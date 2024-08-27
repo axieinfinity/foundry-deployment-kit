@@ -7,10 +7,12 @@ import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
 import { LibString } from "../dependencies/@solady-0.0.228/src/utils/LibString.sol";
 import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
 import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { Vm } from "../dependencies/@forge-std-1.9.1/src/Vm.sol";
 import { ScriptExtended, IScriptExtended } from "./extensions/ScriptExtended.s.sol";
 import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
 import { LibProxy } from "./libraries/LibProxy.sol";
+import { LibInitializeGuard } from "./libraries/LibInitializeGuard.sol";
 import { DefaultContract } from "./utils/DefaultContract.sol";
 import { ProxyInterface, LibDeploy, DeployInfo, UpgradeInfo } from "./libraries/LibDeploy.sol";
 import { cheatBroadcast } from "./utils/Helpers.sol";
@@ -37,6 +39,18 @@ abstract contract BaseMigration is ScriptExtended {
     bytes memory, /* callData */
     ProxyInterface /* proxyInterface */
   ) internal virtual { }
+
+  function _beforeRunningScript() internal virtual override {
+    vm.recordLogs();
+    vm.startStateDiffRecording();
+  }
+
+  function _afterRunningScript() internal virtual override {
+    Vm.Log[] memory recordedLogs = vm.getRecordedLogs();
+    Vm.AccountAccess[] memory stateDiffs = vm.stopAndReturnStateDiff();
+
+    LibInitializeGuard.validate({ logs: recordedLogs, stateDiffs: stateDiffs });
+  }
 
   function _sharedArguments() internal virtual returns (bytes memory rawSharedArgs);
 

@@ -13,6 +13,8 @@ interface INetworkConfig {
     string explorer;
   }
 
+  event ForkModeUpdated(bool enabled);
+
   function setNetworkInfo(NetworkData memory networkData) external;
 
   function setForkMode(bool shouldEnable) external;
@@ -24,6 +26,8 @@ interface INetworkConfig {
   function getExplorer(TNetwork network) external view returns (string memory link);
 
   function getNetworkData(TNetwork network) external view returns (NetworkData memory);
+
+  function getNetworkTypeByForkId(uint256 forkId) external view returns (TNetwork network);
 
   function getForkId(TNetwork network) external view returns (uint256 forkId);
 

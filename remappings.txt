@@ -2,3 +2,4 @@
 @forge-std-1.9.1=dependencies/@forge-std-1.9.1/src/
 @openzeppelin-4.9.3=dependencies/@openzeppelin-4.9.3
 @solady-0.0.228=dependencies/@solady-0.0.228
+@openzeppelin-v5-5.0.2=dependencies/@openzeppelin-v5-5.0.2

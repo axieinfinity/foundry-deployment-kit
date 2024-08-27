@@ -74,10 +74,16 @@ abstract contract NetworkConfig is INetworkConfig {
 
   function setForkMode(bool shouldEnable) public virtual {
     _isForkModeEnabled = shouldEnable;
+    emit ForkModeUpdated(shouldEnable);
   }
 
   function getNetworkData(TNetwork network) public view virtual returns (NetworkData memory) {
     return _networkDataMap[network];
+  }
+
+  function getNetworkTypeByForkId(uint256 forkId) public view virtual returns (TNetwork network) {
+    network = _forkId2Network[forkId];
+    if (network == TNetwork.wrap(0x0)) network = DefaultNetwork.LocalHost.key();
   }
 
   function getDeploymentDirectory(TNetwork network) public view virtual returns (string memory dirPath) {

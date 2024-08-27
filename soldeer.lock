@@ -16,3 +16,9 @@ name = "@solady"
 version = "0.0.228"
 source = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip"
 checksum = "90c6c562403b67338e3fa5fbad36a80b129df333d89db6759c5fd3ed15d4f0da"
+
+[[dependencies]]
+name = "@openzeppelin-v5"
+version = "5.0.2"
+source = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.0.2.zip"
+checksum = "ca49e0776066328da0087977864dfaef0d5e54a0ea9859236a7cd9ad02abb9e5"

@@ -13,7 +13,8 @@ enum Contract {
   tWETH,
   Sample,
   SampleClone,
-  SampleProxy
+  SampleProxy,
+  SampleProxyForTestingPurpose
 }
 
 using { key, name } for Contract global;
@@ -31,5 +32,6 @@ function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.tWRON) return "tWRON";
   if (contractEnum == Contract.SampleClone) return "SampleClone";
   if (contractEnum == Contract.SampleProxy) return "SampleProxy";
+  if (contractEnum == Contract.SampleProxyForTestingPurpose) return "SampleProxyForTestingPurpose";
   revert("Contract: Unknown contract");
 }
