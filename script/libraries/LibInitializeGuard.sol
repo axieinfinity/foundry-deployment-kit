@@ -327,10 +327,8 @@ library LibInitializeGuard {
   function _getContractAbsolutePath(uint256 forkId, address addr) private view returns (string memory contractName) {
     TNetwork networkType = vme.getNetworkTypeByForkId(forkId);
     TContract contractType = vme.getContractTypeByRawData(networkType, addr);
-    string memory contractTypeName = vme.getContractName(contractType);
     string memory contractNameMap = _getContractNameFromAbsolutePath(vme.getContractAbsolutePath(contractType));
-    contractName =
-      (keccak256(bytes(contractNameMap)) == keccak256(bytes(contractTypeName))) ? contractTypeName : contractNameMap;
+    contractName = contractNameMap;
   }
 
   function _getContractNameFromAbsolutePath(string memory path) internal pure returns (string memory contractName) {
