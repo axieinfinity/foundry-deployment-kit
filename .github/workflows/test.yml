@@ -34,6 +34,9 @@ jobs:
         with:
           version: nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce
 
+      - name: Install soldeer
+        run: forge soldeer install
+
       - name: Run Forge build
         run: |
           forge --version
