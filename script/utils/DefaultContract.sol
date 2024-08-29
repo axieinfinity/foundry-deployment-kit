@@ -20,7 +20,13 @@ enum DefaultContract {
   AffiliateRouter,
   PermissionedRouter,
   SCMultisig,
-  USDC
+  USDC,
+  Axie,
+  Pyth,
+  ERC721BatchTransfer,
+  RoninGovernanceAdmin,
+  RoninValidatorSet,
+  RoninVRFCoordinator
 }
 
 using { key, name } for DefaultContract global;
@@ -45,5 +51,11 @@ function name(DefaultContract defaultContract) pure returns (string memory) {
   if (defaultContract == DefaultContract.PermissionedRouter) return "PermissionedRouter";
   if (defaultContract == DefaultContract.SCMultisig) return "SCMultisig";
   if (defaultContract == DefaultContract.USDC) return "USDC";
+  if (defaultContract == DefaultContract.Axie) return "Axie";
+  if (defaultContract == DefaultContract.Pyth) return "Pyth";
+  if (defaultContract == DefaultContract.ERC721BatchTransfer) return "ERC721BatchTransfer";
+  if (defaultContract == DefaultContract.RoninGovernanceAdmin) return "RoninGovernanceAdmin";
+  if (defaultContract == DefaultContract.RoninValidatorSet) return "RoninValidatorSet";
+  if (defaultContract == DefaultContract.RoninVRFCoordinator) return "RoninVRFCoordinator";
   revert("DefaultContract: Unknown contract");
 }
