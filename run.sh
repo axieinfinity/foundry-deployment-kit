@@ -197,6 +197,10 @@ start_time=$(date +%s)
 
 ${op_command} forge script --offline ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
 
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
 end_time=$(date +%s)
 
 echo "Execution time: $((end_time - start_time))s"
