@@ -2,21 +2,24 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { TransparentProxyV2 } from "../src/TransparentProxyV2.sol";
-import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
-import { LibString } from "../dependencies/@solady-0.0.228/src/utils/LibString.sol";
-import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
-import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { Vm } from "../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { ScriptExtended, IScriptExtended } from "./extensions/ScriptExtended.s.sol";
-import { OnchainExecutor } from "./OnchainExecutor.s.sol"; // cheat to load artifact to parent `out` directory
+import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm } from "../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.sol";
+import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
+
+import { OnchainExecutor } from "./OnchainExecutor.s.sol";
+import { IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol"; // cheat to load artifact to parent
+  // `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
-import { LibProxy } from "./libraries/LibProxy.sol";
+
+import { DeployInfo, LibDeploy, ProxyInterface, UpgradeInfo } from "./libraries/LibDeploy.sol";
 import { LibInitializeGuard } from "./libraries/LibInitializeGuard.sol";
-import { DefaultContract } from "./utils/DefaultContract.sol";
-import { ProxyInterface, LibDeploy, DeployInfo, UpgradeInfo } from "./libraries/LibDeploy.sol";
-import { cheatBroadcast } from "./utils/Helpers.sol";
+import { LibProxy } from "./libraries/LibProxy.sol";
+
 import { TContract, TNetwork } from "./types/Types.sol";
+import { DefaultContract } from "./utils/DefaultContract.sol";
+import { cheatBroadcast } from "./utils/Helpers.sol";
 
 abstract contract BaseMigration is ScriptExtended {
   using StdStyle for *;
@@ -58,12 +61,10 @@ abstract contract BaseMigration is ScriptExtended {
 
   function _defaultArguments() internal virtual returns (bytes memory) { }
 
-  function switchTo(TNetwork networkType, uint256 forkBlockNumber)
-    public
-    virtual
-    override
-    returns (TNetwork currNetwork, uint256 currForkId)
-  {
+  function switchTo(
+    TNetwork networkType,
+    uint256 forkBlockNumber
+  ) public virtual override returns (TNetwork currNetwork, uint256 currForkId) {
     (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
     // Should rebuild the shared arguments since different chain may have different shared arguments
     _storeRawSharedArguments();
@@ -75,7 +76,9 @@ abstract contract BaseMigration is ScriptExtended {
     vme.logSenderInfo();
   }
 
-  function loadContractOrDeploy(TContract contractType) public virtual returns (address payable contractAddr) {
+  function loadContractOrDeploy(
+    TContract contractType
+  ) public virtual returns (address payable contractAddr) {
     string memory contractName = CONFIG.getContractName(contractType);
     try this.loadContract(contractType) returns (address payable addr) {
       contractAddr = addr;
@@ -89,7 +92,9 @@ abstract contract BaseMigration is ScriptExtended {
     vme.setRawSharedArguments(_sharedArguments());
   }
 
-  function overrideArgs(bytes memory args) public virtual returns (IMigrationScript) {
+  function overrideArgs(
+    bytes memory args
+  ) public virtual returns (IMigrationScript) {
     _overriddenArgs = args;
     return IMigrationScript(address(this));
   }
@@ -106,7 +111,9 @@ abstract contract BaseMigration is ScriptExtended {
     proxyAdmin = loadContract(DefaultContract.ProxyAdmin.key());
   }
 
-  function _deployImmutable(TContract contractType) internal virtual returns (address payable deployed) {
+  function _deployImmutable(
+    TContract contractType
+  ) internal virtual returns (address payable deployed) {
     deployed = _deployImmutable({
       contractType: contractType,
       artifactName: vme.getContractName(contractType),
@@ -116,11 +123,10 @@ abstract contract BaseMigration is ScriptExtended {
     });
   }
 
-  function _deployImmutable(TContract contractType, bytes memory args)
-    internal
-    virtual
-    returns (address payable deployed)
-  {
+  function _deployImmutable(
+    TContract contractType,
+    bytes memory args
+  ) internal virtual returns (address payable deployed) {
     deployed = _deployImmutable({
       contractType: contractType,
       artifactName: vme.getContractName(contractType),
@@ -156,7 +162,9 @@ abstract contract BaseMigration is ScriptExtended {
     vme.setAddress(network(), contractType, deployed);
   }
 
-  function _deployLogic(TContract contractType) internal virtual returns (address payable logic) {
+  function _deployLogic(
+    TContract contractType
+  ) internal virtual returns (address payable logic) {
     logic = _deployLogic({
       contractType: contractType,
       artifactName: vme.getContractName(contractType),
@@ -174,7 +182,12 @@ abstract contract BaseMigration is ScriptExtended {
     });
   }
 
-  function _deployLogic(TContract contractType, string memory artifactName, address by, bytes memory constructorArgs)
+  function _deployLogic(
+    TContract contractType,
+    string memory artifactName,
+    address by,
+    bytes memory constructorArgs
+  )
     internal
     virtual
     logFn(string.concat("_deployLogic ", TContract.unwrap(contractType).unpackOne()))
@@ -192,15 +205,16 @@ abstract contract BaseMigration is ScriptExtended {
     }).deployImplementation();
   }
 
-  function _deployProxy(TContract contractType) internal virtual returns (address payable deployed) {
+  function _deployProxy(
+    TContract contractType
+  ) internal virtual returns (address payable deployed) {
     deployed = _deployProxy(contractType, arguments());
   }
 
-  function _deployProxy(TContract contractType, bytes memory callData)
-    internal
-    virtual
-    returns (address payable deployed)
-  {
+  function _deployProxy(
+    TContract contractType,
+    bytes memory callData
+  ) internal virtual returns (address payable deployed) {
     deployed = _deployProxy({
       contractType: contractType,
       artifactName: vme.getContractName(contractType),
@@ -212,11 +226,11 @@ abstract contract BaseMigration is ScriptExtended {
     });
   }
 
-  function _deployProxy(TContract contractType, bytes memory callData, bytes memory logicConstructorArgs)
-    internal
-    virtual
-    returns (address payable deployed)
-  {
+  function _deployProxy(
+    TContract contractType,
+    bytes memory callData,
+    bytes memory logicConstructorArgs
+  ) internal virtual returns (address payable deployed) {
     deployed = _deployProxy({
       contractType: contractType,
       artifactName: vme.getContractName(contractType),
@@ -261,7 +275,9 @@ abstract contract BaseMigration is ScriptExtended {
     vme.setAddress(network(), contractType, deployed);
   }
 
-  function _upgradeProxy(TContract contractType) internal virtual returns (address payable proxy) {
+  function _upgradeProxy(
+    TContract contractType
+  ) internal virtual returns (address payable proxy) {
     proxy = _upgradeProxy(contractType, arguments());
   }
 
@@ -269,7 +285,11 @@ abstract contract BaseMigration is ScriptExtended {
     proxy = _upgradeProxy(contractType, args, EMPTY_ARGS);
   }
 
-  function _upgradeProxy(TContract contractType, bytes memory args, bytes memory argsLogicConstructor)
+  function _upgradeProxy(
+    TContract contractType,
+    bytes memory args,
+    bytes memory argsLogicConstructor
+  )
     internal
     virtual
     logFn(string.concat("_upgradeProxy ", TContract.unwrap(contractType).unpackOne()))
@@ -308,7 +328,6 @@ abstract contract BaseMigration is ScriptExtended {
    */
   function _precompileProxyContracts() internal pure virtual {
     bytes memory dummy;
-    dummy = type(TransparentProxyV2).creationCode;
-    dummy = type(TransparentProxyOZv4_9_5).creationCode;
+    dummy = type(RoninTransparentProxy).creationCode;
   }
 }
