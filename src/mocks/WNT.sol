@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import { ERC20 } from "../../dependencies/@openzeppelin-4.9.3/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "../../dependencies/openzeppelin-5.0.2/contracts/token/ERC20/ERC20.sol";
 import { IWNT } from "./interfaces/IWNT.sol";
 
 /// @notice Minimalist and modern Wrapped Ether implementation.
@@ -18,7 +18,9 @@ contract WNT is IWNT, ERC20 {
     emit Deposit(sender, msg.value);
   }
 
-  function withdraw(uint256 amount) public virtual {
+  function withdraw(
+    uint256 amount
+  ) public virtual {
     address sender = _msgSender();
     _burn(sender, amount);
     emit Withdrawal(sender, amount);

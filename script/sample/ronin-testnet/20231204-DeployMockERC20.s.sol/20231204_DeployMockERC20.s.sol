@@ -2,12 +2,13 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { console } from "../../../../dependencies/@forge-std-1.9.1/src/console.sol"; 
-import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
-import { Contract } from "../../utils/Contract.sol";
-import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
+import { console } from "../../../../dependencies/forge-std-1.9.3/src/console.sol";
+
 import { Token } from "../../../../src/mocks/Token.sol";
 import { WNT } from "../../../../src/mocks/WNT.sol";
+import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
+import { Contract } from "../../utils/Contract.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
 contract Migration__20231204_DeployMockERC20 is SampleMigration {
   function _sharedArguments() internal virtual override returns (bytes memory args) {

@@ -163,6 +163,10 @@ fi
 
 echo "Should Verify Contract: $should_verify"
 
+# Get the directory of the current script
+script_root="$(dirname "$(realpath "$0")")"
+extra_argument+="script-root.${script_root}@"
+
 # Remove the @ character from the end of extra_argument
 extra_argument="${extra_argument%%@}"
 

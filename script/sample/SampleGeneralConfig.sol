@@ -2,8 +2,8 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { BaseGeneralConfig } from "@fdk/BaseGeneralConfig.sol";
 import { Contract } from "./utils/Contract.sol";
+import { BaseGeneralConfig } from "@fdk/BaseGeneralConfig.sol";
 
 contract SampleGeneralConfig is BaseGeneralConfig {
   constructor() BaseGeneralConfig("", "deployments/") { }

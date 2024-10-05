@@ -12,29 +12,43 @@ interface IContractConfig {
 
   function getAddress(TNetwork network, TContract contractType) external view returns (address payable);
 
-  function getAllAddresses(TNetwork network) external view returns (address payable[] memory);
+  function getAllAddresses(
+    TNetwork network
+  ) external view returns (address payable[] memory);
 
-  function getContractTypeByRawData(TNetwork network, address contractAddr)
-    external
-    view
-    returns (TContract contractType);
+  function getContractTypeByRawData(
+    TNetwork network,
+    address contractAddr
+  ) external view returns (TContract contractType);
 
   function label(TNetwork network, address contractAddr, string memory contractName) external;
 
-  function getContractTypeFromCurrentNetwork(address contractAddr) external view returns (TContract contractType);
+  function getContractTypeFromCurrentNetwork(
+    address contractAddr
+  ) external view returns (TContract contractType);
 
-  function getContractName(TContract contractType) external view returns (string memory name);
+  function getContractName(
+    TContract contractType
+  ) external view returns (string memory name);
 
-  function getContractAbsolutePath(TContract contractType) external view returns (string memory name);
+  function getContractAbsolutePath(
+    TContract contractType
+  ) external view returns (string memory name);
 
-  function getAddressFromCurrentNetwork(TContract contractType) external view returns (address payable);
+  function getAddressFromCurrentNetwork(
+    TContract contractType
+  ) external view returns (address payable);
 
-  function getAddressByString(string calldata contractName) external view returns (address payable);
+  function getAddressByString(
+    string calldata contractName
+  ) external view returns (address payable);
 
-  function getAddressByRawData(TNetwork network, string calldata contractName)
-    external
-    view
-    returns (address payable addr);
+  function getAddressByRawData(
+    TNetwork network,
+    string calldata contractName
+  ) external view returns (address payable addr);
 
-  function getAllAddressesByRawData(TNetwork network) external view returns (address payable[] memory addrs);
+  function getAllAddressesByRawData(
+    TNetwork network
+  ) external view returns (address payable[] memory addrs);
 }

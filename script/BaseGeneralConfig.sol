@@ -2,19 +2,22 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm, VmSafe } from "../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
-import { WalletConfig } from "./configs/WalletConfig.sol";
-import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
+import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm, VmSafe } from "../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+
+import { ContractConfig, EnumerableSet, TContract } from "./configs/ContractConfig.sol";
 import { MigrationConfig } from "./configs/MigrationConfig.sol";
+import { NetworkConfig, TNetwork } from "./configs/NetworkConfig.sol";
+import { RuntimeConfig } from "./configs/RuntimeConfig.sol";
 import { UserDefinedConfig } from "./configs/UserDefinedConfig.sol";
-import { TNetwork, NetworkConfig } from "./configs/NetworkConfig.sol";
-import { EnumerableSet, TContract, ContractConfig } from "./configs/ContractConfig.sol";
+import { WalletConfig } from "./configs/WalletConfig.sol";
+
 import { ISharedParameter } from "./interfaces/configs/ISharedParameter.sol";
-import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
-import { DefaultContract } from "./utils/DefaultContract.sol";
+
 import { LibSharedAddress } from "./libraries/LibSharedAddress.sol";
+import { DefaultContract } from "./utils/DefaultContract.sol";
+import { DefaultNetwork } from "./utils/DefaultNetwork.sol";
 
 contract BaseGeneralConfig is
   RuntimeConfig,
@@ -38,10 +41,11 @@ contract BaseGeneralConfig is
     }
   }
 
-  constructor(string memory absolutePath, string memory deploymentRoot)
-    NetworkConfig(deploymentRoot)
-    ContractConfig(absolutePath, deploymentRoot)
-  {
+  constructor(
+    string memory absolutePath,
+    string memory deploymentRoot
+  ) NetworkConfig(deploymentRoot) ContractConfig(absolutePath, deploymentRoot) {
+    console.log("GeneralConfig: ", absolutePath);
     _setUpDefaultNetworks();
     _setUpDefaultContracts();
     _setUpDefaultSender();
@@ -76,61 +80,61 @@ contract BaseGeneralConfig is
 
     // ------------------------- Ronin Testnet -------------------------
     TNetwork roninTestnet = DefaultNetwork.RoninTestnet.key();
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x505d91E8fd2091794b45b27f86C045529fa92CD7
     setAddress(roninTestnet, DefaultContract.ProxyAdmin.key(), 0x505d91E8fd2091794b45b27f86C045529fa92CD7);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xcA11bde05977b3631167028862bE2a173976CA11
     setAddress(roninTestnet, DefaultContract.Multicall3.key(), 0xcA11bde05977b3631167028862bE2a173976CA11);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xA959726154953bAe111746E265E6d754F48570E6
     setAddress(roninTestnet, DefaultContract.WRON.key(), 0xA959726154953bAe111746E265E6d754F48570E6);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x2D3Aa3503B4EB3EEea370e2e089E3DEe43D5091C
     setAddress(roninTestnet, DefaultContract.WRONHelper.key(), 0x2D3Aa3503B4EB3EEea370e2e089E3DEe43D5091C);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x29C6F8349A028E1bdfC68BFa08BDee7bC5D47E16
     setAddress(roninTestnet, DefaultContract.WETH.key(), 0x29C6F8349A028E1bdfC68BFa08BDee7bC5D47E16);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x3C4e17b9056272Ce1b49F6900d8cFD6171a1869d
     setAddress(roninTestnet, DefaultContract.AXS.key(), 0x3C4e17b9056272Ce1b49F6900d8cFD6171a1869d);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xFc4090C0A3c07155484Da061B9d9cB8650e6A8cC
     setAddress(roninTestnet, DefaultContract.Scatter.key(), 0xFc4090C0A3c07155484Da061B9d9cB8650e6A8cC);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xDa44546C0715ae78D454fE8B84f0235081584Fe0
     setAddress(roninTestnet, DefaultContract.KatanaRouter.key(), 0xDa44546C0715ae78D454fE8B84f0235081584Fe0);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x86587380C4c815Ba0066c90aDB2B45CC9C15E72c
     setAddress(roninTestnet, DefaultContract.KatanaFactory.key(), 0x86587380C4c815Ba0066c90aDB2B45CC9C15E72c);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x247F12836A421CDC5e22B93Bf5A9AAa0f521f986
     setAddress(roninTestnet, DefaultContract.KatanaGovernance.key(), 0x247F12836A421CDC5e22B93Bf5A9AAa0f521f986);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x4a913d50E618Ee9F61FfA288D8f8040D489d2360
     setAddress(roninTestnet, DefaultContract.AffiliateRouter.key(), 0x4a913d50E618Ee9F61FfA288D8f8040D489d2360);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x3BD36748D17e322cFB63417B059Bcc1059012D83
     setAddress(roninTestnet, DefaultContract.PermissionedRouter.key(), 0x3BD36748D17e322cFB63417B059Bcc1059012D83);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x88Ae5Ff2D22018542C842b68D4F924387f48215d
     setAddress(roninTestnet, DefaultContract.USDC.key(), 0x88Ae5Ff2D22018542C842b68D4F924387f48215d);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xcaCA1c072D26E46686d932686015207FbE08FdB8
     setAddress(roninTestnet, DefaultContract.Axie.key(), 0xcaCA1c072D26E46686d932686015207FbE08FdB8);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xA2aa501b19aff244D90cc15a4Cf739D2725B5729
     setAddress(roninTestnet, DefaultContract.Pyth.key(), 0xA2aa501b19aff244D90cc15a4Cf739D2725B5729);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x2E889348bD37f192063Bfec8Ff39bD3635949e20
     setAddress(roninTestnet, DefaultContract.ERC721BatchTransfer.key(), 0x2E889348bD37f192063Bfec8Ff39bD3635949e20);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x53Ea388CB72081A3a397114a43741e7987815896
     setAddress(roninTestnet, DefaultContract.RoninGovernanceAdmin.key(), 0x53Ea388CB72081A3a397114a43741e7987815896);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0x54B3AC74a90E64E8dDE60671b6fE8F8DDf18eC9d
     setAddress(roninTestnet, DefaultContract.RoninValidatorSet.key(), 0x54B3AC74a90E64E8dDE60671b6fE8F8DDf18eC9d);
-    
+
     // Double check source: https://saigon-app.roninchain.com/address/0xA60c1e07fa030E4B49Eb54950ADb298Ab94dD312
     setAddress(roninTestnet, DefaultContract.RoninVRFCoordinator.key(), 0xA60c1e07fa030E4B49Eb54950ADb298Ab94dD312);
 
@@ -233,7 +237,9 @@ contract BaseGeneralConfig is
     return getAddressByRawData(network, getContractName(contractType));
   }
 
-  function getAllAddresses(TNetwork network) public view virtual returns (address payable[] memory) {
+  function getAllAddresses(
+    TNetwork network
+  ) public view virtual returns (address payable[] memory) {
     return getAllAddressesByRawData(network);
   }
 

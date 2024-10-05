@@ -2,18 +2,19 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { VmSafe } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console, Script } from "../../dependencies/@forge-std-1.9.1/src/Script.sol";
-import { StdAssertions } from "../../dependencies/@forge-std-1.9.1/src/StdAssertions.sol";
+import { Script, console } from "../../dependencies/forge-std-1.9.3/src/Script.sol";
+import { StdAssertions } from "../../dependencies/forge-std-1.9.3/src/StdAssertions.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { VmSafe } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+
+import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { IVme } from "../interfaces/IVme.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
-import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";
-import { logInnerCall, deploySharedAddress } from "../utils/Helpers.sol";
+import { deploySharedAddress, logInnerCall } from "../utils/Helpers.sol";
 import { BaseScriptExtended } from "./BaseScriptExtended.s.sol";
 
 abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, IScriptExtended {
@@ -22,17 +23,23 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
   uint256 internal _originForkBlockNumber;
 
-  modifier logFn(string memory fnName) {
+  modifier logFn(
+    string memory fnName
+  ) {
     logInnerCall(fnName);
     _;
   }
 
-  modifier onlyOn(TNetwork networkType) {
+  modifier onlyOn(
+    TNetwork networkType
+  ) {
     _requireOn(networkType);
     _;
   }
 
-  modifier onNetwork(TNetwork networkType) {
+  modifier onNetwork(
+    TNetwork networkType
+  ) {
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(networkType);
     _;
     switchBack(prevNetwork, prevForkId);
@@ -51,6 +58,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
   }
 
   function run(bytes calldata callData, string calldata command) public virtual {
+    vm.pauseTracing();
     vme.resolveCommand(command);
 
     IRuntimeConfig.Option memory runtimeConfig = vme.getRuntimeConfig();
@@ -59,7 +67,7 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     if (runtimeConfig.network != network()) {
       switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
     } else {
-      uint256 currUnixTimestamp = vm.unixTime() / 1_000;
+      uint256 currUnixTimestamp = vm.unixTime() / 1000;
       if (vm.getBlockTimestamp() < currUnixTimestamp) vm.warp(currUnixTimestamp);
       if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
 
@@ -70,6 +78,8 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
     uint256 start;
     uint256 end;
+
+    vm.resumeTracing();
 
     if (runtimeConfig.disablePrecheck) {
       console.log("\nPrechecking is disabled.".yellow());
@@ -107,7 +117,9 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
 
   function _afterRunningScript() internal virtual { }
 
-  function _requireOn(TNetwork networkType) private view {
+  function _requireOn(
+    TNetwork networkType
+  ) private view {
     require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType)));
   }
 
@@ -116,15 +128,16 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     deploySharedAddress(where, bytecode, string.concat(contractType.name(), "Deploy"));
   }
 
-  function switchTo(TNetwork networkType) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
+  function switchTo(
+    TNetwork networkType
+  ) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
     (currNetwork, currForkId) = switchTo({ networkType: networkType, forkBlockNumber: 0 });
   }
 
-  function switchTo(TNetwork networkType, uint256 forkBlockNumber)
-    public
-    virtual
-    returns (TNetwork prevNetwork, uint256 prevForkId)
-  {
+  function switchTo(
+    TNetwork networkType,
+    uint256 forkBlockNumber
+  ) public virtual returns (TNetwork prevNetwork, uint256 prevForkId) {
     prevForkId = forkId(_originForkBlockNumber);
     prevNetwork = network();
 
@@ -144,12 +157,11 @@ abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, I
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function prankOrBroadcast(address by) internal virtual {
-    if (vme.isPostChecking() || vme.isPreChecking()) {
-      vm.prank(by);
-    } else {
-      vm.broadcast(by);
-    }
+  function prankOrBroadcast(
+    address by
+  ) internal virtual {
+    if (vme.isPostChecking() || vme.isPreChecking()) vm.prank(by);
+    else vm.broadcast(by);
   }
 
   function _configByteCode() internal virtual returns (bytes memory);

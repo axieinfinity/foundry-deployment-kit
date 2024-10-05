@@ -9,7 +9,9 @@ interface IUserDefinedConfig {
 
   function setUserDefinedConfig(string calldata key, bytes calldata value) external;
 
-  function getUserDefinedConfig(string calldata key) external view returns (bytes memory value);
+  function getUserDefinedConfig(
+    string calldata key
+  ) external view returns (bytes memory value);
 
   function getAllKeys() external view returns (string[] memory);
 }

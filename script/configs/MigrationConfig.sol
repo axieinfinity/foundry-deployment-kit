@@ -7,7 +7,9 @@ import { IMigrationConfig } from "../interfaces/configs/IMigrationConfig.sol";
 abstract contract MigrationConfig is IMigrationConfig {
   bytes internal _migrationConfig;
 
-  function setRawSharedArguments(bytes memory config) public virtual {
+  function setRawSharedArguments(
+    bytes memory config
+  ) public virtual {
     _migrationConfig = config;
   }
 

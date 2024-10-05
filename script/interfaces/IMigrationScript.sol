@@ -5,5 +5,7 @@ pragma experimental ABIEncoderV2;
 interface IMigrationScript {
   function run() external returns (address payable);
 
-  function overrideArgs(bytes calldata args) external returns (IMigrationScript);
+  function overrideArgs(
+    bytes calldata args
+  ) external returns (IMigrationScript);
 }

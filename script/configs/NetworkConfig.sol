@@ -2,11 +2,12 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
-import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
+import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
 import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
@@ -26,23 +27,31 @@ abstract contract NetworkConfig is INetworkConfig {
   mapping(TNetwork network => NetworkData) internal _networkDataMap;
   mapping(TNetwork network => mapping(uint256 forkBlockNumber => uint256 forkId)) internal _forkMap;
 
-  constructor(string memory deploymentRoot) {
+  constructor(
+    string memory deploymentRoot
+  ) {
     _deploymentRoot = deploymentRoot;
   }
 
-  function roll(uint256 numBlock) public virtual {
+  function roll(
+    uint256 numBlock
+  ) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
     vm.roll(numBlock);
     vm.warp(blockTime * numBlock);
   }
 
-  function warp(uint256 numSecond) public virtual {
+  function warp(
+    uint256 numSecond
+  ) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
     vm.warp(numSecond);
     vm.roll(numSecond / blockTime);
   }
 
-  function rollUpTo(uint256 untilBlockNumber) public virtual {
+  function rollUpTo(
+    uint256 untilBlockNumber
+  ) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
     uint256 currBlockNumber = vm.getBlockNumber();
     uint256 newBlockTime;
@@ -57,56 +66,71 @@ abstract contract NetworkConfig is INetworkConfig {
     vm.warp(newBlockTime);
   }
 
-  function warpUpTo(uint256 untilTimestamp) public virtual {
+  function warpUpTo(
+    uint256 untilTimestamp
+  ) public virtual {
     uint256 blockTime = _networkDataMap[getCurrentNetwork()].blockTime;
     uint256 currTimestamp = vm.getBlockTimestamp();
     uint256 newBlock;
 
-    if (untilTimestamp <= currTimestamp) {
-      newBlock = vm.getBlockNumber() - (currTimestamp - untilTimestamp) / blockTime;
-    } else {
-      newBlock = vm.getBlockNumber() + (untilTimestamp - currTimestamp) / blockTime;
-    }
+    if (untilTimestamp <= currTimestamp) newBlock = vm.getBlockNumber() - (currTimestamp - untilTimestamp) / blockTime;
+    else newBlock = vm.getBlockNumber() + (untilTimestamp - currTimestamp) / blockTime;
 
     vm.roll(newBlock);
     vm.warp(untilTimestamp);
   }
 
-  function setForkMode(bool shouldEnable) public virtual {
+  function setForkMode(
+    bool shouldEnable
+  ) public virtual {
     _isForkModeEnabled = shouldEnable;
     emit ForkModeUpdated(shouldEnable);
   }
 
-  function getNetworkData(TNetwork network) public view virtual returns (NetworkData memory) {
+  function getNetworkData(
+    TNetwork network
+  ) public view virtual returns (NetworkData memory) {
     return _networkDataMap[network];
   }
 
-  function getNetworkTypeByForkId(uint256 forkId) public view virtual returns (TNetwork network) {
+  function getNetworkTypeByForkId(
+    uint256 forkId
+  ) public view virtual returns (TNetwork network) {
     network = _forkId2Network[forkId];
     if (network == TNetwork.wrap(0x0)) network = DefaultNetwork.LocalHost.key();
   }
 
-  function getDeploymentDirectory(TNetwork network) public view virtual returns (string memory dirPath) {
+  function getDeploymentDirectory(
+    TNetwork network
+  ) public view virtual returns (string memory dirPath) {
     string memory dirName = network.dir();
     require(bytes(dirName).length != 0, "NetworkConfig: Deployment directory not found");
     dirPath = string.concat(_deploymentRoot, dirName);
   }
 
-  function setNetworkInfo(NetworkData memory networkData) public virtual {
+  function setNetworkInfo(
+    NetworkData memory networkData
+  ) public virtual {
     _forkMap[networkData.network][0] = tryCreateFork(networkData.chainAlias, networkData.network, 0);
     _networkDataMap[networkData.network] = networkData;
   }
 
-  function getExplorer(TNetwork network) public view virtual returns (string memory link) {
+  function getExplorer(
+    TNetwork network
+  ) public view virtual returns (string memory link) {
     link = _networkDataMap[network].explorer;
   }
 
-  function getAlias(TNetwork network) public view virtual returns (string memory networkAlias) {
+  function getAlias(
+    TNetwork network
+  ) public view virtual returns (string memory networkAlias) {
     networkAlias = _networkDataMap[network].chainAlias;
     require(bytes(networkAlias).length != 0, "NetworkConfig: Network alias not found");
   }
 
-  function getForkId(TNetwork network) public view virtual returns (uint256 forkId) {
+  function getForkId(
+    TNetwork network
+  ) public view virtual returns (uint256 forkId) {
     forkId = getForkId({ network: network, forkBlockNumber: 0 });
   }
 
@@ -114,7 +138,9 @@ abstract contract NetworkConfig is INetworkConfig {
     forkId = _forkMap[network][forkBlockNumber];
   }
 
-  function createFork(TNetwork network) public returns (uint256 forkId) {
+  function createFork(
+    TNetwork network
+  ) public returns (uint256 forkId) {
     return createFork({ network: network, forkBlockNumber: 0 });
   }
 
@@ -127,11 +153,11 @@ abstract contract NetworkConfig is INetworkConfig {
     _forkId2Network[forkId] = network;
   }
 
-  function tryCreateFork(string memory chainAlias, TNetwork network, uint256 forkBlockNumber)
-    public
-    virtual
-    returns (uint256)
-  {
+  function tryCreateFork(
+    string memory chainAlias,
+    TNetwork network,
+    uint256 forkBlockNumber
+  ) public virtual returns (uint256) {
     uint256 currentFork = NULL_FORK_ID;
 
     try vm.activeFork() returns (uint256 forkId) {
@@ -184,7 +210,9 @@ abstract contract NetworkConfig is INetworkConfig {
     }
   }
 
-  function switchTo(TNetwork network) public virtual {
+  function switchTo(
+    TNetwork network
+  ) public virtual {
     switchTo({ network: network, forkBlockNumber: 0 });
   }
 
@@ -199,7 +227,9 @@ abstract contract NetworkConfig is INetworkConfig {
     _logCurrentForkInfo(_networkDataMap[network].chainAlias);
   }
 
-  function switchTo(uint256 forkId) public virtual {
+  function switchTo(
+    uint256 forkId
+  ) public virtual {
     vm.selectFork(forkId);
     _currentNetwork = _forkId2Network[forkId];
     this.logCurrentForkInfo();
@@ -214,7 +244,9 @@ abstract contract NetworkConfig is INetworkConfig {
     _logCurrentForkInfo(_networkDataMap[getCurrentNetwork()].chainAlias);
   }
 
-  function _logCurrentForkInfo(string memory chainAlias) internal view {
+  function _logCurrentForkInfo(
+    string memory chainAlias
+  ) internal view {
     string memory logA = string.concat(
       "Network: ".blue(),
       chainAlias.yellow(),

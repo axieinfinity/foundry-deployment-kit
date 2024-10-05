@@ -4,8 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import { IVme } from "../interfaces/IVme.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { TNetwork } from "../types/TNetwork.sol";
+
 import { TContract } from "../types/TContract.sol";
+import { TNetwork } from "../types/TNetwork.sol";
 
 abstract contract BaseScriptExtended {
   bytes public constant EMPTY_ARGS = "";
@@ -22,7 +23,9 @@ abstract contract BaseScriptExtended {
     return vme.getForkId(network());
   }
 
-  function forkId(uint256 forkBlockNumber) public view virtual returns (uint256) {
+  function forkId(
+    uint256 forkBlockNumber
+  ) public view virtual returns (uint256) {
     return vme.getForkId(network(), forkBlockNumber);
   }
 
@@ -30,7 +33,9 @@ abstract contract BaseScriptExtended {
     return vme.getSender();
   }
 
-  function loadContract(TContract contractType) public view virtual returns (address payable contractAddr) {
+  function loadContract(
+    TContract contractType
+  ) public view virtual returns (address payable contractAddr) {
     return vme.getAddressFromCurrentNetwork(contractType);
   }
 }

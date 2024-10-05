@@ -13,19 +13,26 @@ interface IRuntimeConfig {
     bool disablePrecheck;
     bool disablePostcheck;
     uint256 forkBlockNumber;
+    string scriptRoot;
   }
 
   function isPostChecking() external view returns (bool);
 
   function isPreChecking() external view returns (bool);
 
-  function setPostCheckingStatus(bool status) external;
+  function setPostCheckingStatus(
+    bool status
+  ) external;
 
-  function setPreCheckingStatus(bool status) external;
+  function setPreCheckingStatus(
+    bool status
+  ) external;
 
   function getCommand() external view returns (string memory);
 
-  function resolveCommand(string calldata command) external;
+  function resolveCommand(
+    string calldata command
+  ) external;
 
   function buildRuntimeConfig() external;
 

@@ -2,15 +2,16 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Math } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/math/Math.sol";
-import { EnumerableSet } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/structs/EnumerableSet.sol";
-import { JSONParserLib } from "../../dependencies/@solady-0.0.228/src/utils/JSONParserLib.sol";
-import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
-import { Vm, VmSafe } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console, vm, vme } from "../utils/Helpers.sol";
-import { TNetwork } from "../types/TNetwork.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm, VmSafe } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { Math } from "../../dependencies/openzeppelin-5.0.2/contracts/utils/math/Math.sol";
+import { EnumerableSet } from "../../dependencies/openzeppelin-5.0.2/contracts/utils/structs/EnumerableSet.sol";
+import { JSONParserLib } from "../../dependencies/solady-0.0.228/src/utils/JSONParserLib.sol";
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+
 import { TContract } from "../types/TContract.sol";
+import { TNetwork } from "../types/TNetwork.sol";
+import { console, vm, vme } from "../utils/Helpers.sol";
 
 interface InitializableOZV4 {
   event Initialized(uint8);
@@ -64,7 +65,8 @@ library LibInitializeGuard {
   /// @dev Maximum value of initialized version in `_initialized` slot of OpenZeppelin v5
   uint256 private constant MAX_VER_V5 = type(uint64).max;
 
-  /// @dev See: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.2/contracts/proxy/utils/Initializable.sol#L77
+  /// @dev See:
+  /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.2/contracts/proxy/utils/Initializable.sol#L77
   bytes32 private constant INITIALIZABLE_STORAGE_OZV5 =
     0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00;
 
@@ -104,9 +106,7 @@ library LibInitializeGuard {
 
         for (uint256 j; j < accs.length; ++j) {
           // Skip if changes does not made changes to `initSlot` by `proxy` to `logic`
-          if (!(accs[j].isWrite && accs[j].account == proxy && accs[j].slot == initLoc.slot)) {
-            continue;
-          }
+          if (!(accs[j].isWrite && accs[j].account == proxy && accs[j].slot == initLoc.slot)) continue;
 
           bool shouldSkip = _validateInitChanges(accs[j], initLoc);
           if (shouldSkip) continue;
@@ -122,7 +122,9 @@ library LibInitializeGuard {
    * @dev Validate the initialized version of the logics.
    * - Check if the logic disable initialized version.
    */
-  function _validateLogicsVersion(Cache storage $cache) private view {
+  function _validateLogicsVersion(
+    Cache storage $cache
+  ) private view {
     address[] memory logics = $cache._logics.values();
     uint256 length = logics.length;
 
@@ -141,7 +143,9 @@ library LibInitializeGuard {
    * - Check if `_initialized` slot is found.
    * - Check if the last initialized version is equal to the number of `initialize` functions.
    */
-  function _validateProxiesVersion(Cache storage $cache) private {
+  function _validateProxiesVersion(
+    Cache storage $cache
+  ) private {
     address[] memory proxies = $cache._proxies.values();
     uint256 length = proxies.length;
 
@@ -211,11 +215,10 @@ library LibInitializeGuard {
    * @param initLoc The initialized location data of the proxy.
    * @return shouldSkip Whether to skip the validation.
    */
-  function _validateInitChanges(Vm.StorageAccess memory acc, InitLocation memory initLoc)
-    private
-    view
-    returns (bool shouldSkip)
-  {
+  function _validateInitChanges(
+    Vm.StorageAccess memory acc,
+    InitLocation memory initLoc
+  ) private view returns (bool shouldSkip) {
     uint256 prvVer = _getVersionFromSlotValue(acc.previousValue, initLoc.bitOffset, initLoc.nBit);
     uint256 newVer = _getVersionFromSlotValue(acc.newValue, initLoc.bitOffset, initLoc.nBit);
 
@@ -271,7 +274,8 @@ library LibInitializeGuard {
   }
 
   /**
-   * @dev Get the number of `initialize` functions of the given `proxy` by inspecting its storage layout using `forge inspect <contract_name> methodIdentifiers`.
+   * @dev Get the number of `initialize` functions of the given `proxy` by inspecting its storage layout using `forge
+   * inspect <contract_name> methodIdentifiers`.
    */
   function _getInitializeFnCount(Cache storage $cache, address proxy) private returns (uint256 count) {
     string[] memory inputs = new string[](4);
@@ -290,7 +294,8 @@ library LibInitializeGuard {
   }
 
   /**
-   * @dev Get `_initialized` slot of the given `proxy` by inspecting its storage layout using `forge inspect <contract_name> storage`.
+   * @dev Get `_initialized` slot of the given `proxy` by inspecting its storage layout using `forge inspect
+   * <contract_name> storage`.
    * If the slot is not found, infer it used OpenZeppelin v5 `Initializable` extension.
    */
   function _getInitializedSlot(Cache storage $cache, address proxy) private returns (InitLocation memory initSlot) {
@@ -331,12 +336,12 @@ library LibInitializeGuard {
     contractName = contractNameMap;
   }
 
-  function _getContractNameFromAbsolutePath(string memory path) internal pure returns (string memory contractName) {
+  function _getContractNameFromAbsolutePath(
+    string memory path
+  ) internal pure returns (string memory contractName) {
     uint256 length = bytes(path).length;
     // Remove ".sol"
-    if (path.endsWith(".sol")) {
-      contractName = path.slice(0, length - 4);
-    }
+    if (path.endsWith(".sol")) contractName = path.slice(0, length - 4);
     return string(contractName);
   }
 

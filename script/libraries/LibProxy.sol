@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
 
 library LibProxy {
@@ -21,7 +21,9 @@ library LibProxy {
     );
   }
 
-  function getProxyAdmin(address proxy) internal view returns (address payable proxyAdmin) {
+  function getProxyAdmin(
+    address proxy
+  ) internal view returns (address payable proxyAdmin) {
     proxyAdmin = getProxyAdmin({ proxy: proxy, nullCheck: true });
   }
 
@@ -36,7 +38,9 @@ library LibProxy {
     );
   }
 
-  function getProxyImplementation(address proxy) internal view returns (address payable impl) {
+  function getProxyImplementation(
+    address proxy
+  ) internal view returns (address payable impl) {
     impl = getProxyImplementation({ proxy: proxy, nullCheck: true });
   }
 }

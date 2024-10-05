@@ -1,25 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Test } from "../dependencies/@forge-std-1.9.1/src/Test.sol";
-import { vme, Vm } from "script/utils/Constants.sol";
-import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
-import { StdStyle } from "../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
+import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Test } from "../dependencies/forge-std-1.9.3/src/Test.sol";
+import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+
+import { Initializable } from "../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/utils/Initializable.sol";
+
+import { MockConfig } from "./MockConfig.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";
 import { BaseMigration } from "script/BaseMigration.s.sol";
-import { Initializable } from "../dependencies/@openzeppelin-4.9.3/contracts/proxy/utils/Initializable.sol";
 import { LibInitializeGuard } from "script/libraries/LibInitializeGuard.sol";
-import { SampleProxy } from "src/mocks/SampleProxy.sol";
-import { SampleProxyDeploy } from "script/sample/contracts/SampleProxyDeploy.s.sol";
 import { LibProxy } from "script/libraries/LibProxy.sol";
-import { MockConfig } from "./MockConfig.sol";
+import { SampleProxyDeploy } from "script/sample/contracts/SampleProxyDeploy.s.sol";
+import { Vm, vme } from "script/utils/Constants.sol";
+
 import { SampleProxyForTestingPurpose2 } from "src/mocks/ForTesting/SampleProxyForTestingPurpose2.sol";
 import { SampleProxyForTestingPurpose5 } from "src/mocks/ForTesting/SampleProxyForTestingPurpose5.sol";
 import { SampleProxyForTestingPurpose6 } from "src/mocks/ForTesting/SampleProxyForTestingPurpose6.sol";
 import { SampleProxyForTestingPurpose7 } from "src/mocks/ForTesting/SampleProxyForTestingPurpose7.sol";
+import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
 interface ITransparentUpgradeableProxy {
-  function upgradeTo(address) external;
   function upgradeToAndCall(address, bytes memory) external payable;
 }
 
@@ -63,7 +65,7 @@ contract LibInitializeGuardTest is Test {
 
     address newLogic = address(new SampleProxyForTestingPurpose2());
     vm.prank(admin);
-    ITransparentUpgradeableProxy(address(_sample)).upgradeTo(newLogic);
+    ITransparentUpgradeableProxy(address(_sample)).upgradeToAndCall(newLogic, "");
     MockConfig(address(vme)).updateSampleProxyLogicForTesting("SampleProxyForTestingPurpose2");
 
     Vm.Log[] memory logs = vm.getRecordedLogs();

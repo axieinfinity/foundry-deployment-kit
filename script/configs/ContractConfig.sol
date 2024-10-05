@@ -2,16 +2,18 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { EnumerableSet } from "../../dependencies/@openzeppelin-4.9.3/contracts/utils/structs/EnumerableSet.sol";
-import { Vm, VmSafe } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm, VmSafe } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+import { EnumerableSet } from "../../dependencies/openzeppelin-5.0.2/contracts/utils/structs/EnumerableSet.sol";
+
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { IContractConfig } from "../interfaces/configs/IContractConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { vme } from "../utils/Constants.sol";
+
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";
+import { vme } from "../utils/Constants.sol";
 
 abstract contract ContractConfig is IContractConfig {
   using LibString for *;
@@ -35,12 +37,10 @@ abstract contract ContractConfig is IContractConfig {
     _deploymentRoot = deploymentRoot;
   }
 
-  function getContractTypeByRawData(TNetwork network, address contractAddr)
-    public
-    view
-    virtual
-    returns (TContract contractType)
-  {
+  function getContractTypeByRawData(
+    TNetwork network,
+    address contractAddr
+  ) public view virtual returns (TContract contractType) {
     contractType = _contractTypeMap[network][contractAddr];
     require(
       TContract.unwrap(contractType) != 0x0,
@@ -48,7 +48,9 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function getContractTypeFromCurrentNetwork(address contractAddr) public view virtual returns (TContract contractType) {
+  function getContractTypeFromCurrentNetwork(
+    address contractAddr
+  ) public view virtual returns (TContract contractType) {
     return getContractTypeByRawData(vme.getCurrentNetwork(), contractAddr);
   }
 
@@ -56,7 +58,9 @@ abstract contract ContractConfig is IContractConfig {
     _contractAbsolutePathMap[contractType] = absolutePath;
   }
 
-  function getContractName(TContract contractType) public view virtual returns (string memory name) {
+  function getContractName(
+    TContract contractType
+  ) public view virtual returns (string memory name) {
     string memory contractTypeName = contractType.name();
     name = _contractNameMap[contractType];
     name = keccak256(bytes(contractTypeName)) == keccak256(bytes(name)) ? name : contractTypeName;
@@ -72,7 +76,9 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function getContractAbsolutePath(TContract contractType) public view virtual returns (string memory name) {
+  function getContractAbsolutePath(
+    TContract contractType
+  ) public view virtual returns (string memory name) {
     if (bytes(_contractAbsolutePathMap[contractType]).length != 0) {
       name = _contractAbsolutePathMap[contractType];
     } else if (bytes(_absolutePath).length != 0) {
@@ -82,7 +88,9 @@ abstract contract ContractConfig is IContractConfig {
     }
   }
 
-  function getAddressFromCurrentNetwork(TContract contractType) public view virtual returns (address payable) {
+  function getAddressFromCurrentNetwork(
+    TContract contractType
+  ) public view virtual returns (address payable) {
     string memory contractName = getContractName(contractType);
     require(
       bytes(contractName).length != 0,
@@ -91,23 +99,25 @@ abstract contract ContractConfig is IContractConfig {
     return getAddressByRawData(vme.getCurrentNetwork(), contractName);
   }
 
-  function getAddressByString(string calldata contractName) public view virtual returns (address payable) {
+  function getAddressByString(
+    string calldata contractName
+  ) public view virtual returns (address payable) {
     return getAddressByRawData(vme.getCurrentNetwork(), contractName);
   }
 
-  function getAddressByRawData(TNetwork network, string memory contractName)
-    public
-    view
-    virtual
-    returns (address payable addr)
-  {
+  function getAddressByRawData(
+    TNetwork network,
+    string memory contractName
+  ) public view virtual returns (address payable addr) {
     addr = payable(_contractAddrMap[network][contractName]);
     require(
       addr != address(0x0), string.concat("ContractConfig(getAddressByRawData): Address not found: ", contractName)
     );
   }
 
-  function getAllAddressesByRawData(TNetwork network) public view virtual returns (address payable[] memory addrs) {
+  function getAllAddressesByRawData(
+    TNetwork network
+  ) public view virtual returns (address payable[] memory addrs) {
     address[] memory v = _contractAddrSet[network].values();
     assembly ("memory-safe") {
       addrs := v
@@ -129,7 +139,9 @@ abstract contract ContractConfig is IContractConfig {
     );
   }
 
-  function _storeDeploymentData(string memory deploymentRoot) internal virtual {
+  function _storeDeploymentData(
+    string memory deploymentRoot
+  ) internal virtual {
     uint256 start = vm.unixTime();
 
     VmSafe.DirEntry[] memory deployments;

@@ -24,7 +24,9 @@ library LibSig {
    * @param signature Signature bytes to split
    * @return r s v Tuple of ECDSA values
    */
-  function split(bytes calldata signature) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
+  function split(
+    bytes calldata signature
+  ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
     assembly ("memory-safe") {
       r := calldataload(signature.offset)
       s := calldataload(add(signature.offset, 0x20))

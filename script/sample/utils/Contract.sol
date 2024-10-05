@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
+import { LibString } from "../../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { TContract } from "@fdk/types/Types.sol";
 
 enum Contract {
@@ -19,11 +19,15 @@ enum Contract {
 
 using { key, name } for Contract global;
 
-function key(Contract contractEnum) pure returns (TContract) {
+function key(
+  Contract contractEnum
+) pure returns (TContract) {
   return TContract.wrap(LibString.packOne(name(contractEnum)));
 }
 
-function name(Contract contractEnum) pure returns (string memory) {
+function name(
+  Contract contractEnum
+) pure returns (string memory) {
   if (contractEnum == Contract.Sample) return "Sample";
   if (contractEnum == Contract.tBERRY) return "tBERRY";
   if (contractEnum == Contract.tWETH) return "tWETH";

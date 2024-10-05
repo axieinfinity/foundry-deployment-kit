@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { SampleProxy } from "src/mocks/SampleProxy.sol";
-import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument, SampleMigration } from "../SampleMigration.s.sol";
+import { Contract } from "../utils/Contract.sol";
+import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
 contract SampleProxyDeploy is SampleMigration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {

@@ -2,14 +2,16 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
-import { vm, vme } from "../utils/Constants.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+
 import { IEIP173 } from "../interfaces/IEIP173.sol";
-import { sendRawTransaction, cheatBroadcast, decodeData } from "../utils/Helpers.sol";
+import { vm, vme } from "../utils/Constants.sol";
+import { cheatBroadcast, decodeData, sendRawTransaction } from "../utils/Helpers.sol";
+
+import { ArtifactInfo } from "./LibArtifact.sol";
 import { LibProxy } from "./LibProxy.sol";
 import { LibSharedAddress } from "./LibSharedAddress.sol";
-import { ArtifactInfo } from "./LibArtifact.sol";
 
 enum ProxyInterface {
   Transparent,
@@ -45,7 +47,9 @@ library LibDeploy {
   using LibProxy for address;
   using LibProxy for address payable;
 
-  modifier prankOrBroadcast(address by) {
+  modifier prankOrBroadcast(
+    address by
+  ) {
     if (vme.isPostChecking()) {
       vm.startPrank(by);
       _;
@@ -98,7 +102,9 @@ library LibDeploy {
     require(currProxyAdmin == prevProxyAdmin, "LibDeploy: ProxyAdmin changed");
   }
 
-  function upgrade(UpgradeInfo memory info) internal {
+  function upgrade(
+    UpgradeInfo memory info
+  ) internal {
     if (info.proxyInterface == ProxyInterface.Transparent) {
       upgradeTransparentProxy(
         info.proxy,
@@ -123,11 +129,8 @@ library LibDeploy {
     function(address,address,uint256,bytes memory,ProxyInterface) internal upgradeCallback,
     bool shouldUseCallback
   ) internal validateUpgrade(proxy, logic, shouldPrompt) {
-    if (shouldUseCallback) {
-      upgradeCallback(proxy, logic, callValue, callData, ProxyInterface.Transparent);
-    } else {
-      _tryUpgradeTransparentProxy(proxy, logic, callValue, callData);
-    }
+    if (shouldUseCallback) upgradeCallback(proxy, logic, callValue, callData, ProxyInterface.Transparent);
+    else _tryUpgradeTransparentProxy(proxy, logic, callValue, callData);
   }
 
   function _tryUpgradeTransparentProxy(address proxy, address logic, uint256 callValue, bytes memory callData) private {
@@ -161,7 +164,9 @@ library LibDeploy {
     }
   }
 
-  function findHierarchyAdminOfProxy(address proxy) internal view returns (address auth, address interactTo) {
+  function findHierarchyAdminOfProxy(
+    address proxy
+  ) internal view returns (address auth, address interactTo) {
     interactTo = proxy;
     auth = proxy.getProxyAdmin();
 
@@ -179,7 +184,9 @@ library LibDeploy {
     }
   }
 
-  function deployImplementation(DeployInfo memory implInfo) internal returns (address payable impl) {
+  function deployImplementation(
+    DeployInfo memory implInfo
+  ) internal returns (address payable impl) {
     require(implInfo.callValue == 0, "LibDeploy: deployImplementation(DeployInfo): Value must be 0.");
     implInfo.artifactName = string.concat(implInfo.artifactName, "Logic");
     return deployFromArtifact(implInfo);
@@ -198,7 +205,7 @@ library LibDeploy {
     DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentProxyOZv4_9_5";
+    proxyInfo.contractName = "RoninTransparentProxy";
     proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
@@ -219,26 +226,10 @@ library LibDeploy {
     );
   }
 
-  function deployTransparentProxyV2(
-    DeployInfo memory implInfo,
-    uint256 callValue,
-    address proxyAdmin,
-    bytes memory callData
-  ) internal returns (address payable proxy) {
-    address impl = deployImplementation(implInfo);
-
-    DeployInfo memory proxyInfo;
-    proxyInfo.callValue = callValue;
-    proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentProxyV2";
-    proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
-    proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
-    proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
-
-    return deployFromArtifact(proxyInfo);
-  }
-
-  function deployFromArtifact(DeployInfo memory info) internal returns (address payable deployed) {
+  function deployFromArtifact(
+    DeployInfo memory info
+  ) internal returns (address payable deployed) {
+    vm.pauseTracing();
     deployed = deployFromBytecode(
       info.absolutePath,
       info.contractName,
@@ -248,6 +239,7 @@ library LibDeploy {
       info.callValue,
       info.by
     );
+    vm.resumeTracing();
   }
 
   function deployFromBytecode(
@@ -282,11 +274,11 @@ library LibDeploy {
     }).generateArtifact();
   }
 
-  function _deployRaw(uint256 callValue, bytes memory bytecode, address by)
-    private
-    prankOrBroadcast(by)
-    returns (address payable deployed)
-  {
+  function _deployRaw(
+    uint256 callValue,
+    bytes memory bytecode,
+    address by
+  ) private prankOrBroadcast(by) returns (address payable deployed) {
     assembly ("memory-safe") {
       deployed := create(callValue, add(bytecode, 0x20), mload(bytecode))
     }

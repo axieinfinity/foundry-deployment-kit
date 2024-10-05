@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { TContract } from "../types/Types.sol";
 
 enum DefaultContract {
@@ -31,11 +31,15 @@ enum DefaultContract {
 
 using { key, name } for DefaultContract global;
 
-function key(DefaultContract defaultContract) pure returns (TContract) {
+function key(
+  DefaultContract defaultContract
+) pure returns (TContract) {
   return TContract.wrap(LibString.packOne(name(defaultContract)));
 }
 
-function name(DefaultContract defaultContract) pure returns (string memory) {
+function name(
+  DefaultContract defaultContract
+) pure returns (string memory) {
   if (defaultContract == DefaultContract.ProxyAdmin) return "ProxyAdmin";
   if (defaultContract == DefaultContract.Multicall2) return "Multicall2";
   if (defaultContract == DefaultContract.Multicall3) return "Multicall3";

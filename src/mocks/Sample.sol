@@ -4,7 +4,9 @@ pragma solidity ^0.8.19;
 contract Sample {
   string internal _message;
 
-  function setMessage(string memory message) public {
+  function setMessage(
+    string memory message
+  ) public {
     _message = message;
   }
 

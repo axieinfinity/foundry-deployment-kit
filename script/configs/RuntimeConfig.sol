@@ -2,12 +2,13 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
-import { StdStyle } from "../../dependencies/@forge-std-1.9.1/src/StdStyle.sol";
-import { console } from "../../dependencies/@forge-std-1.9.1/src/console.sol";
-import { LibString } from "../../dependencies/@solady-0.0.228/src/utils/LibString.sol";
-import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
+import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
+import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 import { TNetwork } from "../types/Types.sol";
 import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 
@@ -30,7 +31,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
     return _isPostChecking;
   }
 
-  function setPostCheckingStatus(bool status) public virtual {
+  function setPostCheckingStatus(
+    bool status
+  ) public virtual {
     _isPostChecking = status;
   }
 
@@ -38,11 +41,15 @@ abstract contract RuntimeConfig is IRuntimeConfig {
     return _isPreChecking;
   }
 
-  function setPreCheckingStatus(bool status) public virtual {
+  function setPreCheckingStatus(
+    bool status
+  ) public virtual {
     _isPreChecking = status;
   }
 
-  function resolveCommand(string calldata command) external virtual {
+  function resolveCommand(
+    string calldata command
+  ) external virtual {
     if (_resolved) return;
 
     _option.network = DefaultNetwork.LocalHost.key();
@@ -69,6 +76,9 @@ abstract contract RuntimeConfig is IRuntimeConfig {
         } else if (args[i].startsWith("sender")) {
           string memory sender = vm.split(args[i], ".")[1];
           _option.sender = vm.parseAddress(sender);
+        } else if (args[i].startsWith("script-root")) {
+          string memory scriptRoot = vm.split(args[i], ".")[1];
+          _option.scriptRoot = scriptRoot;
         } else {
           console.log("Invalid command: %s", args[i]);
         }

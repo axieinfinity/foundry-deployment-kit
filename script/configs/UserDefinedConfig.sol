@@ -22,7 +22,9 @@ abstract contract UserDefinedConfig is IUserDefinedConfig {
     }
   }
 
-  function getUserDefinedConfig(string calldata key) external view returns (bytes memory value) {
+  function getUserDefinedConfig(
+    string calldata key
+  ) external view returns (bytes memory value) {
     UserDefinedData storage $ = _getUserDefinedData(key);
     return $._value;
   }
@@ -31,7 +33,9 @@ abstract contract UserDefinedConfig is IUserDefinedConfig {
     return _userDefinedKeys;
   }
 
-  function _getUserDefinedData(string calldata key) private pure returns (UserDefinedData storage $) {
+  function _getUserDefinedData(
+    string calldata key
+  ) private pure returns (UserDefinedData storage $) {
     bytes32 location = keccak256(abi.encode($$_UserDefinedDataStorageLocation, keccak256(bytes(key))));
 
     assembly ("memory-safe") {

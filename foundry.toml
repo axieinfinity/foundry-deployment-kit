@@ -15,6 +15,11 @@ fs_permissions = [{ access = "read-write", path = "./" }]
 line_length = 120
 tab_width = 2
 bracket_spacing = true
+multiline_func_header = 'params_first'
+single_line_statement_blocks = 'single'
+sort_imports = true
+number_underscore = "thousands"
+wrap_comments = true
 
 [rpc_endpoints]
 ethereum = "https://eth.llamarpc.com"
@@ -24,10 +29,10 @@ ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 localhost = "http://localhost:8545"
 
 [dependencies]
-"openzeppelin-v4" = { version = "4.9.3", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.3.zip" }
-"forge-std" = { version = "1.9.1", url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.1.zip" }
+"forge-std" = { version = "1.9.3", url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.3.zip" }
 "solady" = { version = "0.0.228", url = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip" }
-"openzeppelin-v5" = { version = "5.0.2", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.0.2.zip" }
+"openzeppelin" = { version = "5.0.2", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.0.2.zip" }
+"openzeppelin-v4" = { version = "4.9.5", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip" }
 
 [soldeer]
 # whether soldeer manages remappings

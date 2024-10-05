@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Vm } from "../../dependencies/@forge-std-1.9.1/src/Vm.sol";
+import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 

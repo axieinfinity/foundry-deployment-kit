@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Ownable } from "../../../dependencies/@openzeppelin-4.9.3/contracts/access/Ownable.sol";
-import "@openzeppelin-4.9.3/contracts/utils/Address.sol";
+import { Ownable } from "../../../dependencies/openzeppelin-5.0.2/contracts/access/Ownable.sol";
+import "../../../dependencies/openzeppelin-v4-4.9.5/contracts/utils/Address.sol";
 
 abstract contract InitializableTesting {
   /**
@@ -37,9 +37,7 @@ abstract contract InitializableTesting {
       "Initializable: contract is already initialized"
     );
     _initialized = 1;
-    if (isTopLevelCall) {
-      _initializing = true;
-    }
+    if (isTopLevelCall) _initializing = true;
     _;
     if (isTopLevelCall) {
       _initializing = false;
@@ -65,7 +63,9 @@ abstract contract InitializableTesting {
    *
    * Emits an {Initialized} event.
    */
-  modifier reinitializer(uint8 version) {
+  modifier reinitializer(
+    uint8 version
+  ) {
     require(!_initializing && _initialized < version, "Initializable: contract is already initialized");
     _initialized = version;
     _initializing = true;

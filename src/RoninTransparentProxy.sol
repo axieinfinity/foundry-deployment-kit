@@ -2,20 +2,21 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/transparent/TransparentUpgradeableProxy.sol)
 pragma solidity ^0.8.20;
 
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { ERC1967Utils } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
-import { ITransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ERC1967Proxy } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ERC1967Utils } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import { ITransparentUpgradeableProxy } from
+  "../dependencies/openzeppelin-5.0.2/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @dev Contract TransparentUpgradeableProxy from Openzeppelin v5 with the following modifications:
- * - Admin is a parameter in the constructor ( like previous versions) instead of being deployed
+ * - Admin is a parameter in the constructor (like previous versions) instead of being deployed
  * - Let the admin get access to the proxy via `functionDelegateCall`
  * - Replace _msgSender() with msg.sender
  */
 contract RoninTransparentProxy is ERC1967Proxy {
   /**
    * @dev The proxy caller is the current admin, and can't fallback to the proxy target. Admin must call via
-   * `adminDelegate`.
+   * `functionDelegateCall`.
    */
   error ProxyDeniedAdminAccess();
 

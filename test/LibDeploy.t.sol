@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ProxyInterface, UpgradeInfo, DeployInfo, LibDeploy, LibProxy } from "script/libraries/LibDeploy.sol";
-import { vme } from "script/utils/Constants.sol";
+import { Test } from "../dependencies/forge-std-1.9.3/src/Test.sol";
+import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+
+import { MockERC20 } from "../dependencies/forge-std-1.9.3/src/mocks/MockERC20.sol";
+import { MockERC721 } from "../dependencies/forge-std-1.9.3/src/mocks/MockERC721.sol";
+import { ProxyAdmin } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/transparent/ProxyAdmin.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";
-import { Test } from "../dependencies/@forge-std-1.9.1/src/Test.sol";
-import { console } from "../dependencies/@forge-std-1.9.1/src/console.sol";
-import { TransparentProxyOZv4_9_5 } from "src/TransparentProxyOZv4_9_5.sol";
-import { MockERC721 } from "../dependencies/@forge-std-1.9.1/src/mocks/MockERC721.sol";
-import { MockERC20 } from "../dependencies/@forge-std-1.9.1/src/mocks/MockERC20.sol";
-import { ProxyAdmin } from "../dependencies/@openzeppelin-4.9.3/contracts/proxy/transparent/ProxyAdmin.sol";
+import { DeployInfo, LibDeploy, LibProxy, ProxyInterface, UpgradeInfo } from "script/libraries/LibDeploy.sol";
+import { vme } from "script/utils/Constants.sol";
+import { RoninTransparentProxy } from "src/RoninTransparentProxy.sol";
 
 contract LibDeployTest is Test {
   using LibProxy for *;
@@ -22,7 +23,7 @@ contract LibDeployTest is Test {
     address eoa = makeAddr("eoa");
     address logic = address(new MockERC721());
     vm.label(logic, "Logic");
-    address proxy = address(new TransparentProxyOZv4_9_5(logic, eoa, ""));
+    address proxy = address(new RoninTransparentProxy(logic, eoa, ""));
     vm.label(proxy, "Proxy");
 
     UpgradeInfo memory info = UpgradeInfo({
@@ -42,12 +43,12 @@ contract LibDeployTest is Test {
   function testConcrete_Upgrade_ProxyWithAdminIsProxyAdmin() public {
     address owner = makeAddr("owner");
     vm.prank(owner);
-    address proxyAdmin = address(new ProxyAdmin());
+    address proxyAdmin = address(new ProxyAdmin(owner));
     vm.label(proxyAdmin, "ProxyAdmin");
 
     address logic = address(new MockERC20());
     vm.label(logic, "Logic");
-    address proxy = address(new TransparentProxyOZv4_9_5(logic, proxyAdmin, ""));
+    address proxy = address(new RoninTransparentProxy(logic, proxyAdmin, ""));
     vm.label(proxy, "Proxy");
 
     UpgradeInfo memory info = UpgradeInfo({
@@ -70,7 +71,7 @@ contract LibDeployTest is Test {
 
     address logic = address(new MockERC20());
     vm.label(logic, "Logic");
-    address proxy = address(new TransparentProxyOZv4_9_5(logic, multisig, ""));
+    address proxy = address(new RoninTransparentProxy(logic, multisig, ""));
     vm.label(proxy, "Proxy");
 
     UpgradeInfo memory info = UpgradeInfo({
@@ -91,13 +92,13 @@ contract LibDeployTest is Test {
     address multisig = makeAddr("multisig");
     vm.etch(multisig, type(MockERC20).runtimeCode);
     vm.prank(multisig);
-    address proxyAdmin = address(new ProxyAdmin());
+    address proxyAdmin = address(new ProxyAdmin(multisig));
     assertTrue(ProxyAdmin(proxyAdmin).owner() == multisig, "Owner of ProxyAdmin is not multisig");
     vm.label(proxyAdmin, "ProxyAdmin");
 
     address logic = address(new MockERC20());
     vm.label(logic, "Logic");
-    address proxy = address(new TransparentProxyOZv4_9_5(logic, proxyAdmin, ""));
+    address proxy = address(new RoninTransparentProxy(logic, proxyAdmin, ""));
     vm.label(proxy, "Proxy");
 
     console.log("ProxyAdmin: ", proxy.getProxyAdmin());

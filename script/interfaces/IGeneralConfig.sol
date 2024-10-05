@@ -2,12 +2,12 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { IWalletConfig } from "./configs/IWalletConfig.sol";
-import { IRuntimeConfig } from "./configs/IRuntimeConfig.sol";
-import { IMigrationConfig } from "./configs/IMigrationConfig.sol";
-import { IUserDefinedConfig } from "./configs/IUserDefinedConfig.sol";
-import { INetworkConfig } from "./configs/INetworkConfig.sol";
 import { IContractConfig } from "./configs/IContractConfig.sol";
+import { IMigrationConfig } from "./configs/IMigrationConfig.sol";
+import { INetworkConfig } from "./configs/INetworkConfig.sol";
+import { IRuntimeConfig } from "./configs/IRuntimeConfig.sol";
+import { IUserDefinedConfig } from "./configs/IUserDefinedConfig.sol";
+import { IWalletConfig } from "./configs/IWalletConfig.sol";
 
 interface IGeneralConfig is
   IWalletConfig,

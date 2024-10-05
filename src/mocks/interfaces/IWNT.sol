@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { IERC20 } from "../../../dependencies/@openzeppelin-4.9.3/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "../../../dependencies/openzeppelin-5.0.2/contracts/token/ERC20/IERC20.sol";
 
 interface IWNT is IERC20 {
   event Deposit(address indexed from, uint256 amount);
@@ -10,5 +10,7 @@ interface IWNT is IERC20 {
 
   function deposit() external payable;
 
-  function withdraw(uint256 amount) external;
+  function withdraw(
+    uint256 amount
+  ) external;
 }

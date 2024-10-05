@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Initializable } from "../../dependencies/@openzeppelin-4.9.3/contracts/proxy/utils/Initializable.sol";
+import { Ownable } from "../../dependencies/openzeppelin-5.0.2/contracts/access/Ownable.sol";
+
 import { Initializable as InitializableV5 } from
-  "../../dependencies/@openzeppelin-v5-5.0.2/contracts/proxy/utils/Initializable.sol";
-import { Ownable } from "../../dependencies/@openzeppelin-4.9.3/contracts/access/Ownable.sol";
+  "../../dependencies/openzeppelin-5.0.2/contracts/proxy/utils/Initializable.sol";
+import { Initializable } from "../../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/utils/Initializable.sol";
 
 contract SampleProxy is Ownable, InitializableV5 {
   uint256[50] private __gap;
@@ -12,17 +13,21 @@ contract SampleProxy is Ownable, InitializableV5 {
   string internal _message;
   address internal _addr;
 
-  constructor() {
+  constructor() Ownable(msg.sender) {
     _disableInitializers();
   }
 
-  function initialize(string calldata message) external initializer {
+  function initialize(
+    string calldata message
+  ) external initializer {
     _message = message;
   }
 
   function initializeV2() external reinitializer(2) { }
 
-  function initializeV3(address a) external reinitializer(3) {
+  function initializeV3(
+    address a
+  ) external reinitializer(3) {
     _addr = a;
   }
 
@@ -30,7 +35,9 @@ contract SampleProxy is Ownable, InitializableV5 {
     _disableInitializers();
   }
 
-  function setMessage(string memory message) public {
+  function setMessage(
+    string memory message
+  ) public {
     _message = message;
   }
 

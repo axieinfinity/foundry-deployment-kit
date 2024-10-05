@@ -4,5 +4,7 @@ pragma experimental ABIEncoderV2;
 
 interface IEIP173 {
   function owner() external view returns (address);
-  function transferOwnership(address newOwner) external;
+  function transferOwnership(
+    address newOwner
+  ) external;
 }

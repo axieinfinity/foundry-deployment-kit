@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Initializable } from "../../../dependencies/@openzeppelin-4.9.3/contracts/proxy/utils/Initializable.sol";
+import { Ownable } from "../../../dependencies/openzeppelin-5.0.2/contracts/access/Ownable.sol";
+
 import { Initializable as InitializableV5 } from
-  "../../../dependencies/@openzeppelin-v5-5.0.2/contracts/proxy/utils/Initializable.sol";
-import { Ownable } from "../../../dependencies/@openzeppelin-4.9.3/contracts/access/Ownable.sol";
+  "../../../dependencies/openzeppelin-5.0.2/contracts/proxy/utils/Initializable.sol";
+import { Initializable } from "../../../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/utils/Initializable.sol";
 
 contract SampleProxyForTestingPurpose7 is Ownable, Initializable {
   uint256[50] private __gap;
@@ -14,31 +15,43 @@ contract SampleProxyForTestingPurpose7 is Ownable, Initializable {
   uint256 internal _newVariable;
   uint256 internal _newVariable2;
 
-  constructor() {
+  constructor() Ownable(msg.sender) {
     _disableInitializers();
   }
 
-  function initialize(string calldata message) external initializer {
+  function initialize(
+    string calldata message
+  ) external initializer {
     _message = message;
   }
 
-  function initializeV2(uint256 newValues) external reinitializer(2) {
+  function initializeV2(
+    uint256 newValues
+  ) external reinitializer(2) {
     _newVariable = newValues;
   }
 
-  function initializeV3(uint256 newValues) external reinitializer(3) {
+  function initializeV3(
+    uint256 newValues
+  ) external reinitializer(3) {
     _newVariable2 = newValues;
   }
 
-  function initializeV4(uint256 newValues) external reinitializer(3) {
+  function initializeV4(
+    uint256 newValues
+  ) external reinitializer(3) {
     _newVariable2 = newValues;
   }
 
-  function initializeV5(uint256 newValues) external reinitializer(5) {
+  function initializeV5(
+    uint256 newValues
+  ) external reinitializer(5) {
     _newVariable2 = newValues;
   }
 
-  function setMessage(string memory message) public {
+  function setMessage(
+    string memory message
+  ) public {
     _message = message;
   }
 
