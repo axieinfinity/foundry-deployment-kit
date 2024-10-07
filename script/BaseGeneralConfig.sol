@@ -135,6 +135,9 @@ contract BaseGeneralConfig is
     // Double check source: https://saigon-app.roninchain.com/address/0x54B3AC74a90E64E8dDE60671b6fE8F8DDf18eC9d
     setAddress(roninTestnet, DefaultContract.RoninValidatorSet.key(), 0x54B3AC74a90E64E8dDE60671b6fE8F8DDf18eC9d);
 
+    // Double check source: https://saigon-app.roninchain.com/address/0x3b67c8D22a91572a6AB18acC9F70787Af04A4043
+    setAddress(roninTestnet, DefaultContract.Profile.key(), 0x3b67c8D22a91572a6AB18acC9F70787Af04A4043);
+
     // Double check source: https://saigon-app.roninchain.com/address/0xA60c1e07fa030E4B49Eb54950ADb298Ab94dD312
     setAddress(roninTestnet, DefaultContract.RoninVRFCoordinator.key(), 0xA60c1e07fa030E4B49Eb54950ADb298Ab94dD312);
 
@@ -199,6 +202,9 @@ contract BaseGeneralConfig is
 
     // Double check source: https://app.roninchain.com/address/0x617c5d73662282EA7FfD231E020eCa6D2B0D552f
     setAddress(roninMainnet, DefaultContract.RoninValidatorSet.key(), 0x617c5d73662282EA7FfD231E020eCa6D2B0D552f);
+
+    // Double check source: https://app.roninchain.com/address/0x840EBf1CA767CB690029E91856A357a43B85d035
+    setAddress(roninMainnet, DefaultContract.Profile.key(), 0x840EBf1CA767CB690029E91856A357a43B85d035);
 
     // Double check source: https://app.roninchain.com/address/0x16A62a921e7fEC5Bf867fF5c805b662Db757B778
     setAddress(roninMainnet, DefaultContract.RoninVRFCoordinator.key(), 0x16A62a921e7fEC5Bf867fF5c805b662Db757B778);
