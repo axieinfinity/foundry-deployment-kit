@@ -26,6 +26,7 @@ enum DefaultContract {
   ERC721BatchTransfer,
   RoninGovernanceAdmin,
   RoninValidatorSet,
+  Profile,
   RoninVRFCoordinator
 }
 
@@ -61,5 +62,6 @@ function name(
   if (defaultContract == DefaultContract.RoninGovernanceAdmin) return "RoninGovernanceAdmin";
   if (defaultContract == DefaultContract.RoninValidatorSet) return "RoninValidatorSet";
   if (defaultContract == DefaultContract.RoninVRFCoordinator) return "RoninVRFCoordinator";
+  if (defaultContract == DefaultContract.Profile) return "Profile";
   revert("DefaultContract: Unknown contract");
 }
