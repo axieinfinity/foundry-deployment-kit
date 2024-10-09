@@ -63,7 +63,7 @@ library LibArtifact {
 
   function _serializeArtifact(string memory dirPath, ArtifactInfo memory info) internal {
     string[] memory inputs = new string[](25);
-    inputs[0] = string.concat(vme.getRuntimeConfig().scriptRoot, "/generate-artifact.sh");
+    inputs[0] = "./generate-artifact.sh";
     inputs[1] = "--name";
     inputs[2] = info.contractName;
     inputs[3] = "--args";
