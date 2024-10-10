@@ -340,9 +340,12 @@ library LibInitializeGuard {
     string memory path
   ) internal pure returns (string memory contractName) {
     uint256 length = bytes(path).length;
-    // Remove ".sol"
+    contractName = path;
     if (path.endsWith(".sol")) contractName = path.slice(0, length - 4);
-    return string(contractName);
+    string[] memory parts = contractName.split(":");
+    if (parts.length != 0) contractName = parts[parts.length - 1];
+    parts = contractName.split("/");
+    if (parts.length != 0) contractName = parts[parts.length - 1];
   }
 
   /**
