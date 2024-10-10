@@ -7,6 +7,7 @@ import { Vm } from "../dependencies/forge-std-1.9.3/src/Vm.sol";
 import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
 import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
+import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
 
 import { OnchainExecutor } from "./OnchainExecutor.s.sol";
 import { IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol"; // cheat to load artifact to parent
@@ -328,6 +329,6 @@ abstract contract BaseMigration is ScriptExtended {
    */
   function _precompileProxyContracts() internal pure virtual {
     bytes memory dummy;
-    dummy = type(RoninTransparentProxy).creationCode;
+    dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }
