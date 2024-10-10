@@ -329,6 +329,7 @@ abstract contract BaseMigration is ScriptExtended {
    */
   function _precompileProxyContracts() internal pure virtual {
     bytes memory dummy;
+		dummy = type(RoninTransparentProxy).creationCode;
     dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }
