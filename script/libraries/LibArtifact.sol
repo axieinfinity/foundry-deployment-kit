@@ -8,7 +8,6 @@ import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
 import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
 import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
 
-import { JSONParserLib } from "../../dependencies/solady-0.0.228/src/utils/JSONParserLib.sol";
 import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
@@ -32,8 +31,6 @@ library LibArtifact {
   using stdJson for string;
   using LibString for string;
   using LibString for address;
-  using JSONParserLib for string;
-  using JSONParserLib for JSONParserLib.Item;
 
   Vm private constant vm = Vm(LibSharedAddress.VM);
   IGeneralConfig private constant vme = IGeneralConfig(LibSharedAddress.VME);

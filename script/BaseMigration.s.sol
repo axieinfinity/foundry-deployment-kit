@@ -45,13 +45,17 @@ abstract contract BaseMigration is ScriptExtended {
   ) internal virtual { }
 
   function _beforeRunningScript() internal virtual override {
+    vm.pauseTracing();
     vm.recordLogs();
     vm.startStateDiffRecording();
+    vm.resumeTracing();
   }
 
   function _afterRunningScript() internal virtual override {
+    vm.pauseTracing();
     Vm.Log[] memory recordedLogs = vm.getRecordedLogs();
     Vm.AccountAccess[] memory stateDiffs = vm.stopAndReturnStateDiff();
+    vm.resumeTracing();
 
     LibInitializeGuard.validate({ logs: recordedLogs, stateDiffs: stateDiffs });
   }
@@ -67,6 +71,18 @@ abstract contract BaseMigration is ScriptExtended {
     uint256 forkBlockNumber
   ) public virtual override returns (TNetwork currNetwork, uint256 currForkId) {
     (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
+    // Should rebuild the shared arguments since different chain may have different shared arguments
+    _storeRawSharedArguments();
+    // Should rebuild runtime config since different chain may have different runtime config
+    vme.buildRuntimeConfig();
+    // Should rebuild the contract data since different chain may have different contract data
+    vme.setUpDefaultContracts();
+    // Log Sender Info of current network
+    vme.logSenderInfo();
+  }
+
+  function switchBack(TNetwork prvNetwork, uint256 prvForkId) public virtual override {
+    super.switchBack(prvNetwork, prvForkId);
     // Should rebuild the shared arguments since different chain may have different shared arguments
     _storeRawSharedArguments();
     // Should rebuild runtime config since different chain may have different runtime config

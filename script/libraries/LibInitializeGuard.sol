@@ -86,6 +86,7 @@ library LibInitializeGuard {
    * @param stateDiffs The state diffs of the transactions.
    */
   function validate(Vm.Log[] memory logs, Vm.AccountAccess[] memory stateDiffs) internal {
+    vm.pauseGasMetering();
     Cache storage $ = _getCacheStorage();
 
     _recordUpgradesAndInitializations({ $cache: $, logs: logs });
@@ -116,6 +117,7 @@ library LibInitializeGuard {
 
     _validateLogicsVersion({ $cache: $ });
     _validateProxiesVersion({ $cache: $ });
+    vm.resumeTracing();
   }
 
   /**
@@ -340,6 +342,7 @@ library LibInitializeGuard {
     string memory path
   ) internal pure returns (string memory contractName) {
     uint256 length = bytes(path).length;
+    // Remove ".sol"
     contractName = path;
     if (path.endsWith(".sol")) contractName = path.slice(0, length - 4);
     string[] memory parts = contractName.split(":");

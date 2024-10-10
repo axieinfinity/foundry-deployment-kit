@@ -65,14 +65,18 @@ if [[ -z "$name" || -z "$args" || -z "$value" || -z "$nonce" || -z "$deployer" |
     exit 1
 fi
 
+source_name=$(basename $absolute_path)
+# Remove .json or .sol extension
+source_name=${source_name%.*}
+
 # Generate the artifact
-abi=$(forge inspect $name abi)
-devdoc=$(forge inspect $name devdoc)
-userdoc=$(forge inspect $name userdoc)
-metadata=$(forge inspect $name metadata)
-storage_layout=$(forge inspect $name storageLayout)
-bytecode=$(forge inspect $name bytecode)
-deployed_bytecode=$(forge inspect $name deployedBytecode)
+abi=$(forge inspect $source_name abi)
+devdoc=$(forge inspect $source_name devdoc)
+userdoc=$(forge inspect $source_name userdoc)
+metadata=$(forge inspect $source_name metadata)
+storage_layout=$(forge inspect $source_name storageLayout)
+bytecode=$(forge inspect $source_name bytecode)
+deployed_bytecode=$(forge inspect $source_name deployedBytecode)
 
 # Create the JSON object
 json_content=$(
