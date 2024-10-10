@@ -22,6 +22,7 @@ import { SampleProxyForTestingPurpose7 } from "src/mocks/ForTesting/SampleProxyF
 import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
 interface ITransparentUpgradeableProxy {
+	function upgradeTo(address) external;
   function upgradeToAndCall(address, bytes memory) external payable;
 }
 
@@ -65,7 +66,7 @@ contract LibInitializeGuardTest is Test {
 
     address newLogic = address(new SampleProxyForTestingPurpose2());
     vm.prank(admin);
-    ITransparentUpgradeableProxy(address(_sample)).upgradeToAndCall(newLogic, "");
+    ITransparentUpgradeableProxy(address(_sample)).upgradeTo(newLogic);
     MockConfig(address(vme)).updateSampleProxyLogicForTesting("SampleProxyForTestingPurpose2");
 
     Vm.Log[] memory logs = vm.getRecordedLogs();
