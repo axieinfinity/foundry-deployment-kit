@@ -189,7 +189,7 @@ contract RoninTransparentProxy is ERC1967Proxy {
   }
 
   /**
-   * @dev To keep this contract fully transparent, all `ifAdmin` functions must be payable. This helper is here to
+   * @dev To keep this contract fully transparent, all functions for `admin` must be payable. This helper is here to
    * emulate some proxy functions being non-payable while still allowing value to pass through.
    */
   function _requireZeroValue() private {
