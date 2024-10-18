@@ -205,7 +205,7 @@ library LibDeploy {
     DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentProxyOZv4_9_5";
+    proxyInfo.contractName = "RoninTransparentProxy";
     proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);
