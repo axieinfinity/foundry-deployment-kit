@@ -70,11 +70,11 @@ source_name=$(basename $absolute_path)
 source_name=${source_name%.*}
 
 # Generate the artifact
-abi=$(forge inspect $source_name abi)
-devdoc=$(forge inspect $source_name devdoc)
-userdoc=$(forge inspect $source_name userdoc)
-metadata=$(forge inspect $source_name metadata)
-storage_layout=$(forge inspect $source_name storageLayout)
+abi=$(forge inspect $source_name abi --json)
+devdoc=$(forge inspect $source_name devdoc --json)
+userdoc=$(forge inspect $source_name userdoc --json)
+metadata=$(forge inspect $source_name metadata --json)
+storage_layout=$(forge inspect $source_name storageLayout --json)
 bytecode=$(forge inspect $source_name bytecode)
 deployed_bytecode=$(forge inspect $source_name deployedBytecode)
 
