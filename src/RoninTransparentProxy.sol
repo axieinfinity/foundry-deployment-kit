@@ -2,10 +2,8 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/transparent/TransparentUpgradeableProxy.sol)
 pragma solidity ^0.8.20;
 
-import { ERC1967Proxy } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { ERC1967Utils } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/ERC1967/ERC1967Utils.sol";
-import { ITransparentUpgradeableProxy } from
-  "../dependencies/openzeppelin-5.0.2/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ERC1967Proxy } from "../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ERC1967Utils } from "../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 import { IRoninTransparentProxy } from "./interfaces/IRoninTransparentProxy.sol";
 
@@ -89,7 +87,7 @@ contract RoninTransparentProxy is ERC1967Proxy {
       if (msg.sig == IRoninTransparentProxy.changeAdmin.selector) {
         // Change the admin of the proxy
         ret = _dispatchChangeAdmin();
-      } else if (msg.sig == ITransparentUpgradeableProxy.upgradeToAndCall.selector) {
+      } else if (msg.sig == IRoninTransparentProxy.upgradeToAndCall.selector) {
         // Upgrade the implementation of the proxy and call a function
         ret = _dispatchUpgradeToAndCall();
       } else if (msg.sig == IRoninTransparentProxy.upgradeTo.selector) {

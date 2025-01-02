@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { Vm } from "../dependencies/forge-std-1.9.3/src/Vm.sol";
-import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+import { StdStyle } from "../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { Vm } from "../dependencies/forge-std-1.9.5/src/Vm.sol";
+import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
 import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
 import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
@@ -345,7 +345,7 @@ abstract contract BaseMigration is ScriptExtended {
    */
   function _precompileProxyContracts() internal pure virtual {
     bytes memory dummy;
-		dummy = type(RoninTransparentProxy).creationCode;
+    dummy = type(RoninTransparentProxy).creationCode;
     dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }

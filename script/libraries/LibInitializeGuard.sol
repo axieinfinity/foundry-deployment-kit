@@ -2,10 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { Vm, VmSafe } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
-import { Math } from "../../dependencies/openzeppelin-5.0.2/contracts/utils/math/Math.sol";
-import { EnumerableSet } from "../../dependencies/openzeppelin-5.0.2/contracts/utils/structs/EnumerableSet.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { Vm, VmSafe } from "../../dependencies/forge-std-1.9.5/src/Vm.sol";
+import { Math } from "../../dependencies/openzeppelin-v5-5.1.0/contracts/utils/math/Math.sol";
+import { EnumerableSet } from "../../dependencies/openzeppelin-v5-5.1.0/contracts/utils/structs/EnumerableSet.sol";
 import { JSONParserLib } from "../../dependencies/solady-0.0.228/src/utils/JSONParserLib.sol";
 import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 
@@ -305,11 +305,12 @@ library LibInitializeGuard {
     initSlot.nBit = N_BIT_INIT_V5;
     initSlot.slot = INITIALIZABLE_STORAGE_OZV5;
 
-    string[] memory inputs = new string[](4);
+    string[] memory inputs = new string[](5);
     inputs[0] = "forge";
     inputs[1] = "inspect";
     inputs[2] = _getContractAbsolutePath($cache._chainInfo[proxy].forkId, proxy);
     inputs[3] = "storage";
+    inputs[4] = "--json";
 
     string memory ret = string(vm.ffi(inputs));
     JSONParserLib.Item memory layout = ret.parse().at('"storage"');

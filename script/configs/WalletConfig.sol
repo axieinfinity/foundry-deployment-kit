@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { CommonBase } from "../../dependencies/forge-std-1.9.3/src/Base.sol";
+import { CommonBase } from "../../dependencies/forge-std-1.9.5/src/Base.sol";
 import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { IWalletConfig } from "../interfaces/configs/IWalletConfig.sol";
 

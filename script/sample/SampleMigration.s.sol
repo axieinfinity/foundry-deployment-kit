@@ -2,10 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
+import { BaseMigration } from "../BaseMigration.s.sol";
+import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 import { SampleGeneralConfig } from "./SampleGeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
-import { BaseMigration } from "@fdk/BaseMigration.s.sol";
-import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
 contract SampleMigration is BaseMigration {
   ISharedArgument public constant config = ISharedArgument(address(vme));
