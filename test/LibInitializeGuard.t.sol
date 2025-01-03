@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { Test } from "../dependencies/forge-std-1.9.3/src/Test.sol";
-import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+import { StdStyle } from "../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { Test } from "../dependencies/forge-std-1.9.5/src/Test.sol";
+import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
 
 import { Initializable } from "../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/utils/Initializable.sol";
 
@@ -22,7 +22,9 @@ import { SampleProxyForTestingPurpose7 } from "src/mocks/ForTesting/SampleProxyF
 import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
 interface ITransparentUpgradeableProxy {
-	function upgradeTo(address) external;
+  function upgradeTo(
+    address
+  ) external;
   function upgradeToAndCall(address, bytes memory) external payable;
 }
 

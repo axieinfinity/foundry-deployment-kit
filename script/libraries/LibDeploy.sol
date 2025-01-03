@@ -2,8 +2,8 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { console } from "../../dependencies/forge-std-1.9.5/src/console.sol";
 
 import { IEIP173 } from "../interfaces/IEIP173.sol";
 import { vm, vme } from "../utils/Constants.sol";
@@ -205,7 +205,7 @@ library LibDeploy {
     DeployInfo memory proxyInfo;
     proxyInfo.callValue = callValue;
     proxyInfo.by = implInfo.by;
-    proxyInfo.contractName = "TransparentProxyOZv4_9_5";
+    proxyInfo.contractName = "RoninTransparentProxy";
     proxyInfo.absolutePath = string.concat(proxyInfo.contractName, ".sol:", proxyInfo.contractName);
     proxyInfo.artifactName = string.concat(vm.replace(implInfo.artifactName, "Logic", ""), "Proxy");
     proxyInfo.constructorArgs = abi.encode(impl, proxyAdmin, callData);

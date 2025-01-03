@@ -4,8 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import { SampleMigration } from "../../SampleMigration.s.sol";
 
+import { DefaultNetwork } from "../../../utils/DefaultNetwork.sol";
 import { Contract } from "../../utils/Contract.sol";
-import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
 contract Migration__XXXXYYZZ_UpgradeSampleProxy is SampleMigration {

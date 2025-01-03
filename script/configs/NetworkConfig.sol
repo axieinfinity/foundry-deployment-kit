@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { Vm } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
-import { console } from "../../dependencies/forge-std-1.9.3/src/console.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { Vm } from "../../dependencies/forge-std-1.9.5/src/Vm.sol";
+import { console } from "../../dependencies/forge-std-1.9.5/src/console.sol";
 
 import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
 import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";

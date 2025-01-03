@@ -2,10 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { Script, console } from "../../dependencies/forge-std-1.9.3/src/Script.sol";
-import { StdAssertions } from "../../dependencies/forge-std-1.9.3/src/StdAssertions.sol";
-import { StdStyle } from "../../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { VmSafe } from "../../dependencies/forge-std-1.9.3/src/Vm.sol";
+import { Script, console } from "../../dependencies/forge-std-1.9.5/src/Script.sol";
+import { StdAssertions } from "../../dependencies/forge-std-1.9.5/src/StdAssertions.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { VmSafe } from "../../dependencies/forge-std-1.9.5/src/Vm.sol";
 
 import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
 import { IVme } from "../interfaces/IVme.sol";

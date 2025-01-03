@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Test } from "../dependencies/forge-std-1.9.3/src/Test.sol";
-import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+import { Test } from "../dependencies/forge-std-1.9.5/src/Test.sol";
+import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
 
-import { MockERC20 } from "../dependencies/forge-std-1.9.3/src/mocks/MockERC20.sol";
-import { MockERC721 } from "../dependencies/forge-std-1.9.3/src/mocks/MockERC721.sol";
-import { ProxyAdmin } from "../dependencies/openzeppelin-5.0.2/contracts/proxy/transparent/ProxyAdmin.sol";
+import { MockERC20 } from "../dependencies/forge-std-1.9.5/src/mocks/MockERC20.sol";
+import { MockERC721 } from "../dependencies/forge-std-1.9.5/src/mocks/MockERC721.sol";
+import { ProxyAdmin } from "../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/transparent/ProxyAdmin.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";
 import { DeployInfo, LibDeploy, LibProxy, ProxyInterface, UpgradeInfo } from "script/libraries/LibDeploy.sol";
 import { vme } from "script/utils/Constants.sol";

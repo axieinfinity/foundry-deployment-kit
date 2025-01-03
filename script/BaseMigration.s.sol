@@ -2,9 +2,9 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../dependencies/forge-std-1.9.3/src/StdStyle.sol";
-import { Vm } from "../dependencies/forge-std-1.9.3/src/Vm.sol";
-import { console } from "../dependencies/forge-std-1.9.3/src/console.sol";
+import { StdStyle } from "../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { Vm } from "../dependencies/forge-std-1.9.5/src/Vm.sol";
+import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
 import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
 import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
@@ -45,13 +45,17 @@ abstract contract BaseMigration is ScriptExtended {
   ) internal virtual { }
 
   function _beforeRunningScript() internal virtual override {
+    vm.pauseTracing();
     vm.recordLogs();
     vm.startStateDiffRecording();
+    vm.resumeTracing();
   }
 
   function _afterRunningScript() internal virtual override {
+    vm.pauseTracing();
     Vm.Log[] memory recordedLogs = vm.getRecordedLogs();
     Vm.AccountAccess[] memory stateDiffs = vm.stopAndReturnStateDiff();
+    vm.resumeTracing();
 
     LibInitializeGuard.validate({ logs: recordedLogs, stateDiffs: stateDiffs });
   }
@@ -67,6 +71,18 @@ abstract contract BaseMigration is ScriptExtended {
     uint256 forkBlockNumber
   ) public virtual override returns (TNetwork currNetwork, uint256 currForkId) {
     (currNetwork, currForkId) = super.switchTo(networkType, forkBlockNumber);
+    // Should rebuild the shared arguments since different chain may have different shared arguments
+    _storeRawSharedArguments();
+    // Should rebuild runtime config since different chain may have different runtime config
+    vme.buildRuntimeConfig();
+    // Should rebuild the contract data since different chain may have different contract data
+    vme.setUpDefaultContracts();
+    // Log Sender Info of current network
+    vme.logSenderInfo();
+  }
+
+  function switchBack(TNetwork prvNetwork, uint256 prvForkId) public virtual override {
+    super.switchBack(prvNetwork, prvForkId);
     // Should rebuild the shared arguments since different chain may have different shared arguments
     _storeRawSharedArguments();
     // Should rebuild runtime config since different chain may have different runtime config
@@ -329,7 +345,7 @@ abstract contract BaseMigration is ScriptExtended {
    */
   function _precompileProxyContracts() internal pure virtual {
     bytes memory dummy;
-		dummy = type(RoninTransparentProxy).creationCode;
+    dummy = type(RoninTransparentProxy).creationCode;
     dummy = type(TransparentProxyOZv4_9_5).creationCode;
   }
 }

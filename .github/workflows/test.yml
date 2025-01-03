@@ -3,16 +3,16 @@ name: test
 on:
   push:
     branches:
-      - 'feature/*'
-      - 'features/*'
-      - 'implement-feature/**'
-      - 'implement-feature/**/**'
+      - "feature/*"
+      - "features/*"
+      - "implement-feature/**"
+      - "implement-feature/**/**"
   pull_request:
     branches:
       - mainnet
       - testnet
-      - 'feature/*'
-      - 'features/*'
+      - "feature/*"
+      - "features/*"
 
 env:
   FOUNDRY_PROFILE: ci
@@ -30,9 +30,7 @@ jobs:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1 
-        with:
-          version: nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce
+        uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install soldeer
         run: forge soldeer install

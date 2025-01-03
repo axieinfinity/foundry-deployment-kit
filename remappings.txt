@@ -1,4 +1,0 @@
-@fdk/=script/
-forge-std=dependencies/forge-std-1.9.3/src/
-@solady-0.0.228=dependencies/solady-0.0.228
-@openzeppelin=dependencies/openzeppelin-5.0.2

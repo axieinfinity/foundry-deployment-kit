@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { IGeneralConfig } from "@fdk/interfaces/IGeneralConfig.sol";
+import { IGeneralConfig } from "../../interfaces/IGeneralConfig.sol";
 
 interface ISharedArgument is IGeneralConfig {
   struct SharedParameter {

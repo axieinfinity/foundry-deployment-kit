@@ -1,27 +1,27 @@
 [[dependencies]]
 name = "forge-std"
-version = "1.9.3"
-source = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.3.zip"
-checksum = "cc61148ae1a47f2415956a95ada670501b10ebd7f65cc00eda6ea7025770f42b"
-integrity = "d53734fbd7201cd9e44de730ae045ed8958dd2c7b9493c30b322f6e6c21ca8b2"
-
-[[dependencies]]
-name = "openzeppelin"
-version = "5.0.2"
-source = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.0.2.zip"
-checksum = "ca49e0776066328da0087977864dfaef0d5e54a0ea9859236a7cd9ad02abb9e5"
-integrity = "55fe084dbf45643d367163b4a6750cf63cabf58ac2678d5f919ab47ca4fe1f67"
+version = "1.9.5"
+url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.5.zip"
+checksum = "c21ef9ee2c952e0022fb1a860c5cbc37ace13229c4efbdf0db918098905d1e2d"
+integrity = "bb422d1016ef60c6362bbb0d64894caba8ae936b83658eff5d73358d008c22f7"
 
 [[dependencies]]
 name = "openzeppelin-v4"
 version = "4.9.5"
-source = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip"
+url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip"
 checksum = "fe249a9cb37b7a6664f8bfe61a9633873fbbb895e5d4c3fac78db50fd9af3a73"
-integrity = "57a77366cd0ae010b93ce7a3759c7dd0ccd181a3becd599a1c57aab331fb685f"
+integrity = "590ed70cbd82f6a8ea6512d136626c3aa02a22433a4bf84664faaa463c397574"
+
+[[dependencies]]
+name = "openzeppelin-v5"
+version = "5.1.0"
+url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.1.0.zip"
+checksum = "30600e9dc4dd7d9089c5f2ae78aedfdb764349ae15647190c792afd07123e2c2"
+integrity = "cb412b382c03069b2eb43beda83d3be86c9efcf3724368cb884d527357341366"
 
 [[dependencies]]
 name = "solady"
 version = "0.0.228"
-source = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip"
+url = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip"
 checksum = "90c6c562403b67338e3fa5fbad36a80b129df333d89db6759c5fd3ed15d4f0da"
 integrity = "f5bcf42b85af46cb672a86c6df1674706bf59c53195d09fedb97041cb1f85410"

@@ -188,7 +188,7 @@ if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]
         if [[ $(eval "echo \$$account_label") == *"op://"* ]]; then
             echo "\033[32mFound 'op://' in ${account_label}\033[0m"
             op_command="op run --env-file="./.env" --"
-        elif [[ $(eval "echo \$$account_label") == *""* ]]; then
+        elif [[ -z $(eval "echo \$$account_label") ]]; then
             echo "\033[33mWARNING: Not found private key in ${account_label}\033[0m"
         fi
     else
