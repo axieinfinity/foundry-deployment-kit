@@ -277,14 +277,15 @@ library LibInitializeGuard {
 
   /**
    * @dev Get the number of `initialize` functions of the given `proxy` by inspecting its storage layout using `forge
-   * inspect <contract_name> methodIdentifiers`.
+   * inspect <contract_name> methodIdentifiers --json`.
    */
   function _getInitializeFnCount(Cache storage $cache, address proxy) private returns (uint256 count) {
-    string[] memory inputs = new string[](4);
+    string[] memory inputs = new string[](5);
     inputs[0] = "forge";
     inputs[1] = "inspect";
     inputs[2] = _getContractAbsolutePath($cache._chainInfo[proxy].forkId, proxy);
     inputs[3] = "methodIdentifiers";
+		inputs[4] = "--json";
 
     string memory ret = vm.toLowercase(string(vm.ffi(inputs)));
     string[] memory allFns = vm.parseJsonKeys(ret, ".");
