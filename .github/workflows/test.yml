@@ -3,16 +3,16 @@ name: test
 on:
   push:
     branches:
-      - mainnet
-      - testnet
-      - 'feature/*'
-      - 'features/*'
+      - "feature/*"
+      - "features/*"
+      - "implement-feature/**"
+      - "implement-feature/**/**"
   pull_request:
     branches:
       - mainnet
       - testnet
-      - 'feature/*'
-      - 'features/*'
+      - "feature/*"
+      - "features/*"
 
 env:
   FOUNDRY_PROFILE: ci
@@ -31,13 +31,14 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+
+      - name: Install soldeer
+        run: forge soldeer install
 
       - name: Run Forge build
         run: |
           forge --version
-          forge build --sizes
+          forge build
         id: build
 
       - name: Run Forge tests

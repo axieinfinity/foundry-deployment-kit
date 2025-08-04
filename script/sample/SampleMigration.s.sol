@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { BaseMigration } from "../BaseMigration.s.sol";
+import { DefaultNetwork } from "../utils/DefaultNetwork.sol";
 import { SampleGeneralConfig } from "./SampleGeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
 
 contract SampleMigration is BaseMigration {
-  ISharedArgument public constant config = ISharedArgument(address(CONFIG));
+  ISharedArgument public constant config = ISharedArgument(address(vme));
 
   function _configByteCode() internal virtual override returns (bytes memory) {
     return abi.encodePacked(type(SampleGeneralConfig).creationCode);
@@ -24,7 +25,7 @@ contract SampleMigration is BaseMigration {
       param.message = "Sample Ronin Mainnet";
       param.proxyMessage = "Sample Proxy Ronin Mainnet";
     }
-    if (network() == DefaultNetwork.Local.key()) {
+    if (network() == DefaultNetwork.LocalHost.key()) {
       param.message = "Sample Anvil";
       param.proxyMessage = "Sample Proxy Anvil";
     }

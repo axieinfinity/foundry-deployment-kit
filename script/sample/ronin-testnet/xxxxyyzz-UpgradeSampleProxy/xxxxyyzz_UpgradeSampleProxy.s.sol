@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
+
+import { SampleMigration } from "../../SampleMigration.s.sol";
+
+import { DefaultNetwork } from "../../../utils/DefaultNetwork.sol";
+import { Contract } from "../../utils/Contract.sol";
+import { SampleProxy } from "src/mocks/SampleProxy.sol";
+
+contract Migration__XXXXYYZZ_UpgradeSampleProxy is SampleMigration {
+  function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
+    _upgradeProxy(Contract.Sample.key());
+  }
+}

@@ -1,58 +1,69 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+
+import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { TNetwork } from "../types/Types.sol";
 
 enum DefaultNetwork {
-  Local,
+  LocalHost,
   RoninTestnet,
   RoninMainnet
 }
 
-using { key, name, chainId, chainAlias, envLabel, deploymentDir, explorer } for DefaultNetwork global;
+using { key, chainId, chainAlias, explorer, data } for DefaultNetwork global;
 
-function chainId(DefaultNetwork defaultNetwork) pure returns (uint256) {
-  if (defaultNetwork == DefaultNetwork.Local) return 31337;
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return 2020;
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return 2021;
+function data(
+  DefaultNetwork network
+) pure returns (INetworkConfig.NetworkData memory) {
+  return INetworkConfig.NetworkData({
+    network: key(network),
+    blockTime: blockTime(network),
+    chainAlias: chainAlias(network),
+    explorer: explorer(network),
+    chainId: chainId(network)
+  });
+}
+
+function chainId(
+  DefaultNetwork network
+) pure returns (uint256) {
+  if (network == DefaultNetwork.LocalHost) return 31_337;
+  if (network == DefaultNetwork.RoninMainnet) return 2020;
+  if (network == DefaultNetwork.RoninTestnet) return 2021;
   revert("DefaultNetwork: Unknown chain id");
 }
 
-function explorer(DefaultNetwork defaultNetwork) pure returns (string memory link) {
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "https://saigon-app.roninchain.com/";
-  return "";
+function blockTime(
+  DefaultNetwork network
+) pure returns (uint256) {
+  if (network == DefaultNetwork.LocalHost) return 3;
+  if (network == DefaultNetwork.RoninMainnet) return 3;
+  if (network == DefaultNetwork.RoninTestnet) return 3;
+  revert("DefaultNetwork: Unknown block time");
 }
 
-function key(DefaultNetwork defaultNetwork) pure returns (TNetwork) {
-  return TNetwork.wrap(LibString.packOne(name(defaultNetwork)));
+function explorer(
+  DefaultNetwork network
+) pure returns (string memory link) {
+  if (network == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
+  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-app.roninchain.com/";
+  return "https://unknown-explorer.com/";
 }
 
-function name(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "Local";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "RoninTestnet";
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "RoninMainnet";
-  revert("DefaultNetwork: Unknown network name");
+function key(
+  DefaultNetwork network
+) pure returns (TNetwork) {
+  return TNetwork.wrap(LibString.packOne(chainAlias(network)));
 }
 
-function deploymentDir(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "local/";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "ronin-testnet/";
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "ronin-mainnet/";
-  revert("DefaultNetwork: Unknown network deployment directory");
-}
-
-function envLabel(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "LOCAL_PK";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "TESTNET_PK";
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "MAINNET_PK";
-  revert("DefaultNetwork: Unknown private key env label");
-}
-
-function chainAlias(DefaultNetwork defaultNetwork) pure returns (string memory) {
-  if (defaultNetwork == DefaultNetwork.Local) return "local";
-  if (defaultNetwork == DefaultNetwork.RoninTestnet) return "ronin-testnet";
-  if (defaultNetwork == DefaultNetwork.RoninMainnet) return "ronin-mainnet";
+function chainAlias(
+  DefaultNetwork network
+) pure returns (string memory) {
+  if (network == DefaultNetwork.LocalHost) return "localhost";
+  if (network == DefaultNetwork.RoninTestnet) return "ronin-testnet";
+  if (network == DefaultNetwork.RoninMainnet) return "ronin-mainnet";
   revert("DefaultNetwork: Unknown network alias");
 }

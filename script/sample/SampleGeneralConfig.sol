@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { BaseGeneralConfig } from "foundry-deployment-kit/BaseGeneralConfig.sol";
+import { BaseGeneralConfig } from "../BaseGeneralConfig.sol";
 import { Contract } from "./utils/Contract.sol";
 
 contract SampleGeneralConfig is BaseGeneralConfig {
@@ -9,11 +10,11 @@ contract SampleGeneralConfig is BaseGeneralConfig {
 
   function _setUpContracts() internal virtual override {
     _contractNameMap[Contract.Sample.key()] = Contract.Sample.name();
-    // {SamepleClone} share same logic as {Sample}
+    // {SampleClone} share same logic as {Sample}
     _contractNameMap[Contract.SampleClone.key()] = Contract.Sample.name();
     _contractNameMap[Contract.SampleProxy.key()] = Contract.SampleProxy.name();
 
-    // allow diffrent contracts to share same logic
+    // allow different contracts to share same logic
     _contractNameMap[Contract.tSLP.key()] = "Token";
     _contractNameMap[Contract.tAXS.key()] = "Token";
     _contractNameMap[Contract.tWETH.key()] = "Token";

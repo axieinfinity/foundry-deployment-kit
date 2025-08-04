@@ -1,0 +1,27 @@
+[[dependencies]]
+name = "forge-std"
+version = "1.9.5"
+url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.5.zip"
+checksum = "c21ef9ee2c952e0022fb1a860c5cbc37ace13229c4efbdf0db918098905d1e2d"
+integrity = "bb422d1016ef60c6362bbb0d64894caba8ae936b83658eff5d73358d008c22f7"
+
+[[dependencies]]
+name = "openzeppelin-v4"
+version = "4.9.5"
+url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip"
+checksum = "fe249a9cb37b7a6664f8bfe61a9633873fbbb895e5d4c3fac78db50fd9af3a73"
+integrity = "590ed70cbd82f6a8ea6512d136626c3aa02a22433a4bf84664faaa463c397574"
+
+[[dependencies]]
+name = "openzeppelin-v5"
+version = "5.1.0"
+url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.1.0.zip"
+checksum = "30600e9dc4dd7d9089c5f2ae78aedfdb764349ae15647190c792afd07123e2c2"
+integrity = "cb412b382c03069b2eb43beda83d3be86c9efcf3724368cb884d527357341366"
+
+[[dependencies]]
+name = "solady"
+version = "0.0.228"
+url = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip"
+checksum = "90c6c562403b67338e3fa5fbad36a80b129df333d89db6759c5fd3ed15d4f0da"
+integrity = "f5bcf42b85af46cb672a86c6df1674706bf59c53195d09fedb97041cb1f85410"

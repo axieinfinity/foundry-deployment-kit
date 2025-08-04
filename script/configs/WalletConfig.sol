@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { CommonBase } from "../../lib/forge-std/src/Base.sol";
-import { LibString } from "../../lib/solady/src/utils/LibString.sol";
+import { CommonBase } from "../../dependencies/forge-std-1.9.5/src/Base.sol";
+import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
 import { IWalletConfig } from "../interfaces/configs/IWalletConfig.sol";
 
 abstract contract WalletConfig is CommonBase, IWalletConfig {
@@ -23,24 +24,28 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     return "DEPLOYER";
   }
 
-  function ethSignMessage(address by, string memory message, WalletOption walletOption)
-    public
-    returns (bytes memory sig)
-  {
+  function ethSignMessage(
+    address by,
+    string memory message,
+    WalletOption walletOption
+  ) public returns (bytes memory sig) {
     sig =
       walletOption == WalletOption.Env ? envEthSignMessage(by, message, _envLabel) : trezorEthSignMessage(by, message);
   }
 
-  function ethSignMessage(string memory message) public returns (bytes memory sig) {
+  function ethSignMessage(
+    string memory message
+  ) public returns (bytes memory sig) {
     sig = _walletOption == WalletOption.Env
       ? envEthSignMessage(_envSender, message, _envLabel)
       : trezorEthSignMessage(_trezorSender, message);
   }
 
-  function envEthSignMessage(address by, string memory message, string memory envLabel)
-    public
-    returns (bytes memory sig)
-  {
+  function envEthSignMessage(
+    address by,
+    string memory message,
+    string memory envLabel
+  ) public returns (bytes memory sig) {
     sig = ethSignMessage(by, message, _loadENVPrivateKey(envLabel));
   }
 
@@ -71,25 +76,29 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     sig = vm.ffi(commandInput);
   }
 
-  function signTypedDataV4(address by, string memory filePath, WalletOption walletOption)
-    public
-    returns (bytes memory sig)
-  {
+  function signTypedDataV4(
+    address by,
+    string memory filePath,
+    WalletOption walletOption
+  ) public returns (bytes memory sig) {
     sig = walletOption == WalletOption.Env
       ? envSignTypedDataV4(by, filePath, _envLabel)
       : trezorSignTypedDataV4(by, filePath);
   }
 
-  function signTypedDataV4(string memory filePath) public returns (bytes memory sig) {
+  function signTypedDataV4(
+    string memory filePath
+  ) public returns (bytes memory sig) {
     sig = _walletOption == WalletOption.Env
       ? envSignTypedDataV4(_envSender, filePath, _envLabel)
       : trezorSignTypedDataV4(_trezorSender, filePath);
   }
 
-  function envSignTypedDataV4(address by, string memory filePath, string memory envLabel)
-    public
-    returns (bytes memory sig)
-  {
+  function envSignTypedDataV4(
+    address by,
+    string memory filePath,
+    string memory envLabel
+  ) public returns (bytes memory sig) {
     sig = signTypedDataV4(by, filePath, _loadENVPrivateKey(envLabel));
   }
 
@@ -124,6 +133,16 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     sig = vm.ffi(commandInput);
   }
 
+  function loadTrezorAccount() external {
+    _loadTrezorAccount();
+  }
+
+  function loadENVAccount(
+    string calldata envLabel
+  ) external {
+    _loadENVAccount(envLabel);
+  }
+
   function _loadTrezorAccount() internal {
     if (tx.origin != DEFAULT_SENDER) {
       _trezorSender = tx.origin;
@@ -145,13 +164,17 @@ abstract contract WalletConfig is CommonBase, IWalletConfig {
     _walletOption = WalletOption.Trezor;
   }
 
-  function _loadENVAccount(string memory envLabel) internal {
+  function _loadENVAccount(
+    string memory envLabel
+  ) internal {
     _envLabel = envLabel;
     _walletOption = WalletOption.Env;
     _envSender = vm.rememberKey(_loadENVPrivateKey(envLabel));
   }
 
-  function _loadENVPrivateKey(string memory envLabel) private view returns (uint256) {
+  function _loadENVPrivateKey(
+    string memory envLabel
+  ) private view returns (uint256) {
     try vm.envUint(envLabel) returns (uint256 pk) {
       return pk;
     } catch {

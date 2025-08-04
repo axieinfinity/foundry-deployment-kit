@@ -1,13 +1,13 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib"]
+libs = ["dependencies"]
+test = "test"
 ffi = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
-solc = '0.8.23'
 extra_output = ["devdoc", "userdoc", "storagelayout"]
-evm_version = 'istanbul'
+evm_version = 'london'
 use_literal_content = true
 fs_permissions = [{ access = "read-write", path = "./" }]
 
@@ -15,6 +15,11 @@ fs_permissions = [{ access = "read-write", path = "./" }]
 line_length = 120
 tab_width = 2
 bracket_spacing = true
+multiline_func_header = 'params_first'
+single_line_statement_blocks = 'single'
+sort_imports = true
+number_underscore = "thousands"
+wrap_comments = true
 
 [rpc_endpoints]
 ethereum = "https://eth.llamarpc.com"
@@ -22,3 +27,29 @@ goerli = "https://ethereum-goerli.publicnode.com"
 ronin-mainnet = "https://api-partner.roninchain.com/rpc"
 ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 localhost = "http://localhost:8545"
+
+[dependencies]
+"forge-std" = { version = "1.9.5", url = "https://github.com/foundry-rs/forge-std/archive/refs/tags/v1.9.5.zip" }
+"solady" = { version = "0.0.228", url = "https://github.com/Vectorized/solady/archive/refs/tags/v0.0.228.zip" }
+"openzeppelin-v5" = { version = "5.1.0", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.1.0.zip" }
+"openzeppelin-v4" = { version = "4.9.5", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip" }
+
+[soldeer]
+# whether soldeer manages remappings
+remappings_generate = false
+
+# whether soldeer re-generates all remappings when installing, updating or uninstalling deps
+remappings_regenerate = false
+
+# whether to suffix the remapping with the version: `name-a.b.c`
+remappings_version = true
+
+# a prefix to add to the remappings ("@" would give `@name`)
+remappings_prefix = ""
+
+# where to store the remappings ("txt" for `remappings.txt` or "config" for `foundry.toml`)
+# ignored when `soldeer.toml` is used as config (uses `remappings.txt`)
+remappings_location = "txt"
+
+# whether to install sub-dependencies or not. If true this wil install the dependencies of dependencies 1 level down.
+recursive_deps = true
