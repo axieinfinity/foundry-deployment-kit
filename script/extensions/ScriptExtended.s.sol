@@ -1,77 +1,155 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../lib/forge-std/src/StdStyle.sol";
-import { console, Script } from "../../lib/forge-std/src/Script.sol";
-import { stdStorage, StdStorage } from "../../lib/forge-std/src/StdStorage.sol";
-import { StdAssertions } from "../../lib/forge-std/src/StdAssertions.sol";
-import { IGeneralConfig } from "../interfaces/IGeneralConfig.sol";
-import { TNetwork, IScriptExtended } from "../interfaces/IScriptExtended.sol";
-import { LibErrorHandler } from "../../lib/contract-libs/src/LibErrorHandler.sol";
+import { Script, console } from "../../dependencies/forge-std-1.9.5/src/Script.sol";
+import { StdAssertions } from "../../dependencies/forge-std-1.9.5/src/StdAssertions.sol";
+import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
+import { VmSafe } from "../../dependencies/forge-std-1.9.5/src/Vm.sol";
+
+import { IScriptExtended } from "../interfaces/IScriptExtended.sol";
+import { IVme } from "../interfaces/IVme.sol";
+import { IRuntimeConfig } from "../interfaces/configs/IRuntimeConfig.sol";
+import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
-import { TContract } from "../types/Types.sol";
+import { TContract } from "../types/TContract.sol";
+import { TNetwork } from "../types/TNetwork.sol";
+import { deploySharedAddress, logInnerCall } from "../utils/Helpers.sol";
+import { BaseScriptExtended } from "./BaseScriptExtended.s.sol";
 
-abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
+abstract contract ScriptExtended is BaseScriptExtended, Script, StdAssertions, IScriptExtended {
   using StdStyle for *;
   using LibErrorHandler for bool;
 
-  bytes public constant EMPTY_ARGS = "";
-  IGeneralConfig public constant CONFIG = IGeneralConfig(LibSharedAddress.CONFIG);
+  uint256 internal _originForkBlockNumber;
 
-  modifier logFn(string memory fnName) {
-    _logFn(fnName);
+  modifier logFn(
+    string memory fnName
+  ) {
+    logInnerCall(fnName);
     _;
   }
 
-  modifier onlyOn(TNetwork networkType) {
+  modifier onlyOn(
+    TNetwork networkType
+  ) {
     _requireOn(networkType);
     _;
   }
 
-  modifier onNetwork(TNetwork networkType) {
-    TNetwork currentNetwork = _switchTo(networkType);
+  modifier onNetwork(
+    TNetwork networkType
+  ) {
+    (TNetwork prevNetwork, uint256 prevForkId) = switchTo(networkType);
     _;
-    _switchBack(currentNetwork);
+    switchBack(prevNetwork, prevForkId);
   }
 
   constructor() {
-    setUp();
+    try vm.isContext(VmSafe.ForgeContext.Test) {
+      setUp();
+    } catch {
+      // Do nothing
+    }
   }
 
   function setUp() public virtual {
-    deploySharedAddress(address(CONFIG), _configByteCode(), "GeneralConfig");
+    deploySharedAddress(address(vme), _configByteCode(), "VME");
   }
 
-  function _configByteCode() internal virtual returns (bytes memory);
-
-  function _postCheck() internal virtual { }
-
   function run(bytes calldata callData, string calldata command) public virtual {
-    CONFIG.resolveCommand(command);
+    vm.pauseTracing();
+    vme.resolveCommand(command);
+
+    IRuntimeConfig.Option memory runtimeConfig = vme.getRuntimeConfig();
+    _originForkBlockNumber = runtimeConfig.forkBlockNumber;
+
+    if (runtimeConfig.network != network()) {
+      switchTo(runtimeConfig.network, runtimeConfig.forkBlockNumber);
+    } else {
+      uint256 currUnixTimestamp = vm.unixTime() / 1000;
+      if (vm.getBlockTimestamp() < currUnixTimestamp) vm.warp(currUnixTimestamp);
+      if (runtimeConfig.forkBlockNumber != 0) vme.rollUpTo(runtimeConfig.forkBlockNumber);
+
+      vme.logSenderInfo();
+      vme.setUpDefaultContracts();
+      vme.logCurrentForkInfo();
+    }
+
+    uint256 start;
+    uint256 end;
+
+    vm.resumeTracing();
+
+    if (runtimeConfig.disablePrecheck) {
+      console.log("\nPrechecking is disabled.".yellow());
+    } else {
+      console.log("\n>> Prechecking...".yellow());
+      vme.setPreCheckingStatus({ status: true });
+      start = vm.unixTime();
+      _preCheck();
+      end = vm.unixTime();
+      vme.setPreCheckingStatus({ status: false });
+      console.log("ScriptExtended:".blue(), "Prechecking completed in", vm.toString(end - start), "milliseconds.\n");
+    }
+
+    _beforeRunningScript();
+
     (bool success, bytes memory data) = address(this).delegatecall(callData);
     success.handleRevert(msg.sig, data);
 
-    if (CONFIG.getRuntimeConfig().disablePostcheck) {
+    _afterRunningScript();
+
+    if (vme.getRuntimeConfig().disablePostcheck) {
       console.log("\nPostchecking is disabled.".yellow());
-      return;
+    } else {
+      console.log("\n>> Postchecking...".yellow());
+      vme.setPostCheckingStatus({ status: true });
+      start = vm.unixTime();
+      _postCheck();
+      end = vm.unixTime();
+      vme.setPostCheckingStatus({ status: false });
+      console.log("ScriptExtended:".blue(), "Postchecking completed in", vm.toString(end - start), "milliseconds.");
     }
-
-    console.log("\n>> Postchecking...".yellow());
-    CONFIG.setPostCheckingStatus({ status: true });
-    _postCheck();
-    CONFIG.setPostCheckingStatus({ status: false });
   }
 
-  function network() public view virtual returns (TNetwork) {
-    return CONFIG.getCurrentNetwork();
+  function _beforeRunningScript() internal virtual { }
+
+  function _afterRunningScript() internal virtual { }
+
+  function _requireOn(
+    TNetwork networkType
+  ) private view {
+    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", vme.getAlias(networkType)));
   }
 
-  function forkId() public view virtual returns (uint256) {
-    return CONFIG.getForkId(network());
+  function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
+    where = address(ripemd160(abi.encode(contractType)));
+    deploySharedAddress(where, bytecode, string.concat(contractType.name(), "Deploy"));
   }
 
-  function sender() public view virtual returns (address payable) {
-    return CONFIG.getSender();
+  function switchTo(
+    TNetwork networkType
+  ) public virtual returns (TNetwork currNetwork, uint256 currForkId) {
+    (currNetwork, currForkId) = switchTo({ networkType: networkType, forkBlockNumber: 0 });
+  }
+
+  function switchTo(
+    TNetwork networkType,
+    uint256 forkBlockNumber
+  ) public virtual returns (TNetwork prevNetwork, uint256 prevForkId) {
+    prevForkId = forkId(_originForkBlockNumber);
+    prevNetwork = network();
+
+    vme.createFork(networkType, forkBlockNumber);
+    vme.switchTo(networkType, forkBlockNumber);
+  }
+
+  function switchBack(TNetwork prevNetwork, uint256 prevForkId) public virtual {
+    try vme.switchTo(prevForkId) { }
+    catch {
+      vme.switchTo(prevNetwork);
+    }
   }
 
   function fail() internal override {
@@ -79,50 +157,16 @@ abstract contract ScriptExtended is Script, StdAssertions, IScriptExtended {
     revert("ScriptExtended: Got failed assertion");
   }
 
-  function deploySharedAddress(address where, bytes memory bytecode, string memory label) public {
-    if (where.code.length == 0) {
-      vm.makePersistent(where);
-      vm.allowCheatcodes(where);
-      deployCodeTo(bytecode, where);
-      if (bytes(label).length != 0) vm.label(where, label);
-    }
+  function prankOrBroadcast(
+    address by
+  ) internal virtual {
+    if (vme.isPostChecking() || vme.isPreChecking()) vm.prank(by);
+    else vm.broadcast(by);
   }
 
-  function deploySharedMigration(TContract contractType, bytes memory bytecode) public returns (address where) {
-    where = address(ripemd160(abi.encode(contractType)));
-    deploySharedAddress(where, bytecode, string.concat(contractType.contractName(), "Deploy"));
-  }
+  function _configByteCode() internal virtual returns (bytes memory);
 
-  function deployCodeTo(bytes memory creationCode, address where) internal {
-    deployCodeTo(EMPTY_ARGS, creationCode, 0, where);
-  }
+  function _postCheck() internal virtual { }
 
-  function deployCodeTo(bytes memory creationCode, uint256 value, address where) internal {
-    deployCodeTo(EMPTY_ARGS, creationCode, value, where);
-  }
-
-  function deployCodeTo(bytes memory args, bytes memory creationCode, uint256 value, address where) internal {
-    vm.etch(where, abi.encodePacked(creationCode, args));
-    (bool success, bytes memory runtimeBytecode) = where.call{ value: value }("");
-    assertTrue(success, "ScriptExtended: Failed to create runtime bytecode.");
-    vm.etch(where, runtimeBytecode);
-  }
-
-  function _logFn(string memory fnName) private view {
-    console.log("> ", StdStyle.blue(fnName), "...");
-  }
-
-  function _requireOn(TNetwork networkType) private view {
-    require(network() == networkType, string.concat("ScriptExtended: Only allowed on ", CONFIG.getAlias(networkType)));
-  }
-
-  function _switchTo(TNetwork networkType) private returns (TNetwork currentNetwork) {
-    currentNetwork = network();
-    CONFIG.createFork(networkType);
-    CONFIG.switchTo(networkType);
-  }
-
-  function _switchBack(TNetwork currentNetwork) private {
-    CONFIG.switchTo(currentNetwork);
-  }
+  function _preCheck() internal virtual { }
 }

@@ -1,30 +1,54 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { TContract } from "../../types/Types.sol";
+import { TContract } from "../../types/TContract.sol";
+import { TNetwork } from "../../types/TNetwork.sol";
 
 interface IContractConfig {
-  function getContractTypeByRawData(uint256 chainId, address contractAddr)
-    external
-    view
-    returns (TContract contractType);
+  function setUpDefaultContracts() external;
 
-  function label(uint256 chainId, address contractAddr, string memory contractName) external;
+  function setAddress(TNetwork network, TContract contractType, address contractAddr) external;
 
-  function getContractTypeFromCurrentNetwok(address contractAddr) external view returns (TContract contractType);
+  function getAddress(TNetwork network, TContract contractType) external view returns (address payable);
 
-  function getContractName(TContract contractType) external view returns (string memory name);
+  function getAllAddresses(
+    TNetwork network
+  ) external view returns (address payable[] memory);
 
-  function getContractAbsolutePath(TContract contractType) external view returns (string memory name);
+  function getContractTypeByRawData(
+    TNetwork network,
+    address contractAddr
+  ) external view returns (TContract contractType);
 
-  function getAddressFromCurrentNetwork(TContract contractType) external view returns (address payable);
+  function label(TNetwork network, address contractAddr, string memory contractName) external;
 
-  function getAddressByString(string calldata contractName) external view returns (address payable);
+  function getContractTypeFromCurrentNetwork(
+    address contractAddr
+  ) external view returns (TContract contractType);
 
-  function getAddressByRawData(uint256 chainId, string calldata contractName)
-    external
-    view
-    returns (address payable addr);
+  function getContractName(
+    TContract contractType
+  ) external view returns (string memory name);
 
-  function getAllAddressesByRawData(uint256 chainId) external view returns (address payable[] memory addrs);
+  function getContractAbsolutePath(
+    TContract contractType
+  ) external view returns (string memory name);
+
+  function getAddressFromCurrentNetwork(
+    TContract contractType
+  ) external view returns (address payable);
+
+  function getAddressByString(
+    string calldata contractName
+  ) external view returns (address payable);
+
+  function getAddressByRawData(
+    TNetwork network,
+    string calldata contractName
+  ) external view returns (address payable addr);
+
+  function getAllAddressesByRawData(
+    TNetwork network
+  ) external view returns (address payable[] memory addrs);
 }

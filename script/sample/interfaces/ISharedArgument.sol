@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
+import { IGeneralConfig } from "../../interfaces/IGeneralConfig.sol";
 
 interface ISharedArgument is IGeneralConfig {
   struct SharedParameter {
@@ -10,7 +11,7 @@ interface ISharedArgument is IGeneralConfig {
     address mFactory;
     address testnetFactory;
     bytes32 mPairCodeHash;
-    bytes32 testnetpairCodeHash;
+    bytes32 testnetPairCodeHash;
     address mWRON;
     address mSLP;
     address mAXS;

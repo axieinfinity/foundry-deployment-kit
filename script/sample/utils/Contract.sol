@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { LibString } from "lib/solady/src/utils/LibString.sol";
-import { TContract } from "foundry-deployment-kit/types/Types.sol";
+import { LibString } from "../../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+import { TContract } from "../../types/Types.sol";
 
 enum Contract {
   tSLP,
@@ -12,16 +13,21 @@ enum Contract {
   tWETH,
   Sample,
   SampleClone,
-  SampleProxy
+  SampleProxy,
+  SampleProxyForTestingPurpose
 }
 
 using { key, name } for Contract global;
 
-function key(Contract contractEnum) pure returns (TContract) {
+function key(
+  Contract contractEnum
+) pure returns (TContract) {
   return TContract.wrap(LibString.packOne(name(contractEnum)));
 }
 
-function name(Contract contractEnum) pure returns (string memory) {
+function name(
+  Contract contractEnum
+) pure returns (string memory) {
   if (contractEnum == Contract.Sample) return "Sample";
   if (contractEnum == Contract.tBERRY) return "tBERRY";
   if (contractEnum == Contract.tWETH) return "tWETH";
@@ -30,5 +36,6 @@ function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.tWRON) return "tWRON";
   if (contractEnum == Contract.SampleClone) return "SampleClone";
   if (contractEnum == Contract.SampleProxy) return "SampleProxy";
+  if (contractEnum == Contract.SampleProxyForTestingPurpose) return "SampleProxyForTestingPurpose";
   revert("Contract: Unknown contract");
 }
