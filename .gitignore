@@ -16,7 +16,8 @@ docs/
 *.env
 .vscode
 
-node_modules/
-yarn-error.log
-.yarn
-.yarnrc.yml
+deployments/**/exported_address
+dependencies
+deployments
+logs/deployed-contracts
+broadcast

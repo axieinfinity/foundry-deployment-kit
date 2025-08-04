@@ -1,12 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
 
-import { console2 as console } from "forge-std/console2.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
-import { Contract } from "../../utils/Contract.sol";
+import { console } from "../../../../dependencies/forge-std-1.9.5/src/console.sol";
+
+import { Token } from "../../../../src/mocks/Token.sol";
+import { WNT } from "../../../../src/mocks/WNT.sol";
+
+import { DefaultNetwork } from "../../../utils/DefaultNetwork.sol";
 import { ISharedArgument, SampleMigration } from "../../SampleMigration.s.sol";
-import { Token } from "../../../../src/Token.sol";
-import { WNT } from "../../../../src/WNT.sol";
+import { Contract } from "../../utils/Contract.sol";
 
 contract Migration__20231204_DeployMockERC20 is SampleMigration {
   function _sharedArguments() internal virtual override returns (bytes memory args) {
@@ -20,11 +23,11 @@ contract Migration__20231204_DeployMockERC20 is SampleMigration {
     param.mWRON = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;
     param.mBERRY = 0x1B918543B518E34902e1E8dd76052BeE43C762Ff;
 
-    config.label(2021, param.mAXS, "AXS");
-    config.label(2021, param.mSLP, "SLP");
-    config.label(2021, param.mWETH, "WETH");
-    config.label(2021, param.mWRON, "WRON");
-    config.label(2021, param.mBERRY, "BERRY");
+    config.label(DefaultNetwork.RoninMainnet.key(), param.mAXS, "AXS");
+    config.label(DefaultNetwork.RoninMainnet.key(), param.mSLP, "SLP");
+    config.label(DefaultNetwork.RoninMainnet.key(), param.mWETH, "WETH");
+    config.label(DefaultNetwork.RoninMainnet.key(), param.mWRON, "WRON");
+    config.label(DefaultNetwork.RoninMainnet.key(), param.mBERRY, "BERRY");
 
     args = abi.encode(param);
   }
