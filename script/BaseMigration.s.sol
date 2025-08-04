@@ -9,7 +9,6 @@ import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.so
 import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
 import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
 
-import { OnchainExecutor } from "./OnchainExecutor.s.sol";
 import { IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol"; // cheat to load artifact to parent
   // `out` directory
 import { IMigrationScript } from "./interfaces/IMigrationScript.sol";
