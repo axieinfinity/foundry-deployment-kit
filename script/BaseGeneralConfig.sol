@@ -117,8 +117,8 @@ contract BaseGeneralConfig is
     // Double check source: https://saigon-app.roninchain.com/address/0x3BD36748D17e322cFB63417B059Bcc1059012D83
     setAddress(roninTestnet, DefaultContract.PermissionedRouter.key(), 0x3BD36748D17e322cFB63417B059Bcc1059012D83);
 
-    // Double check source: https://saigon-app.roninchain.com/address/0x88Ae5Ff2D22018542C842b68D4F924387f48215d
-    setAddress(roninTestnet, DefaultContract.USDC.key(), 0x88Ae5Ff2D22018542C842b68D4F924387f48215d);
+    // Double check source: https://saigon-app.roninchain.com/address/0x067fbff8990c58ab90bae3c97241c5d736053f77
+    setAddress(roninTestnet, DefaultContract.USDC.key(), 0x067fbff8990c58ab90bae3c97241c5d736053f77);
 
     // Double check source: https://saigon-app.roninchain.com/address/0xcaCA1c072D26E46686d932686015207FbE08FdB8
     setAddress(roninTestnet, DefaultContract.Axie.key(), 0xcaCA1c072D26E46686d932686015207FbE08FdB8);
