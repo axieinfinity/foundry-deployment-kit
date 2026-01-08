@@ -68,6 +68,8 @@ fi
 source_name=$(basename $absolute_path)
 # Remove .json or .sol extension
 source_name=${source_name%.*}
+#
+echo "source_name: $source_name"
 
 # Generate the artifact
 abi=$(forge inspect $source_name abi --json)
@@ -77,6 +79,45 @@ metadata=$(forge inspect $source_name metadata --json)
 storage_layout=$(forge inspect $source_name storageLayout --json)
 bytecode=$(forge inspect $source_name bytecode)
 deployed_bytecode=$(forge inspect $source_name deployedBytecode)
+
+sanitize_json_field() {
+    local name="$1"
+    local value="$2"
+
+    if [[ -z "$value" || "$value" == "null" ]]; then
+        echo "field $name is null" >&2
+        echo "null"
+        return
+    fi
+
+    # Ensure the value is valid JSON; fallback to null if not
+    if echo "$value" | jq -c . >/dev/null 2>&1; then
+        echo "$value" | jq -c .
+    else
+        echo "field $name is invalid JSON; defaulting to null" >&2
+        echo "null"
+    fi
+}
+
+sanitize_string_field() {
+    local name="$1"
+    local value="$2"
+
+    if [[ -z "$value" || "$value" == "null" ]]; then
+        echo "field $name is null" >&2
+        echo ""
+    else
+        echo "$value"
+    fi
+}
+
+abi=$(sanitize_json_field "abi" "$abi")
+devdoc=$(sanitize_json_field "devdoc" "$devdoc")
+userdoc=$(sanitize_json_field "userdoc" "$userdoc")
+metadata=$(sanitize_json_field "metadata" "$metadata")
+storage_layout=$(sanitize_json_field "storage_layout" "$storage_layout")
+bytecode=$(sanitize_string_field "bytecode" "$bytecode")
+deployed_bytecode=$(sanitize_string_field "deployed_bytecode" "$deployed_bytecode")
 
 # Create the JSON object
 json_content=$(
