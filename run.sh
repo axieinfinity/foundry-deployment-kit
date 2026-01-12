@@ -150,11 +150,17 @@ if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
     extra_argument+=generate-artifact@
 fi
 
+ronin_verification=false
 if [[ $should_verify == true ]]; then
     if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
-        verify_arg="--verify --retries 5 --verifier sourcify --verifier-url https://sourcify.roninchain.com/server/"
+        # Ronin uses Sourcify V1 (deprecated API) which is incompatible with Foundry 1.5.x+
+        # Skip built-in verification, will use manual V1 API verification after deployment
+        ronin_verification=true
+        verify_arg=""
+        echo "Note: Ronin verification will use Sourcify V1 API (post-deployment)"
     else
-        verify_arg="--verify --retries 5"
+        # Ethereum and other chains use Sourcify V2 (default)
+        verify_arg="--verify --retries 5 --verifier sourcify"
     fi
 fi
 
@@ -205,3 +211,85 @@ fi
 end_time=$(date +%s)
 
 echo "Execution time: $((end_time - start_time))s"
+
+# Ronin Sourcify V1 verification (post-deployment)
+# Foundry 1.5.x+ uses Sourcify APIv2 which Ronin doesn't support
+if [[ $ronin_verification == true ]] && [[ $is_broadcast == true ]]; then
+    echo ""
+    echo "Starting Ronin Sourcify V1 verification..."
+    
+    # Determine chain ID based on network
+    if [[ $network_name == "ronin-mainnet" ]]; then
+        chain_id="2020"
+    else
+        chain_id="2021"
+    fi
+    
+    # Find the latest broadcast file
+    broadcast_dir="broadcast"
+    if [ -d "$broadcast_dir" ]; then
+        latest_run=$(find "$broadcast_dir" -name "run-latest.json" -path "*/$chain_id/*" | head -1)
+        if [ -n "$latest_run" ]; then
+            echo "Found broadcast file: $latest_run"
+            
+            # Extract deployed contracts and verify each one
+            contracts=$(jq -r '.transactions[] | select(.transactionType == "CREATE" or .transactionType == "CREATE2") | "\(.contractAddress)|\(.contractName)"' "$latest_run" 2>/dev/null)
+            
+            if [ -n "$contracts" ]; then
+                while IFS='|' read -r address contract_name; do
+                    if [ -n "$address" ] && [ -n "$contract_name" ]; then
+                        echo "Verifying $contract_name at $address on chain $chain_id..."
+                        
+                        # Find the source file and metadata for the contract
+                        source_file=$(find src script -name "*.sol" -exec grep -l "contract $contract_name" {} \; 2>/dev/null | head -1)
+                        metadata_file="out/${contract_name}.sol/${contract_name}.json"
+                        
+                        if [ -n "$source_file" ] && [ -f "$metadata_file" ]; then
+                            # Extract metadata and source content
+                            metadata=$(jq -c '.metadata' "$metadata_file")
+                            source_content=$(cat "$source_file" | jq -Rs .)
+                            source_filename=$(basename "$source_file")
+                            
+                            # Submit to Ronin Sourcify V1 API using JSON
+                            response=$(curl -s -X POST "https://sourcify.roninchain.com/server/verify" \
+                                -H "Content-Type: application/json" \
+                                -d "{
+                                    \"address\": \"$address\",
+                                    \"chain\": \"$chain_id\",
+                                    \"files\": {
+                                        \"metadata.json\": $(echo "$metadata" | jq -Rs .),
+                                        \"$source_filename\": $source_content
+                                    }
+                                }" 2>/dev/null)
+                            
+                            # Check response - verification succeeds even if IPFS storage fails
+                            if echo "$response" | grep -q '"status":"perfect"\|full_match'; then
+                                echo "\033[32mVerification successful (perfect match) for $contract_name\033[0m"
+                            elif echo "$response" | grep -q '"status":"partial"\|partial_match'; then
+                                echo "\033[33mVerification successful (partial match) for $contract_name\033[0m"
+                            elif echo "$response" | grep -q "error" && ! echo "$response" | grep -q "full_match\|partial_match"; then
+                                echo "\033[31mVerification failed for $contract_name: $(echo "$response" | jq -r '.error // .message // "Unknown error"')\033[0m"
+                            else
+                                # Check verification status via API
+                                check_response=$(curl -s "https://sourcify.roninchain.com/server/check-by-addresses?addresses=$address&chainIds=$chain_id" 2>/dev/null)
+                                if echo "$check_response" | grep -q '"status":"perfect"'; then
+                                    echo "\033[32mVerification successful (perfect match) for $contract_name\033[0m"
+                                elif echo "$check_response" | grep -q '"status":"partial"'; then
+                                    echo "\033[33mVerification successful (partial match) for $contract_name\033[0m"
+                                else
+                                    echo "\033[33mVerification response for $contract_name: $response\033[0m"
+                                fi
+                            fi
+                        else
+                            echo "\033[33mCould not find source file or metadata for $contract_name\033[0m"
+                        fi
+                    fi
+                done <<< "$contracts"
+            else
+                echo "No CREATE transactions found in broadcast file"
+            fi
+        else
+            echo "No broadcast file found for chain $chain_id"
+        fi
+    fi
+fi
