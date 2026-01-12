@@ -310,7 +310,7 @@ library LibInitializeGuard {
     inputs[0] = "forge";
     inputs[1] = "inspect";
     inputs[2] = _getContractAbsolutePath($cache._chainInfo[proxy].forkId, proxy);
-    inputs[3] = "storage";
+    inputs[3] = "storageLayout";
     inputs[4] = "--json";
 
     string memory ret = string(vm.ffi(inputs));
