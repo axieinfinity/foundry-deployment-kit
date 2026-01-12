@@ -140,9 +140,6 @@ done
 
 export_address
 
-echo "\033[33mTrying to compile contracts ...\033[0m"
-forge build --offline # Ensure the contracts are compiled before running the script
-
 should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
 
 if [[ $force_generate_artifact == true ]]; then
@@ -199,7 +196,7 @@ fi
 
 start_time=$(date +%s)
 
-${op_command} forge script --offline ${verify_arg} ${@} -g 200 --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
+${op_command} forge script --offline ${verify_arg} ${@} -g 200 --color always --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
 
 if [ $? -ne 0 ]; then
     exit 1

@@ -229,7 +229,6 @@ library LibDeploy {
   function deployFromArtifact(
     DeployInfo memory info
   ) internal returns (address payable deployed) {
-    vm.pauseTracing();
     deployed = deployFromBytecode(
       info.absolutePath,
       info.contractName,
@@ -239,7 +238,6 @@ library LibDeploy {
       info.callValue,
       info.by
     );
-    vm.resumeTracing();
   }
 
   function deployFromBytecode(

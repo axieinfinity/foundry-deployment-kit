@@ -47,15 +47,11 @@ library LibArtifact {
 
     console.log(string.concat("By: ", vm.getLabel(info.deployer), ", nonce: ", vm.toString(info.nonce), "\n"));
 
-    vm.pauseTracing();
-
     string memory dirPath = vme.getDeploymentDirectory(vme.getCurrentNetwork());
 
     _tryCreateDir(dirPath);
 
     _serializeArtifact(dirPath, info);
-
-    vm.resumeTracing();
   }
 
   function _serializeArtifact(string memory dirPath, ArtifactInfo memory info) internal {
