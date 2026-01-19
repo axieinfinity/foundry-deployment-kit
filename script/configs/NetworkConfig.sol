@@ -134,7 +134,10 @@ abstract contract NetworkConfig is INetworkConfig {
     forkId = getForkId({ network: network, forkBlockNumber: 0 });
   }
 
-  function getForkId(TNetwork network, uint256 forkBlockNumber) public view virtual returns (uint256 forkId) {
+  function getForkId(
+    TNetwork network,
+    uint256 forkBlockNumber
+  ) public view virtual returns (uint256 forkId) {
     forkId = _forkMap[network][forkBlockNumber];
   }
 
@@ -144,12 +147,15 @@ abstract contract NetworkConfig is INetworkConfig {
     return createFork({ network: network, forkBlockNumber: 0 });
   }
 
-  function createFork(TNetwork network, uint256 forkBlockNumber) public returns (uint256 forkId) {
+  function createFork(
+    TNetwork network,
+    uint256 forkBlockNumber
+  ) public returns (uint256 forkId) {
     setForkMode({ shouldEnable: true });
 
     NetworkData memory networkData = _networkDataMap[network];
-    forkId =
-      _forkMap[network][forkBlockNumber] = tryCreateFork(networkData.chainAlias, networkData.network, forkBlockNumber);
+    forkId = _forkMap[network][forkBlockNumber] =
+      tryCreateFork(networkData.chainAlias, networkData.network, forkBlockNumber);
     _forkId2Network[forkId] = network;
   }
 
@@ -216,7 +222,10 @@ abstract contract NetworkConfig is INetworkConfig {
     switchTo({ network: network, forkBlockNumber: 0 });
   }
 
-  function switchTo(TNetwork network, uint256 forkBlockNumber) public virtual {
+  function switchTo(
+    TNetwork network,
+    uint256 forkBlockNumber
+  ) public virtual {
     uint256 forkId = _forkMap[network][forkBlockNumber];
     require(forkId != NULL_FORK_ID, "Network Config: Unexists fork!");
 
@@ -253,9 +262,7 @@ abstract contract NetworkConfig is INetworkConfig {
       " - Block Number ".blue(),
       vm.toString(vm.getBlockNumber()),
       " - Timestamp ".blue(),
-      vm.toString(vm.getBlockTimestamp()),
-      " - Period ".blue(),
-      vm.toString(vm.getBlockTimestamp() / 1 days)
+      vm.toString(vm.getBlockTimestamp())
     );
     string memory logB = string.concat(
       " - Chain ID ".blue(),
