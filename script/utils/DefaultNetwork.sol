@@ -49,7 +49,7 @@ function explorer(
   DefaultNetwork network
 ) pure returns (string memory link) {
   if (network == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
-  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-explorer.roninchain.com";
+  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-explorer.roninchain.com/";
   return "https://localhost-explorer.com/";
 }
 
