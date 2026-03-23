@@ -6,12 +6,14 @@ test = "test"
 ffi = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
+solc = "0.8.30"
 extra_output = ["devdoc", "userdoc", "storagelayout"]
 evm_version = 'cancun'
 optimizer = true
 optimizer_runs = 200
 use_literal_content = true
 fs_permissions = [{ access = "read-write", path = "./" }]
+script_execution_protection = false
 
 [fmt]
 line_length = 120
@@ -27,7 +29,7 @@ wrap_comments = true
 ethereum = "https://eth.llamarpc.com"
 goerli = "https://ethereum-goerli.publicnode.com"
 ronin-mainnet = "https://api-partner.roninchain.com/rpc"
-ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
+ronin-testnet = "https://saigon-testnet.roninchain.com/rpc"
 localhost = "http://localhost:8545"
 
 [dependencies]

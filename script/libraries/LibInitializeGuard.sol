@@ -177,7 +177,7 @@ library LibInitializeGuard {
         (actualInitVer == MAX_VER_V4 && initLoc.nBit == N_BIT_INIT_V4)
           || (actualInitVer == MAX_VER_V5 && initLoc.nBit == N_BIT_INIT_V5)
       ) {
-        string memory ret = vm.prompt(
+        try vm.prompt(
           string.concat(
             "[WARNING] ".yellow(),
             vm.getLabel(proxy),
@@ -187,11 +187,27 @@ library LibInitializeGuard {
             "yes ".blue(),
             "to continue..."
           )
-        );
-        require(
-          keccak256(bytes(vm.toLowercase(ret))) == keccak256("yes"),
-          "LibInitializeGuard: Aborted due to unintended disable initialization!"
-        );
+        ) returns (string memory ret) {
+          require(
+            keccak256(bytes(vm.toLowercase(ret))) == keccak256("yes"),
+            "LibInitializeGuard: Aborted due to unintended disable initialization!"
+          );
+        } catch {
+          // Non-interactive terminal - check environment variable for confirmation
+          string memory skipDisabledInitCheck = vm.envOr("SKIP_DISABLED_INIT_CHECK", string(""));
+          require(
+            keccak256(bytes(skipDisabledInitCheck)) == keccak256("yes"),
+            string.concat(
+              "LibInitializeGuard: ",
+              vm.getLabel(proxy),
+              " disabled initialized version. ",
+              "Set SKIP_DISABLED_INIT_CHECK=yes to confirm this is intentional."
+            )
+          );
+          console.log(
+            string.concat("[WARNING] ", vm.getLabel(proxy), " disabled initialized version (confirmed via env)").yellow()
+          );
+        }
 
         continue;
       }

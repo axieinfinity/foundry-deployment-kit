@@ -8,6 +8,9 @@ import { Sample } from "src/mocks/Sample.sol";
 
 contract SampleDeploy is SampleMigration {
   function run() public virtual returns (Sample instance) {
+    ISharedArgument.SharedParameter memory param = ISharedArgument(address(vme)).sharedArguments();
     instance = Sample(_deployImmutable(Contract.Sample.key()));
+
+    instance.setMessage(param.message);
   }
 }
