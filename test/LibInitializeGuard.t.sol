@@ -148,7 +148,7 @@ contract LibInitializeGuardTest is Test {
     Vm.AccountAccess[] memory stateDiffs = vm.stopAndReturnStateDiff();
 
     ValidateWrapper _wrapper = new ValidateWrapper();
-    vm.expectRevert(bytes(string.concat("LibInitializeGuard: Invalid initialized version! Expected: 4 Got: 1")));
+    vm.expectRevert(bytes(string.concat("LibInitializeGuard: Invalid initialized version! Expected: 3 Got: 1")));
     _wrapper.runValidate(logs, stateDiffs);
   }
 
