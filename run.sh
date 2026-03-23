@@ -151,8 +151,10 @@ if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
 fi
 
 if [[ $should_verify == true ]]; then
-    if [[ $network_name == "ronin-mainnet" ]] || [[ $network_name == "ronin-testnet" ]]; then
-        verify_arg="--verify --retries 5 --verifier sourcify --verifier-url https://sourcify.roninchain.com/server/"
+    if [[ $network_name == "ronin-mainnet" ]]; then
+        verify_arg="--verify --retries 5 --verifier sourcify --chain 2020"
+    elif [[ $network_name == "ronin-testnet" ]]; then
+        verify_arg="--verify --retries 5 --verifier blockscout --verifier-url https://explorer-saigon-testnet-cc58e966ql.t.conduit.xyz/api"
     else
         verify_arg="--verify --retries 5"
     fi

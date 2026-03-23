@@ -32,7 +32,7 @@ function chainId(
 ) pure returns (uint256) {
   if (network == DefaultNetwork.LocalHost) return 31_337;
   if (network == DefaultNetwork.RoninMainnet) return 2020;
-  if (network == DefaultNetwork.RoninTestnet) return 2021;
+  if (network == DefaultNetwork.RoninTestnet) return 202601;
   revert("DefaultNetwork: Unknown chain id");
 }
 
@@ -49,8 +49,8 @@ function explorer(
   DefaultNetwork network
 ) pure returns (string memory link) {
   if (network == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
-  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-app.roninchain.com/";
-  return "https://unknown-explorer.com/";
+  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-explorer.roninchain.com/";
+  return "https://localhost-explorer.com/";
 }
 
 function key(
