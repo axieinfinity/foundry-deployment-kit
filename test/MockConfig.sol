@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
+import { console } from "forge-std/console.sol";
 
 import "script/sample/SampleGeneralConfig.sol";
 

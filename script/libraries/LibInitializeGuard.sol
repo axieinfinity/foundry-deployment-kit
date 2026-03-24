@@ -2,12 +2,12 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
-import { Vm, VmSafe } from "../../dependencies/forge-std-1.9.5/src/Vm.sol";
-import { Math } from "../../dependencies/openzeppelin-v5-5.1.0/contracts/utils/math/Math.sol";
-import { EnumerableSet } from "../../dependencies/openzeppelin-v5-5.1.0/contracts/utils/structs/EnumerableSet.sol";
-import { JSONParserLib } from "../../dependencies/solady-0.0.228/src/utils/JSONParserLib.sol";
-import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { Vm, VmSafe } from "forge-std/Vm.sol";
+import { Math } from "@openzeppelin-v5/utils/math/Math.sol";
+import { EnumerableSet } from "@openzeppelin-v5/utils/structs/EnumerableSet.sol";
+import { JSONParserLib } from "solady/utils/JSONParserLib.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
 import { TContract } from "../types/TContract.sol";
 import { TNetwork } from "../types/TNetwork.sol";

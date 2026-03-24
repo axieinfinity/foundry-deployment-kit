@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { ITransparentUpgradeableProxy } from
-  "../../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+  "@openzeppelin-v5/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @dev Interface for {RoninTransparentProxy}. In order to implement transparency, {RoninTransparentProxy}

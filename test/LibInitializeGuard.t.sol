@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { StdStyle } from "../dependencies/forge-std-1.9.5/src/StdStyle.sol";
-import { Test } from "../dependencies/forge-std-1.9.5/src/Test.sol";
-import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { Test } from "forge-std/Test.sol";
+import { console } from "forge-std/console.sol";
 
-import { Initializable } from "../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/utils/Initializable.sol";
+import { Initializable } from "@openzeppelin-v4/proxy/utils/Initializable.sol";
 
 import { MockConfig } from "./MockConfig.sol";
 import { BaseGeneralConfig } from "script/BaseGeneralConfig.sol";

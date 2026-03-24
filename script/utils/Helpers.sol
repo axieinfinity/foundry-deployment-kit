@@ -2,14 +2,14 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { stdJson } from "../../dependencies/forge-std-1.9.5/src/StdJson.sol";
-import { StdStorage, stdStorage } from "../../dependencies/forge-std-1.9.5/src/StdStorage.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { StdStorage, stdStorage } from "forge-std/StdStorage.sol";
 
-import { StdStyle } from "../../dependencies/forge-std-1.9.5/src/StdStyle.sol";
-import { console } from "../../dependencies/forge-std-1.9.5/src/console.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { console } from "forge-std/console.sol";
 
-import { JSONParserLib } from "../../dependencies/solady-0.0.228/src/utils/JSONParserLib.sol";
-import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+import { JSONParserLib } from "solady/utils/JSONParserLib.sol";
+import { LibString } from "solady/utils/LibString.sol";
 import { LibErrorHandler } from "../libraries/LibErrorHandler.sol";
 import { LibSharedAddress } from "../libraries/LibSharedAddress.sol";
 

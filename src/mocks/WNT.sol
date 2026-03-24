@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import { ERC20 } from "../../dependencies/openzeppelin-v5-5.1.0/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin-v5/token/ERC20/ERC20.sol";
 import { IWNT } from "./interfaces/IWNT.sol";
 
 /// @notice Minimalist and modern Wrapped Ether implementation.

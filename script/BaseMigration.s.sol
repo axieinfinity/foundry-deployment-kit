@@ -2,12 +2,10 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { StdStyle } from "../dependencies/forge-std-1.9.5/src/StdStyle.sol";
-import { Vm } from "../dependencies/forge-std-1.9.5/src/Vm.sol";
-import { console } from "../dependencies/forge-std-1.9.5/src/console.sol";
-import { LibString } from "../dependencies/solady-0.0.228/src/utils/LibString.sol";
-import { RoninTransparentProxy } from "../src/RoninTransparentProxy.sol";
-import { TransparentProxyOZv4_9_5 } from "../src/TransparentProxyOZv4_9_5.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { Vm } from "forge-std/Vm.sol";
+import { console } from "forge-std/console.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
 import { IScriptExtended, ScriptExtended } from "./extensions/ScriptExtended.s.sol"; // cheat to load artifact to parent
   // `out` directory
@@ -337,14 +335,4 @@ abstract contract BaseMigration is ScriptExtended {
     vm.allowCheatcodes(deployScript);
   }
 
-  /**
-   * @dev Cheat to force build artifact for customized TransparentProxy contract
-   *
-   * Can be disabled in child contract by overriding this function
-   */
-  function _precompileProxyContracts() internal pure virtual {
-    bytes memory dummy;
-    dummy = type(RoninTransparentProxy).creationCode;
-    dummy = type(TransparentProxyOZv4_9_5).creationCode;
-  }
 }
