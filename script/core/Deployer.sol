@@ -5,8 +5,8 @@ pragma experimental ABIEncoderV2;
 import { CommonBase } from "forge-std/Base.sol";
 import { console } from "forge-std/console.sol";
 
-import { LibProxy } from "../libraries/LibProxy.sol";
 import { IEIP173 } from "../interfaces/IEIP173.sol";
+import { LibProxy } from "../libraries/LibProxy.sol";
 
 /**
  * @dev Lightweight stateless deploy/upgrade helpers.
@@ -33,7 +33,10 @@ abstract contract Deployer is CommonBase {
     require(deployed.code.length > 0, "Deployer: Empty code after deploy");
   }
 
-  function _deployRaw(bytes memory creationCode, bytes memory constructorArgs) internal returns (address deployed) {
+  function _deployRaw(
+    bytes memory creationCode,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
     return _deployRaw(abi.encodePacked(creationCode, constructorArgs));
   }
 
@@ -59,7 +62,10 @@ abstract contract Deployer is CommonBase {
     logic = _deployFromArtifact(artifactPath);
   }
 
-  function _deployLogic(string memory artifactPath, bytes memory constructorArgs) internal returns (address logic) {
+  function _deployLogic(
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address logic) {
     logic = _deployFromArtifact(artifactPath, constructorArgs);
   }
 
@@ -94,10 +100,7 @@ abstract contract Deployer is CommonBase {
     require(
       actualAdmin == proxyAdmin,
       string.concat(
-        "Deployer: Proxy admin mismatch. Expected: ",
-        vm.toString(proxyAdmin),
-        " Got: ",
-        vm.toString(actualAdmin)
+        "Deployer: Proxy admin mismatch. Expected: ", vm.toString(proxyAdmin), " Got: ", vm.toString(actualAdmin)
       )
     );
   }
@@ -105,7 +108,11 @@ abstract contract Deployer is CommonBase {
   /**
    * @dev Upgrade a transparent proxy to a new implementation.
    */
-  function _upgradeProxy(address proxy, address newLogic, bytes memory callData) internal {
+  function _upgradeProxy(
+    address proxy,
+    address newLogic,
+    bytes memory callData
+  ) internal {
     require(newLogic != address(0), "Deployer: Null logic");
 
     (address auth, address interactTo) = _findHierarchyAdmin(proxy);

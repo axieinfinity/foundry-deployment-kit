@@ -1,39 +1,36 @@
-# Source (or "dot") the .env file to load environment variables
-if [ -f .env ]; then
-    source .broadcast.env
-else
-    echo "Error: .broadcast.env file not found."
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    echo "Usage: $0 <script_path> [--network <alias>] [--command <string>] [--call <sig>] [--] [forge_args...]"
+    echo ""
+    echo "This is a thin wrapper over run.sh that always adds --broadcast."
+    exit 1
+}
+
+if [ "$#" -eq 0 ]; then
+    usage
 fi
 
-extra_argument=""
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+args=("$@")
+split_index=-1
 
-for arg in "$@"; do
-    case $arg in
-    --trezor)
-        extra_argument+=trezor@
-        ;;
-    *) ;;
-    esac
+for i in "${!args[@]}"; do
+    if [ "${args[$i]}" = "--" ]; then
+        split_index=$i
+        break
+    fi
 done
 
-# Remove the @ character from the end of extra_argument
-extra_argument="${extra_argument%%@}"
-
-op_command=""
-## Check if the private key is stored in the .env file
-if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]]; then
-    source .env
-    if [[ $MAINNET_PK == op* ]] || [[ $TESTNET_PK == op* ]] || [[ $LOCAL_PK == op* ]]; then
-        op_command="op run --env-file="./.env" --"
-    fi
+if [ "$split_index" -ge 0 ]; then
+    run_args=("${args[@]:0:$split_index}")
+    forge_args=("${args[@]:$((split_index + 1))}")
+else
+    run_args=("${args[@]}")
+    forge_args=()
 fi
 
-echo Broadcast Tx...
-echo From: ${FROM}
-echo To: ${TO}
-echo Value: ${VALUE}
-echo GasAmount: ${GAS}
-echo Calldata:
-cast pretty-calldata ${CALLDATA}
-calldata=$(cast calldata 'broadcast(address,address,uint256,uint256,bytes)' ${FROM} ${TO} ${GAS} ${VALUE} ${CALLDATA})
-${op_command} forge script ${verify_arg} ${@} -g 200 OnchainExecutor --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
+forge_args+=("--broadcast")
+
+"$script_dir/run.sh" "${run_args[@]}" -- "${forge_args[@]}"

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import { ERC20 } from "@openzeppelin-v5/token/ERC20/ERC20.sol";
 import { IWNT } from "./interfaces/IWNT.sol";
+import { ERC20 } from "@openzeppelin-v5/token/ERC20/ERC20.sol";
 
 /// @notice Minimalist and modern Wrapped Ether implementation.
 /// @author Solmate
@@ -10,7 +10,10 @@ import { IWNT } from "./interfaces/IWNT.sol";
 /// @author Inspired by WETH9
 /// (https://github.com/dapphub/ds-weth/blob/master/src/weth9.sol)
 contract WNT is IWNT, ERC20 {
-  constructor(string memory name_, string memory symbol_) payable ERC20(name_, symbol_) { }
+  constructor(
+    string memory name_,
+    string memory symbol_
+  ) payable ERC20(name_, symbol_) { }
 
   function deposit() public payable virtual {
     address sender = _msgSender();

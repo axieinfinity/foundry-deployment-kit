@@ -9,8 +9,8 @@ import { Deployer } from "script/core/Deployer.sol";
 
 import { TContract } from "script/types/TContract.sol";
 import { TNetwork } from "script/types/TNetwork.sol";
-import { DefaultNetwork } from "script/utils/DefaultNetwork.sol";
 import { DefaultContract } from "script/utils/DefaultContract.sol";
+import { DefaultNetwork } from "script/utils/DefaultNetwork.sol";
 
 /**
  * @dev Lightweight test base for consumer repos.
@@ -43,15 +43,15 @@ abstract contract ForkTest is Test, AddressBook, Deployer {
     _setUpFork(network, 0);
   }
 
-  function _setUpFork(TNetwork network, uint256 blockNumber) internal virtual {
+  function _setUpFork(
+    TNetwork network,
+    uint256 blockNumber
+  ) internal virtual {
     string memory rpcUrl = vm.rpcUrl(network.chainAlias());
 
     uint256 forkId;
-    if (blockNumber == 0) {
-      forkId = vm.createSelectFork(rpcUrl);
-    } else {
-      forkId = vm.createSelectFork(rpcUrl, blockNumber);
-    }
+    if (blockNumber == 0) forkId = vm.createSelectFork(rpcUrl);
+    else forkId = vm.createSelectFork(rpcUrl, blockNumber);
 
     _setCurrentNetwork(network);
     _loadDeployment(network, _deploymentRoot);

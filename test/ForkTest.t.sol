@@ -3,10 +3,10 @@ pragma solidity ^0.8.19;
 
 import { ForkTest } from "./ForkTest.sol";
 
+import { LibProxy } from "script/libraries/LibProxy.sol";
 import { TContract } from "script/types/TContract.sol";
 import { DefaultContract } from "script/utils/DefaultContract.sol";
 import { DefaultNetwork } from "script/utils/DefaultNetwork.sol";
-import { LibProxy } from "script/libraries/LibProxy.sol";
 
 import { SampleProxy } from "src/mocks/SampleProxy.sol";
 
@@ -55,9 +55,7 @@ contract ForkTestDemo is ForkTest {
   function testConcrete_UpgradeProxy() public {
     address newLogic = address(new SampleProxy());
 
-    _upgradeProxy(
-      address(proxy), newLogic, abi.encodeCall(SampleProxy.initializeV2, ())
-    );
+    _upgradeProxy(address(proxy), newLogic, abi.encodeCall(SampleProxy.initializeV2, ()));
 
     assertEq(proxy.getMessage(), "hello");
   }

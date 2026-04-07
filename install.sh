@@ -20,9 +20,3 @@ $HOME/.cargo/bin/cargo install soldeer
 $HOME/.cargo/bin/soldeer update
 # Run forge build
 $HOME/.foundry/bin/forge build
-
-# Check if rustup is installed
-if ! command -v jq &>/dev/null; then
-    # Install jq
-    brew install jq
-fi

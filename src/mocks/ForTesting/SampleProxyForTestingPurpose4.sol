@@ -4,8 +4,7 @@ pragma solidity ^0.8.25;
 import { Ownable } from "@openzeppelin-v5/access/Ownable.sol";
 
 import { Initializable } from "@openzeppelin-v4/proxy/utils/Initializable.sol";
-import { Initializable as InitializableV5 } from
-  "@openzeppelin-v5/proxy/utils/Initializable.sol";
+import { Initializable as InitializableV5 } from "@openzeppelin-v5/proxy/utils/Initializable.sol";
 
 contract SampleProxyForTestingPurpose4 is Ownable, Initializable {
   uint256[50] private __gap;

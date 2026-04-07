@@ -35,7 +35,11 @@ contract RoninTransparentProxy is ERC1967Proxy {
    * backed by the implementation at `logic`, and optionally initialized with `data` as explained in
    * {ERC1967Proxy-constructor}.
    */
-  constructor(address logic, address admin, bytes memory data) payable ERC1967Proxy(logic, data) {
+  constructor(
+    address logic,
+    address admin,
+    bytes memory data
+  ) payable ERC1967Proxy(logic, data) {
     // Set the storage value and emit an event for ERC-1967 compatibility
     ERC1967Utils.changeAdmin(admin);
   }

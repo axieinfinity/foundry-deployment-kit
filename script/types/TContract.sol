@@ -16,10 +16,22 @@ function name(
   return TContract.unwrap(contractType).unpackOne();
 }
 
-function eq(TContract a, TContract b) pure returns (bool) {
+function key(
+  string memory contractName
+) pure returns (TContract) {
+  return TContract.wrap(LibString.packOne(contractName));
+}
+
+function eq(
+  TContract a,
+  TContract b
+) pure returns (bool) {
   return TContract.unwrap(a) == TContract.unwrap(b);
 }
 
-function neq(TContract a, TContract b) pure returns (bool) {
+function neq(
+  TContract a,
+  TContract b
+) pure returns (bool) {
   return TContract.unwrap(a) != TContract.unwrap(b);
 }

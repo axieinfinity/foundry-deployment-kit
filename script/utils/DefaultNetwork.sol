@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import { LibString } from "solady/utils/LibString.sol";
 
-import { INetworkConfig } from "../interfaces/configs/INetworkConfig.sol";
 import { TNetwork } from "../types/Types.sol";
 
 enum DefaultNetwork {
@@ -13,44 +12,15 @@ enum DefaultNetwork {
   RoninMainnet
 }
 
-using { key, chainId, chainAlias, explorer, data } for DefaultNetwork global;
-
-function data(
-  DefaultNetwork network
-) pure returns (INetworkConfig.NetworkData memory) {
-  return INetworkConfig.NetworkData({
-    network: key(network),
-    blockTime: blockTime(network),
-    chainAlias: chainAlias(network),
-    explorer: explorer(network),
-    chainId: chainId(network)
-  });
-}
+using { key, chainId, chainAlias } for DefaultNetwork global;
 
 function chainId(
   DefaultNetwork network
 ) pure returns (uint256) {
   if (network == DefaultNetwork.LocalHost) return 31_337;
   if (network == DefaultNetwork.RoninMainnet) return 2020;
-  if (network == DefaultNetwork.RoninTestnet) return 202601;
+  if (network == DefaultNetwork.RoninTestnet) return 202_601;
   revert("DefaultNetwork: Unknown chain id");
-}
-
-function blockTime(
-  DefaultNetwork network
-) pure returns (uint256) {
-  if (network == DefaultNetwork.LocalHost) return 3;
-  if (network == DefaultNetwork.RoninMainnet) return 3;
-  if (network == DefaultNetwork.RoninTestnet) return 3;
-  revert("DefaultNetwork: Unknown block time");
-}
-
-function explorer(
-  DefaultNetwork network
-) pure returns (string memory link) {
-  if (network == DefaultNetwork.RoninMainnet) return "https://app.roninchain.com/";
-  if (network == DefaultNetwork.RoninTestnet) return "https://saigon-explorer.roninchain.com/";
-  return "https://localhost-explorer.com/";
 }
 
 function key(
@@ -66,4 +36,13 @@ function chainAlias(
   if (network == DefaultNetwork.RoninTestnet) return "ronin-testnet";
   if (network == DefaultNetwork.RoninMainnet) return "ronin-mainnet";
   revert("DefaultNetwork: Unknown network alias");
+}
+
+function fromChainId(
+  uint256 id
+) pure returns (TNetwork) {
+  if (id == chainId(DefaultNetwork.LocalHost)) return key(DefaultNetwork.LocalHost);
+  if (id == chainId(DefaultNetwork.RoninTestnet)) return key(DefaultNetwork.RoninTestnet);
+  if (id == chainId(DefaultNetwork.RoninMainnet)) return key(DefaultNetwork.RoninMainnet);
+  return key(DefaultNetwork.LocalHost);
 }
