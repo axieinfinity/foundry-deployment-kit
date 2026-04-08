@@ -15,6 +15,14 @@ use_literal_content = true
 fs_permissions = [{ access = "read-write", path = "./" }]
 script_execution_protection = false
 
+[profile.ci]
+verbosity = 3
+fuzz = { runs = 10000 }
+
+[profile.lite]
+optimizer = false
+fuzz = { runs = 32 }
+
 [fmt]
 line_length = 120
 tab_width = 2

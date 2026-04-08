@@ -11,7 +11,7 @@ contract SampleProxyUpgrade is ScriptExtended {
   function run() public {
     address proxy = getAddressFromCurrentNetwork(Contract.SampleProxy.key());
 
-    address newLogic = _deployLogic("SampleProxy.sol:SampleProxy");
+    address newLogic = _deployLogic(Contract.SampleProxy.artifact());
     _upgradeProxy(proxy, newLogic, abi.encodeCall(SampleProxy.initializeV2, ()));
   }
 }

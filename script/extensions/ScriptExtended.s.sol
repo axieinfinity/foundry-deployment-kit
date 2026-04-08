@@ -61,9 +61,37 @@ abstract contract ScriptExtended is Script, AddressBook, Deployer {
     return DefaultNetwork.LocalHost.key();
   }
 
-  function _beforeRun() internal virtual { }
+  function _beforeRun() internal virtual {
+    _loadBroadcastPk();
+  }
 
   function _afterRun() internal virtual { }
+
+  function _loadBroadcastPk() internal {
+    TNetwork network = getCurrentNetwork();
+    string memory networkAlias = network.chainAlias();
+
+    // Convert network alias to env var: ronin-testnet -> RONIN_TESTNET_PK
+    string memory pkEnvVar = string.concat(
+      _toUpperAlias(networkAlias).replace("-", "_"),
+      "_PK"
+    );
+
+    if (vm.envExists(pkEnvVar)) {
+      _setBroadcastPkFromEnv(pkEnvVar);
+    }
+  }
+
+  function _toUpperAlias(string memory s) internal pure returns (string memory) {
+    bytes memory b = bytes(s);
+    for (uint256 i; i < b.length; ++i) {
+      uint8 c = uint8(b[i]);
+      if (c >= 97 && c <= 122) {
+        b[i] = bytes1(c - 32);
+      }
+    }
+    return string(b);
+  }
 
   function _revert(
     bytes memory data

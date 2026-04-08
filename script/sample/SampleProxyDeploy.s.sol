@@ -12,7 +12,7 @@ contract SampleProxyDeploy is ScriptExtended {
     address proxyAdmin = vm.envAddress("PROXY_ADMIN");
     bytes memory initData = abi.encodeCall(SampleProxy.initialize, ("hello"));
 
-    address proxy = _deployTransparentProxy("SampleProxy.sol:SampleProxy", proxyAdmin, initData);
+    address proxy = _deployTransparentProxy(Contract.SampleProxy.artifact(), proxyAdmin, initData);
 
     recordDeployment(Contract.SampleProxy.key(), proxy, _deploymentRoot);
   }

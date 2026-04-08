@@ -23,9 +23,26 @@ abstract contract Deployer is CommonBase {
   using LibProxy for address;
   using LibProxy for address payable;
 
+  uint256 internal _broadcastPk;
+
+  function _setBroadcastPk(uint256 pk) internal {
+    _broadcastPk = pk;
+  }
+
+  function _setBroadcastPkFromEnv(string memory envVar) internal {
+    if (vm.envExists(envVar)) {
+      _broadcastPk = vm.envUint(envVar);
+    }
+  }
+
   function _deployRaw(
     bytes memory creationCode
   ) internal returns (address deployed) {
+    if (_broadcastPk != 0) {
+      vm.broadcast(_broadcastPk);
+    } else {
+      vm.broadcast();
+    }
     assembly ("memory-safe") {
       deployed := create(0, add(creationCode, 0x20), mload(creationCode))
     }
@@ -129,7 +146,11 @@ abstract contract Deployer is CommonBase {
         : abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newLogic, callData);
     }
 
-    vm.prank(auth);
+    if (_broadcastPk != 0) {
+      vm.broadcast(_broadcastPk);
+    } else {
+      vm.broadcast(auth);
+    }
     (bool success, bytes memory ret) = interactTo.call(upgradeCallData);
     require(success, string.concat("Deployer: Upgrade failed: ", vm.toString(ret)));
   }

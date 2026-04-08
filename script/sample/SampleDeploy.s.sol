@@ -9,7 +9,7 @@ import { Contract } from "./Contract.sol";
 
 contract SampleDeploy is ScriptExtended {
   function run() public {
-    Sample sample = Sample(_deployFromArtifact("Sample.sol:Sample"));
+    Sample sample = Sample(_deployFromArtifact(Contract.Sample.artifact()));
     sample.setMessage("hello");
 
     recordDeployment(Contract.Sample.key(), address(sample), _deploymentRoot);

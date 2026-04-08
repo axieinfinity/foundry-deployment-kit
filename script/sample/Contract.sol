@@ -11,7 +11,7 @@ enum Contract {
   SampleProxy
 }
 
-using { key, name } for Contract global;
+using { key, name, artifact } for Contract global;
 
 function name(
   Contract contractType
@@ -25,4 +25,11 @@ function key(
   Contract contractType
 ) pure returns (TContract) {
   return TContract.wrap(LibString.packOne(name(contractType)));
+}
+
+function artifact(
+  Contract contractType
+) pure returns (string memory) {
+  string memory contractName = name(contractType);
+  return string.concat(contractName, ".sol:", contractName);
 }
