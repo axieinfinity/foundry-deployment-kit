@@ -9,11 +9,9 @@ import { Contract } from "./Contract.sol";
 
 contract SampleProxyDeploy is ScriptExtended {
   function run() public {
-    address proxyAdmin = vm.envAddress("PROXY_ADMIN");
+    address proxyAdmin = getAddressFromCurrentNetwork(Contract.ProxyAdmin.key());
     bytes memory initData = abi.encodeCall(SampleProxy.initialize, ("hello"));
 
     address proxy = _deployTransparentProxy(Contract.SampleProxy.artifact(), proxyAdmin, initData);
-
-    recordDeployment(Contract.SampleProxy.key(), proxy, _deploymentRoot);
   }
 }

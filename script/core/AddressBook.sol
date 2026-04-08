@@ -191,9 +191,34 @@ abstract contract AddressBook is CommonBase {
     if (!vm.exists(dirPath)) vm.createDir(dirPath, true);
 
     string memory exportedPath = string.concat(dirPath, "exported_address");
-    string memory existing = vm.exists(exportedPath) ? vm.readFile(exportedPath) : "";
-    string memory line = string.concat(contractName, ".json@", vm.toString(contractAddr), "\n");
-    vm.writeFile(exportedPath, string.concat(existing, line));
+    string memory newLine = string.concat(contractName, ".json@", vm.toString(contractAddr));
+
+    if (!vm.exists(exportedPath)) {
+      vm.writeFile(exportedPath, string.concat(newLine, "\n"));
+      return;
+    }
+
+    string memory existing = vm.readFile(exportedPath);
+    string memory prefix = string.concat(contractName, ".json@");
+    string[] memory entries = vm.split(existing, "\n");
+    string memory result;
+    bool replaced;
+
+    for (uint256 i; i < entries.length; ++i) {
+      if (bytes(entries[i]).length == 0) continue;
+      if (entries[i].startsWith(prefix)) {
+        result = string.concat(result, newLine, "\n");
+        replaced = true;
+      } else {
+        result = string.concat(result, entries[i], "\n");
+      }
+    }
+
+    if (!replaced) {
+      result = string.concat(result, newLine, "\n");
+    }
+
+    vm.writeFile(exportedPath, result);
   }
 
   function _shouldRecordDeployment() private view returns (bool) {

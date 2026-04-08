@@ -7,6 +7,7 @@ import { LibString } from "solady/utils/LibString.sol";
 import { TContract } from "../types/TContract.sol";
 
 enum Contract {
+  ProxyAdmin,
   Sample,
   SampleProxy
 }
@@ -16,6 +17,7 @@ using { key, name, artifact } for Contract global;
 function name(
   Contract contractType
 ) pure returns (string memory) {
+  if (contractType == Contract.ProxyAdmin) return "ProxyAdmin";
   if (contractType == Contract.Sample) return "Sample";
   if (contractType == Contract.SampleProxy) return "SampleProxy";
   revert("Contract: Unknown contract");
