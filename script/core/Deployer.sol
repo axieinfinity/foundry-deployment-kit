@@ -7,6 +7,7 @@ import { console } from "forge-std/console.sol";
 
 import { IEIP173 } from "../interfaces/IEIP173.sol";
 import { LibProxy } from "../libraries/LibProxy.sol";
+import { TContract } from "../types/TContract.sol";
 
 /**
  * @dev Lightweight stateless deploy/upgrade helpers.
@@ -25,29 +26,36 @@ abstract contract Deployer is CommonBase {
 
   uint256 internal _broadcastPk;
 
-  function _setBroadcastPk(uint256 pk) internal {
+  function _setBroadcastPk(
+    uint256 pk
+  ) internal {
     _broadcastPk = pk;
   }
 
-  function _setBroadcastPkFromEnv(string memory envVar) internal {
-    if (vm.envExists(envVar)) {
-      _broadcastPk = vm.envUint(envVar);
-    }
+  function _setBroadcastPkFromEnv(
+    string memory envVar
+  ) internal {
+    if (vm.envExists(envVar)) _broadcastPk = vm.envUint(envVar);
   }
 
   function _deployRaw(
     bytes memory creationCode
   ) internal returns (address deployed) {
-    if (_broadcastPk != 0) {
-      vm.broadcast(_broadcastPk);
-    } else {
-      vm.broadcast();
-    }
+    if (_broadcastPk != 0) vm.broadcast(_broadcastPk);
+    else vm.broadcast();
     assembly ("memory-safe") {
       deployed := create(0, add(creationCode, 0x20), mload(creationCode))
     }
     require(deployed != address(0), "Deployer: Deployment failed");
     require(deployed.code.length > 0, "Deployer: Empty code after deploy");
+  }
+
+  function _deployRawAndRecord(
+    TContract contractType,
+    bytes memory creationCode
+  ) internal returns (address deployed) {
+    deployed = _deployRaw(creationCode);
+    _recordDeployment(contractType, deployed);
   }
 
   function _deployRaw(
@@ -57,10 +65,27 @@ abstract contract Deployer is CommonBase {
     return _deployRaw(abi.encodePacked(creationCode, constructorArgs));
   }
 
+  function _deployRawAndRecord(
+    TContract contractType,
+    bytes memory creationCode,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    deployed = _deployRaw(creationCode, constructorArgs);
+    _recordDeployment(contractType, deployed);
+  }
+
   function _deployFromArtifact(
     string memory artifactPath
   ) internal returns (address deployed) {
     return _deployRaw(vm.getCode(artifactPath));
+  }
+
+  function _deployFromArtifactAndRecord(
+    TContract contractType,
+    string memory artifactPath
+  ) internal returns (address deployed) {
+    deployed = _deployFromArtifact(artifactPath);
+    _recordDeployment(contractType, deployed);
   }
 
   function _deployFromArtifact(
@@ -68,6 +93,15 @@ abstract contract Deployer is CommonBase {
     bytes memory constructorArgs
   ) internal returns (address deployed) {
     return _deployRaw(vm.getCode(artifactPath), constructorArgs);
+  }
+
+  function _deployFromArtifactAndRecord(
+    TContract contractType,
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    deployed = _deployFromArtifact(artifactPath, constructorArgs);
+    _recordDeployment(contractType, deployed);
   }
 
   /**
@@ -79,6 +113,14 @@ abstract contract Deployer is CommonBase {
     logic = _deployFromArtifact(artifactPath);
   }
 
+  function _deployLogicAndRecord(
+    TContract contractType,
+    string memory artifactPath
+  ) internal returns (address logic) {
+    logic = _deployLogic(artifactPath);
+    _recordDeployment(contractType, logic);
+  }
+
   function _deployLogic(
     string memory artifactPath,
     bytes memory constructorArgs
@@ -86,19 +128,54 @@ abstract contract Deployer is CommonBase {
     logic = _deployFromArtifact(artifactPath, constructorArgs);
   }
 
+  function _deployLogicAndRecord(
+    TContract contractType,
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address logic) {
+    logic = _deployLogic(artifactPath, constructorArgs);
+    _recordDeployment(contractType, logic);
+  }
+
+  function _deployProxy(
+    string memory implArtifactPath,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    return _deployProxy(implArtifactPath, _proxyAdmin(), initData);
+  }
+
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, initData);
+    _recordDeployment(contractType, proxy);
+  }
+
   /**
    * @dev Deploy a TransparentUpgradeableProxy (OZ v4 style) from artifact.
    * Does NOT import the proxy .sol file; uses vm.getCode to load compiled artifact.
    */
-  function _deployTransparentProxy(
+  function _deployProxy(
     string memory implArtifactPath,
     address proxyAdmin,
     bytes memory initData
   ) internal returns (address proxy) {
-    return _deployTransparentProxy(implArtifactPath, "", proxyAdmin, initData);
+    return _deployProxy(implArtifactPath, "", proxyAdmin, initData);
   }
 
-  function _deployTransparentProxy(
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, proxyAdmin, initData);
+    _recordDeployment(contractType, proxy);
+  }
+
+  function _deployProxy(
     string memory implArtifactPath,
     bytes memory implConstructorArgs,
     address proxyAdmin,
@@ -120,6 +197,17 @@ abstract contract Deployer is CommonBase {
         "Deployer: Proxy admin mismatch. Expected: ", vm.toString(proxyAdmin), " Got: ", vm.toString(actualAdmin)
       )
     );
+  }
+
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    bytes memory implConstructorArgs,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, implConstructorArgs, proxyAdmin, initData);
+    _recordDeployment(contractType, proxy);
   }
 
   /**
@@ -146,11 +234,8 @@ abstract contract Deployer is CommonBase {
         : abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newLogic, callData);
     }
 
-    if (_broadcastPk != 0) {
-      vm.broadcast(_broadcastPk);
-    } else {
-      vm.broadcast(auth);
-    }
+    if (_broadcastPk != 0) vm.broadcast(_broadcastPk);
+    else vm.broadcast(auth);
     (bool success, bytes memory ret) = interactTo.call(upgradeCallData);
     require(success, string.concat("Deployer: Upgrade failed: ", vm.toString(ret)));
   }
@@ -173,4 +258,11 @@ abstract contract Deployer is CommonBase {
       }
     }
   }
+
+  function _recordDeployment(
+    TContract contractType,
+    address contractAddr
+  ) internal virtual { }
+
+  function _proxyAdmin() internal view virtual returns (address);
 }

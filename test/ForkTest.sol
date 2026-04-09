@@ -71,7 +71,7 @@ abstract contract ForkTest is Test, AddressBook, Deployer {
     address proxyAdmin,
     bytes memory initData
   ) internal returns (address payable proxy) {
-    proxy = payable(_deployTransparentProxy(artifactPath, proxyAdmin, initData));
+    proxy = payable(_deployProxy(artifactPath, proxyAdmin, initData));
     setAddress(getCurrentNetwork(), contractType, proxy);
   }
 
@@ -82,7 +82,7 @@ abstract contract ForkTest is Test, AddressBook, Deployer {
     address proxyAdmin,
     bytes memory initData
   ) internal returns (address payable proxy) {
-    proxy = payable(_deployTransparentProxy(artifactPath, constructorArgs, proxyAdmin, initData));
+    proxy = payable(_deployProxy(artifactPath, constructorArgs, proxyAdmin, initData));
     setAddress(getCurrentNetwork(), contractType, proxy);
   }
 
@@ -104,5 +104,9 @@ abstract contract ForkTest is Test, AddressBook, Deployer {
   ) internal returns (address payable deployed) {
     deployed = payable(_deployFromArtifact(artifactPath, constructorArgs));
     setAddress(getCurrentNetwork(), contractType, deployed);
+  }
+
+  function _proxyAdmin() internal view override returns (address) {
+    return getAddressFromCurrentNetwork(DefaultContract.ProxyAdmin.key());
   }
 }
