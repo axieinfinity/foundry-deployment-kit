@@ -1,0 +1,268 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity >=0.6.2 <0.9.0;
+pragma experimental ABIEncoderV2;
+
+import { CommonBase } from "forge-std/Base.sol";
+import { console } from "forge-std/console.sol";
+
+import { IEIP173 } from "../interfaces/IEIP173.sol";
+import { LibProxy } from "../libraries/LibProxy.sol";
+import { TContract } from "../types/TContract.sol";
+
+/**
+ * @dev Lightweight stateless deploy/upgrade helpers.
+ *
+ * Unlike BaseMigration, this contract has NO dependency on:
+ * - VME / BaseGeneralConfig / config mixins
+ * - Proxy contract source files (deploys via vm.getCode artifact lookup)
+ * - ScriptExtended / StdAssertions
+ * - LibArtifact (no artifact file generation)
+ *
+ * Consumer tests can inherit this for simple deploy/upgrade flows.
+ */
+abstract contract Deployer is CommonBase {
+  using LibProxy for address;
+  using LibProxy for address payable;
+
+  uint256 internal _broadcastPk;
+
+  function _setBroadcastPk(
+    uint256 pk
+  ) internal {
+    _broadcastPk = pk;
+  }
+
+  function _setBroadcastPkFromEnv(
+    string memory envVar
+  ) internal {
+    if (vm.envExists(envVar)) _broadcastPk = vm.envUint(envVar);
+  }
+
+  function _deployRaw(
+    bytes memory creationCode
+  ) internal returns (address deployed) {
+    if (_broadcastPk != 0) vm.broadcast(_broadcastPk);
+    else vm.broadcast();
+    assembly ("memory-safe") {
+      deployed := create(0, add(creationCode, 0x20), mload(creationCode))
+    }
+    require(deployed != address(0), "Deployer: Deployment failed");
+    require(deployed.code.length > 0, "Deployer: Empty code after deploy");
+  }
+
+  function _deployRawAndRecord(
+    TContract contractType,
+    bytes memory creationCode
+  ) internal returns (address deployed) {
+    deployed = _deployRaw(creationCode);
+    _recordDeployment(contractType, deployed);
+  }
+
+  function _deployRaw(
+    bytes memory creationCode,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    return _deployRaw(abi.encodePacked(creationCode, constructorArgs));
+  }
+
+  function _deployRawAndRecord(
+    TContract contractType,
+    bytes memory creationCode,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    deployed = _deployRaw(creationCode, constructorArgs);
+    _recordDeployment(contractType, deployed);
+  }
+
+  function _deployFromArtifact(
+    string memory artifactPath
+  ) internal returns (address deployed) {
+    return _deployRaw(vm.getCode(artifactPath));
+  }
+
+  function _deployFromArtifactAndRecord(
+    TContract contractType,
+    string memory artifactPath
+  ) internal returns (address deployed) {
+    deployed = _deployFromArtifact(artifactPath);
+    _recordDeployment(contractType, deployed);
+  }
+
+  function _deployFromArtifact(
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    return _deployRaw(vm.getCode(artifactPath), constructorArgs);
+  }
+
+  function _deployFromArtifactAndRecord(
+    TContract contractType,
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address deployed) {
+    deployed = _deployFromArtifact(artifactPath, constructorArgs);
+    _recordDeployment(contractType, deployed);
+  }
+
+  /**
+   * @dev Deploy an implementation contract from an artifact path.
+   */
+  function _deployLogic(
+    string memory artifactPath
+  ) internal returns (address logic) {
+    logic = _deployFromArtifact(artifactPath);
+  }
+
+  function _deployLogicAndRecord(
+    TContract contractType,
+    string memory artifactPath
+  ) internal returns (address logic) {
+    logic = _deployLogic(artifactPath);
+    _recordDeployment(contractType, logic);
+  }
+
+  function _deployLogic(
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address logic) {
+    logic = _deployFromArtifact(artifactPath, constructorArgs);
+  }
+
+  function _deployLogicAndRecord(
+    TContract contractType,
+    string memory artifactPath,
+    bytes memory constructorArgs
+  ) internal returns (address logic) {
+    logic = _deployLogic(artifactPath, constructorArgs);
+    _recordDeployment(contractType, logic);
+  }
+
+  function _deployProxy(
+    string memory implArtifactPath,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    return _deployProxy(implArtifactPath, _proxyAdmin(), initData);
+  }
+
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, initData);
+    _recordDeployment(contractType, proxy);
+  }
+
+  /**
+   * @dev Deploy a TransparentUpgradeableProxy (OZ v4 style) from artifact.
+   * Does NOT import the proxy .sol file; uses vm.getCode to load compiled artifact.
+   */
+  function _deployProxy(
+    string memory implArtifactPath,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    return _deployProxy(implArtifactPath, "", proxyAdmin, initData);
+  }
+
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, proxyAdmin, initData);
+    _recordDeployment(contractType, proxy);
+  }
+
+  function _deployProxy(
+    string memory implArtifactPath,
+    bytes memory implConstructorArgs,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    require(proxyAdmin != address(0), "Deployer: Null proxy admin");
+
+    address impl = bytes(implConstructorArgs).length > 0
+      ? _deployFromArtifact(implArtifactPath, implConstructorArgs)
+      : _deployFromArtifact(implArtifactPath);
+
+    bytes memory proxyCreationCode = vm.getCode("TransparentProxyOZv4_9_5.sol:TransparentProxyOZv4_9_5");
+    proxy = _deployRaw(proxyCreationCode, abi.encode(impl, proxyAdmin, initData));
+
+    address actualAdmin = proxy.getProxyAdmin();
+    require(
+      actualAdmin == proxyAdmin,
+      string.concat(
+        "Deployer: Proxy admin mismatch. Expected: ", vm.toString(proxyAdmin), " Got: ", vm.toString(actualAdmin)
+      )
+    );
+  }
+
+  function _deployProxyAndRecord(
+    TContract contractType,
+    string memory implArtifactPath,
+    bytes memory implConstructorArgs,
+    address proxyAdmin,
+    bytes memory initData
+  ) internal returns (address proxy) {
+    proxy = _deployProxy(implArtifactPath, implConstructorArgs, proxyAdmin, initData);
+    _recordDeployment(contractType, proxy);
+  }
+
+  /**
+   * @dev Upgrade a transparent proxy to a new implementation.
+   */
+  function _upgradeProxy(
+    address proxy,
+    address newLogic,
+    bytes memory callData
+  ) internal {
+    require(newLogic != address(0), "Deployer: Null logic");
+
+    (address auth, address interactTo) = _findHierarchyAdmin(proxy);
+    bool isViaAuxiliary = interactTo != proxy;
+
+    bytes memory upgradeCallData;
+    if (isViaAuxiliary) {
+      upgradeCallData = callData.length == 0
+        ? abi.encodeWithSignature("upgrade(address,address)", proxy, newLogic)
+        : abi.encodeWithSignature("upgradeAndCall(address,address,bytes)", proxy, newLogic, callData);
+    } else {
+      upgradeCallData = callData.length == 0
+        ? abi.encodeWithSignature("upgradeTo(address)", newLogic)
+        : abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newLogic, callData);
+    }
+
+    if (_broadcastPk != 0) vm.broadcast(_broadcastPk);
+    else vm.broadcast(auth);
+    (bool success, bytes memory ret) = interactTo.call(upgradeCallData);
+    require(success, string.concat("Deployer: Upgrade failed: ", vm.toString(ret)));
+  }
+
+  function _findHierarchyAdmin(
+    address proxy
+  ) internal view returns (address auth, address interactTo) {
+    interactTo = proxy;
+    auth = proxy.getProxyAdmin();
+
+    while (true) {
+      if (auth.code.length == 0) return (auth, interactTo);
+
+      try IEIP173(auth).owner() returns (address owner) {
+        if (owner == address(0)) return (auth, interactTo);
+        interactTo = auth;
+        auth = owner;
+      } catch {
+        return (auth, interactTo);
+      }
+    }
+  }
+
+  function _recordDeployment(
+    TContract contractType,
+    address contractAddr
+  ) internal virtual { }
+
+  function _proxyAdmin() internal view virtual returns (address);
+}

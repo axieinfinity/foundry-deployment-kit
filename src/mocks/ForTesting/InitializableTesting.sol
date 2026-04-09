@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "../../../dependencies/openzeppelin-v4-4.9.5/contracts/utils/Address.sol";
-import { Ownable } from "../../../dependencies/openzeppelin-v5-5.1.0/contracts/access/Ownable.sol";
+import "@openzeppelin-v4/utils/Address.sol";
+import { Ownable } from "@openzeppelin-v5/access/Ownable.sol";
 
 abstract contract InitializableTesting {
   /**

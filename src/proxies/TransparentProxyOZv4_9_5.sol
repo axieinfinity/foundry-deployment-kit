@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
   ITransparentUpgradeableProxy,
   TransparentUpgradeableProxy
-} from "../dependencies/openzeppelin-v4-4.9.5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+} from "@openzeppelin-v4/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title TransparentProxyOZv4_9_5
@@ -17,5 +17,9 @@ contract TransparentProxyOZv4_9_5 is TransparentUpgradeableProxy {
    * @param admin The address of the admin contract.
    * @param data The initialization data.
    */
-  constructor(address logic, address admin, bytes memory data) payable TransparentUpgradeableProxy(logic, admin, data) { }
+  constructor(
+    address logic,
+    address admin,
+    bytes memory data
+  ) payable TransparentUpgradeableProxy(logic, admin, data) { }
 }

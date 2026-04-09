@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Ownable } from "../../../dependencies/openzeppelin-v5-5.1.0/contracts/access/Ownable.sol";
 import "./InitializableTesting.sol";
+import { Ownable } from "@openzeppelin-v5/access/Ownable.sol";
 
 contract SampleProxyForTestingPurpose2 is Ownable, InitializableTesting {
   uint256[50] private __gap;

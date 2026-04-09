@@ -1,12 +1,14 @@
-# Default network value
+#!/usr/bin/env bash
+set -euo pipefail
+
 networkName="ronin-testnet"
-# Function to print usage and exit
+
 usage() {
     echo "Usage: $0 -c <network>"
     echo "  -c: Specify the network (ronin-testnet or ronin-mainnet)"
     exit 1
 }
-# Parse command-line options
+
 while getopts "c:" opt; do
     case $opt in
     c)
@@ -30,56 +32,68 @@ while getopts "c:" opt; do
         ;;
     esac
 done
-# Shift the processed options out of the argument list
+
 shift $((OPTIND - 1))
-# Define the deployments folder by concatenating it with the child folder
+
 folder="deployments/$child_folder"
-# Check if the specified folder exists
+exported="$folder/exported_address"
+
 if [ ! -d "$folder" ]; then
     echo "Error: The specified folder does not exist for the selected network."
     exit 1
 fi
+
+if [ ! -f "$exported" ]; then
+    echo "Error: $exported not found. Run a deployment script first."
+    exit 1
+fi
+
+json_keys() {
+    python3 - <<'PY'
+import json, sys
+data = json.loads(sys.stdin.read() or "{}")
+for key in data.keys():
+    print(key)
+PY
+}
+
 index=0
-for file in "$folder"/*.json; do
-    # Check if the file exists and is a regular file
-    if [ -f "$file" ] && [ "$(basename "$file")" != ".chainId" ]; then
-        # Extract contractName and address from the JSON file
-        contractName=$(jq -r '.contractName' "$file")
-        # Check if contractName and address are not empty
-        if [ -n "$contractName" ]; then
-            # Increment the index
-            ((index++))
-            (
-                # Initialize arrays to store events and errors keys
-                events_keys=()
-                errors_keys=()
-                # Get events and errors JSON data
-                events=$(forge inspect $contractName events)
-                errors=$(forge inspect $contractName errors)
-                # Extract keys and populate the arrays
-                while read -r key; do
-                    events_keys+=("\"event $key\"")
-                done <<<"$(echo "$events" | jq -r 'keys[]')"
-                while read -r key; do
-                    errors_keys+=("\"$key\"")
-                done <<<"$(echo "$errors" | jq -r 'keys[]')"
-                # Combine keys from events and errors
-                all_keys=("${events_keys[@]}" "${errors_keys[@]}")
-                echo cast upload-signature "${all_keys[@]}"
-                # Call cast upload-signature
-                cast upload-signature "${all_keys[@]}"
-            ) &
-        else
-            echo "Error: Missing contractName or address in $file"
-        fi
+while IFS= read -r line; do
+    if [ -z "$line" ]; then
+        continue
     fi
 
-    # Check if index is a multiple of 10, then wait
+    contractName="${line%@*}"
+    contractName="${contractName%.json}"
+    if [ -z "$contractName" ]; then
+        continue
+    fi
+
+    ((index++))
+    (
+        events=$(forge inspect "$contractName" events)
+        errors=$(forge inspect "$contractName" errors)
+
+        events_keys=()
+        errors_keys=()
+
+        while read -r key; do
+            [ -n "$key" ] && events_keys+=("event $key")
+        done <<<"$(echo "$events" | json_keys)"
+
+        while read -r key; do
+            [ -n "$key" ] && errors_keys+=("$key")
+        done <<<"$(echo "$errors" | json_keys)"
+
+        all_keys=("${events_keys[@]}" "${errors_keys[@]}")
+        echo cast upload-signature "${all_keys[@]}"
+        cast upload-signature "${all_keys[@]}"
+    ) &
+
     if [ $((index % 10)) -eq 0 ]; then
         wait
     fi
-
-done
+done < "$exported"
 
 forge selectors upload --all &
 

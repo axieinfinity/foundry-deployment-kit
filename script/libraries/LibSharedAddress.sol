@@ -7,5 +7,6 @@ library LibSharedAddress {
   /// @dev Preserve constant for backwards compatibility
   address internal constant CONFIG = address(uint160(uint256(keccak256("vme"))));
   address internal constant VM = address(uint160(uint256(keccak256("hevm cheat code"))));
+  address internal constant ADDRESS_BOOK = address(uint160(uint256(keccak256("address-book"))));
   address internal constant ARTIFACT_FACTORY = address(uint160(uint256(keccak256("logger"))));
 }

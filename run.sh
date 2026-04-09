@@ -1,209 +1,190 @@
-# Function to display script usage
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+
 usage() {
-    forge script --help
-
+    echo "Usage: $0 <script_path> [forge_options...]"
     echo ""
-    echo "\033[33mFoundry Script Usage:\033[0m"
-    echo "Usage: $0 [forge_options] --no-postcheck|--npo --no-precheck|--npr --sender {sender_address} --force-generate-artifact"
-    echo "Options:"
-    echo " --no-postcheck: Disable post-check"
-    echo " --no-precheck: Disable pre-check"
-    echo " --sender: Specify the default sender address"
-    echo " --force-generate-artifact: Force generate artifact"
-
+    echo "Examples:"
+    echo "  $0 script/sample/SampleDeploy.s.sol -f ronin-testnet --broadcast --verify"
+    echo "  $0 script/sample/SampleDeploy.s.sol --rpc-url ronin-testnet --broadcast"
+    echo ""
+    echo "Custom flags (non-forge):"
+    echo "  --call <sig>   Inner function signature (default: run())"
     exit 1
 }
 
-# Check if command-line arguments are provided
-if [ "$#" -eq 0 ]; then
-    usage
-fi
+# ---------------------------------------------------------------------------
+# Post-broadcast: record deployed addresses from broadcast JSON
+# ---------------------------------------------------------------------------
 
-verify_arg=""
-extra_argument=""
-
-index=0
-op_command=""
-network_name=""
-is_broadcast=false
-should_verify=false
-force_generate_artifact=false
-# Define the deployments folder by concatenating it with the child folder
-root="deployments/"
-
-export_address() {
-    index=0
-
-    start_time=$(date +%s)
-
-    for folder in "$root"/*; do
-        # If exported_address.toml exists, delete it
-        if [ -f "$folder"/exported_address ]; then
-            rm "$folder"/exported_address
-        fi
-
-        # Create a new exported_address file
-        touch "$folder"/exported_address
-
-        for file in "$folder"/*.json; do
-
-            # Check if the file exists and is a regular file
-            if [ -f "$file" ] && [ "$(basename "$file")" != ".chainId" ] && [ "$(basename "$file")" != "exported_address" ]; then
-                ((index++))
-                (
-                    # Extract address from the JSON file
-                    contractAddress=$(jq -r '.address' "$file")
-                    # Extract contractName from file name without the extension
-                    contractName=$(basename "$file" .json)
-
-                    # Check if contractName and address are not empty
-                    if [ -n "$contractName" ]; then
-                        # Write to file the contractName and address
-                        echo "$contractName.json@$contractAddress" >>"$folder"/exported_address
-                    else
-                        echo "Error: Missing contractName or address in $file"
-                    fi
-                ) &
-            fi
-
-            # Check if index is a multiple of 10, then wait
-            if [ $((index % 10)) -eq 0 ]; then
-                wait
-            fi
-        done
-    done
-
-    wait
-
-    end_time=$(date +%s)
-    echo "Export address in deployment folder: $((end_time - start_time)) seconds"
+resolve_script_key() {
+    local rel="$1"
+    rel="${rel#./}"
+    [[ "$rel" == "$script_dir/"* ]] && rel="${rel#"$script_dir/"}"
+    [[ "$rel" == script/* ]] && rel="${rel#script/}"
+    echo "${rel//\//_}"
 }
 
-index=0
+find_latest_broadcast_file() {
+    local dir="$script_dir/broadcast/$1"
+    [ ! -d "$dir" ] && return 1
+    local files=()
+    shopt -s nullglob; files=("$dir"/*/run-latest.json); shopt -u nullglob
+    [ "${#files[@]}" -eq 0 ] && return 1
+    ls -t "${files[@]}" | head -n 1
+}
 
-for arg in "$@"; do
-    case $arg in
-    -t | --trezor)
-        extra_argument+=trezor@
-        ;;
-    --np | --no-postcheck)
-        set -- "${@/#--no-postcheck/}"
-        extra_argument+=no-postcheck@
-        ;;
-    --npr | --no-precheck)
-        set -- "${@/#--no-precheck/}"
-        extra_argument+=no-precheck@
-        ;;
-    --verify)
-        should_verify=true
-        set -- "${@/#--verify/}"
-        ;;
-    -f | --fork-url)
-        network_name=${@:index+2:1}
-        # skip if network_name is localhost
-        if [[ $network_name != "localhost" ]]; then
-            extra_argument+="network.${network_name}@"
+resolve_network_from_chain_id() {
+    case "$1" in
+        2020)   echo "ronin-mainnet" ;;
+        202601) echo "ronin-testnet" ;;
+        *)      echo "localhost" ;;
+    esac
+}
 
-            set -- "${@/#-f/}"
-            set -- "${@/#--fork-url/}"
-            set -- "${@/#$network_name/}"
-        fi
+extract_chain_id() {
+    python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('chain',''))" "$1"
+}
 
-        ;;
-    --fork-block-number)
-        fork_block_number=${@:index+2:1}
-        extra_argument+="fork-block-number.${fork_block_number}@"
+extract_deployment_lines() {
+    python3 - "$1" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+seen, out = set(), []
+for tx in data.get("transactions", []):
+    if tx.get("transactionType") != "CREATE": continue
+    n, a = tx.get("contractName"), tx.get("contractAddress")
+    if n and a:
+        line = f"{n}.json@{a}"
+        if line not in seen: seen.add(line); out.append(line)
+print("\n".join(out))
+PY
+}
 
-        set -- "${@/#--fork-block-number/}"
-        set -- "${@/#$fork_block_number/}"
-        ;;
+record_broadcast_deployments() {
+    local script_path="$1" net="$2"
+    local key bf
+    key="$(resolve_script_key "$script_path")"
+    bf="$(find_latest_broadcast_file "$key")" || return 0
+    [ -z "$net" ] && net="$(resolve_network_from_chain_id "$(extract_chain_id "$bf")")"
+    local lines; lines="$(extract_deployment_lines "$bf")"
+    [ -z "$lines" ] && return 0
+    local dir="$script_dir/deployments/$net" ef="$script_dir/deployments/$net/exported_address"
+    mkdir -p "$dir"; [ ! -f "$ef" ] && : > "$ef"
+    while IFS= read -r l; do
+        [ -z "$l" ] && continue
+        grep -qxF "$l" "$ef" || echo "$l" >> "$ef"
+    done <<< "$lines"
+}
+
+# ---------------------------------------------------------------------------
+# Parse arguments
+# ---------------------------------------------------------------------------
+
+[ "$#" -eq 0 ] && usage
+
+script_path="$1"; shift
+
+network=""
+is_broadcast=false
+should_verify=false
+has_sender=false
+call_sig="run()"
+
+# Scan args: extract info we need, build cleaned arg list
+cleaned=()
+args=("$@")
+i=0
+while [ "$i" -lt "${#args[@]}" ]; do
+    arg="${args[$i]}"
+    case "$arg" in
+    -f|--fork-url|--rpc-url)
+        network="${args[$((i+1))]}"
+        cleaned+=("$arg" "$network")
+        i=$((i + 2)); continue ;;
     --broadcast)
         is_broadcast=true
-        ;;
+        cleaned+=("$arg") ;;
+    --verify)
+        should_verify=true ;;  # stripped; re-added with network-aware args
     --sender)
-        sender=${@:index+2:1}
-        extra_argument+="sender.${sender}@"
-        ;;
-    --force-generate-artifact)
-        force_generate_artifact=true
-
-        set -- "${@/#--force-generate-artifact/}"
-        ;;
-    -h | --help)
-        usage
-        exist 1
-        ;;
-    *) ;;
+        has_sender=true
+        cleaned+=("$arg") ;;
+    --call)
+        call_sig="${args[$((i+1))]}"
+        i=$((i + 2)); continue ;;
+    -h|--help)
+        usage ;;
+    *)
+        cleaned+=("$arg") ;;
     esac
-    index=$((index + 1))
+    i=$((i + 1))
 done
 
-export_address
+# Build command string for ScriptExtended
+command=""
+[ -n "$network" ] && [ "$network" != "localhost" ] && command="network.${network}"
 
-should_verify=$([[ $should_verify == true && $is_broadcast == true ]] && echo true || echo false)
+# Only verify when also broadcasting (matches original behaviour)
+should_verify=$([[ "$should_verify" == true && "$is_broadcast" == true ]] && echo true || echo false)
 
-if [[ $force_generate_artifact == true ]]; then
-    extra_argument+=generate-artifact@
-fi
+# ---------------------------------------------------------------------------
+# 1Password op:// detection  (mirrors mainnet/run.sh)
+# ---------------------------------------------------------------------------
 
-if [[ $should_verify == true ]] && [[ $force_generate_artifact == false ]]; then
-    extra_argument+=generate-artifact@
-fi
+op_command=""
 
-if [[ $should_verify == true ]]; then
-    if [[ $network_name == "ronin-mainnet" ]]; then
-        verify_arg="--verify --retries 5 --verifier sourcify --chain 2020"
-    elif [[ $network_name == "ronin-testnet" ]]; then
-        verify_arg="--verify --retries 5 --verifier blockscout --verifier-url https://explorer-saigon-testnet-cc58e966ql.t.conduit.xyz/api"
+if [ "$has_sender" = false ]; then
+    if [ -f "${script_dir}/.env" ]; then
+        source "${script_dir}/.env"
+
+        network_for_pk="${network:-localhost}"
+        account_label=$(echo "$network_for_pk" | tr '[:lower:]' '[:upper:]' | tr '-' '_')_PK
+        pk_value="$(eval "echo \${$account_label:-}")"
+
+        if [[ "$pk_value" == *"op://"* ]]; then
+            echo -e "\033[32mFound 'op://' in ${account_label}\033[0m"
+            op_command="op run --env-file=${script_dir}/.env --"
+        elif [[ -z "$pk_value" ]]; then
+            echo -e "\033[33mWARNING: Not found private key in ${account_label}\033[0m"
+        fi
     else
-        verify_arg="--verify --retries 5"
+        echo -e "\033[33mWARNING: .env file not found\033[0m"
     fi
 fi
+
+# ---------------------------------------------------------------------------
+# Build & execute
+# ---------------------------------------------------------------------------
+
+verify_args=""
+if [ "$should_verify" = true ]; then
+    case "$network" in
+    ronin-mainnet) verify_args="--verify --retries 5 --verifier sourcify --chain 2020" ;;
+    ronin-testnet) verify_args="--verify --retries 5 --verifier blockscout --verifier-url https://explorer-saigon-testnet-cc58e966ql.t.conduit.xyz/api" ;;
+    *)             verify_args="--verify --retries 5" ;;
+    esac
+fi
+
+call_data=$(cast calldata "$call_sig")
 
 echo "Should Verify Contract: $should_verify"
 
-# Get the directory of the current script
-script_root="$(dirname "$(realpath "$0")")"
-extra_argument+="script-root.${script_root}@"
-
-# Remove the @ character from the end of extra_argument
-extra_argument="${extra_argument%%@}"
-
-## Check if the private key is stored in the .env file
-if [[ ! $extra_argument == *"sender"* ]] && [[ ! $extra_argument == *"trezor"* ]]; then
-    # Check if the .env file exists
-    if [ -f .env ]; then
-        source .env
-        # If network_name is empty, set it to localhost
-        network_name=${network_name:-localhost}
-        # Convert network name to uppercase
-        account_label=$(echo $network_name | tr '[:lower:]' '[:upper:]')
-        # Replace "-" with "_"
-        account_label=$(echo $account_label | tr '-' '_')
-        # Add "_PK" prefix
-        account_label="${account_label}_PK"
-
-        # Check if the private key is stored in the .env file
-        if [[ $(eval "echo \$$account_label") == *"op://"* ]]; then
-            echo "\033[32mFound 'op://' in ${account_label}\033[0m"
-            op_command="op run --env-file="./.env" --"
-        elif [[ -z $(eval "echo \$$account_label") ]]; then
-            echo "\033[33mWARNING: Not found private key in ${account_label}\033[0m"
-        fi
-    else
-        echo "\033[33mWARNING: .env file not found\033[0m"
-    fi
-
-fi
-
 start_time=$(date +%s)
 
-${op_command} forge script --offline ${verify_arg} ${@} -g 200 --color always --sig 'run(bytes,string)' $(cast calldata 'run()') "${extra_argument}"
+# shellcheck disable=SC2086
+${op_command} forge script "$script_path" \
+    ${verify_args} \
+    "${cleaned[@]+"${cleaned[@]}"}" \
+    --sig "run(bytes,string)" "$call_data" "$command"
 
-if [ $? -ne 0 ]; then
-    exit 1
-fi
+if [ $? -ne 0 ]; then exit 1; fi
 
 end_time=$(date +%s)
-
 echo "Execution time: $((end_time - start_time))s"
+
+if [ "$is_broadcast" = true ]; then
+    record_broadcast_deployments "$script_path" "$network"
+fi

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { ITransparentUpgradeableProxy } from
-  "../../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy } from "@openzeppelin-v5/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @dev Interface for {RoninTransparentProxy}. In order to implement transparency, {RoninTransparentProxy}
@@ -19,7 +18,10 @@ interface IRoninTransparentProxy is ITransparentUpgradeableProxy {
     address newImplementation
   ) external;
 
-  function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+  function upgradeToAndCall(
+    address newImplementation,
+    bytes calldata data
+  ) external payable;
 
   function implementation() external view returns (address);
 

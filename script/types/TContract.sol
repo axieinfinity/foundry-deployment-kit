@@ -2,7 +2,7 @@
 pragma solidity >=0.6.2 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import { LibString } from "../../dependencies/solady-0.0.228/src/utils/LibString.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
 type TContract is bytes32;
 
@@ -16,10 +16,22 @@ function name(
   return TContract.unwrap(contractType).unpackOne();
 }
 
-function eq(TContract a, TContract b) pure returns (bool) {
+function key(
+  string memory contractName
+) pure returns (TContract) {
+  return TContract.wrap(LibString.packOne(contractName));
+}
+
+function eq(
+  TContract a,
+  TContract b
+) pure returns (bool) {
   return TContract.unwrap(a) == TContract.unwrap(b);
 }
 
-function neq(TContract a, TContract b) pure returns (bool) {
+function neq(
+  TContract a,
+  TContract b
+) pure returns (bool) {
   return TContract.unwrap(a) != TContract.unwrap(b);
 }

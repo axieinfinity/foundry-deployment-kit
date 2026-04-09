@@ -2,8 +2,8 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (proxy/transparent/TransparentUpgradeableProxy.sol)
 pragma solidity ^0.8.20;
 
-import { ERC1967Proxy } from "../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { ERC1967Utils } from "../dependencies/openzeppelin-v5-5.1.0/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import { ERC1967Proxy } from "@openzeppelin-v5/proxy/ERC1967/ERC1967Proxy.sol";
+import { ERC1967Utils } from "@openzeppelin-v5/proxy/ERC1967/ERC1967Utils.sol";
 
 import { IRoninTransparentProxy } from "./interfaces/IRoninTransparentProxy.sol";
 
@@ -35,7 +35,11 @@ contract RoninTransparentProxy is ERC1967Proxy {
    * backed by the implementation at `logic`, and optionally initialized with `data` as explained in
    * {ERC1967Proxy-constructor}.
    */
-  constructor(address logic, address admin, bytes memory data) payable ERC1967Proxy(logic, data) {
+  constructor(
+    address logic,
+    address admin,
+    bytes memory data
+  ) payable ERC1967Proxy(logic, data) {
     // Set the storage value and emit an event for ERC-1967 compatibility
     ERC1967Utils.changeAdmin(admin);
   }

@@ -1,30 +1,46 @@
-# Source (or "dot") the .env file to load environment variables
-if [ -f .env ]; then
-    source .debug.env
-else
-    echo "Error: .debug.env file not found."
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    echo "Usage: $0 <script_path> [--network <alias>] [--command <string>] [--call <sig>] [--] [forge_args...]"
+    echo ""
+    echo "This is a thin wrapper over run.sh that adds -vvvv for verbose output."
+    exit 1
+}
+
+if [ "$#" -eq 0 ]; then
+    usage
 fi
 
-extra_argument=""
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+args=("$@")
+split_index=-1
 
-for arg in "$@"; do
-    case $arg in
-    --trezor)
-        extra_argument+=trezor@
-        ;;
-    *) ;;
-    esac
+for i in "${!args[@]}"; do
+    if [ "${args[$i]}" = "--" ]; then
+        split_index=$i
+        break
+    fi
 done
 
-# Remove the @ character from the end of extra_argument
-extra_argument="${extra_argument%%@}"
+if [ "$split_index" -ge 0 ]; then
+    run_args=("${args[@]:0:$split_index}")
+    forge_args=("${args[@]:$((split_index + 1))}")
+else
+    run_args=("${args[@]}")
+    forge_args=()
+fi
 
-echo Debug Tx...
-echo From: ${FROM}
-echo To: ${TO}
-echo Value: ${VALUE}
-echo GasAmount: ${GAS}
-echo Calldata:
-cast pretty-calldata ${CALLDATA}
-calldata=$(cast calldata 'trace(uint256,address,address,uint256,uint256,bytes)' ${BLOCK} ${FROM} ${TO} ${GAS} ${VALUE} ${CALLDATA})
-forge script ${verify_arg} --legacy ${@} OnchainExecutor --sig 'run(bytes,string)' ${calldata} "${extra_argument}"
+has_verbose=false
+for arg in "${forge_args[@]}"; do
+    if [[ "$arg" =~ ^-v+$ ]]; then
+        has_verbose=true
+        break
+    fi
+done
+
+if [ "$has_verbose" = false ]; then
+    forge_args+=("-vvvv")
+fi
+
+"$script_dir/run.sh" "${run_args[@]}" -- "${forge_args[@]}"
