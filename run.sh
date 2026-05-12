@@ -154,7 +154,7 @@ if [[ $should_verify == true ]]; then
     if [[ $network_name == "ronin-mainnet" ]]; then
         verify_arg="--verify --retries 5 --verifier sourcify --chain 2020"
     elif [[ $network_name == "ronin-testnet" ]]; then
-        verify_arg="--verify --retries 5 --verifier blockscout --verifier-url https://explorer-saigon-testnet-cc58e966ql.t.conduit.xyz/api"
+        verify_arg="--verify --retries 5 --verifier sourcify --chain 202601"
     else
         verify_arg="--verify --retries 5"
     fi
