@@ -10,14 +10,14 @@ name = "openzeppelin-v4"
 version = "4.9.5"
 url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.9.5.zip"
 checksum = "fe249a9cb37b7a6664f8bfe61a9633873fbbb895e5d4c3fac78db50fd9af3a73"
-integrity = "b4b46e19320d23ccd8708b45bf3a1b996fdd3734fd6ec46cd1d24713af6d44f9"
+integrity = "68f279991af7e089d31d65b6384b62f6d95d55a604b47a0794572cccbcbac924"
 
 [[dependencies]]
 name = "openzeppelin-v5"
 version = "5.1.0"
 url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v5.1.0.zip"
 checksum = "30600e9dc4dd7d9089c5f2ae78aedfdb764349ae15647190c792afd07123e2c2"
-integrity = "5c896fe66026522d814bf97d4331d408283f549123254575c8a0f67c1fefecc1"
+integrity = "b93be998df1f7b88f6155c547677c2f96b3e10d892ee3c5b2c028c4c2d5f96bf"
 
 [[dependencies]]
 name = "solady"
