@@ -19,6 +19,6 @@ contract Migration__XXXXYYZZ_DeploySample is SampleMigration {
   }
 
   function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
-    SampleProxy sampleProxy = new SampleProxyDeploy().run();
+    new SampleProxyDeploy().run();
   }
 }

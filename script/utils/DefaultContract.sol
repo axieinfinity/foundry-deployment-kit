@@ -27,7 +27,9 @@ enum DefaultContract {
   RoninGovernanceAdmin,
   RoninValidatorSet,
   Profile,
-  RoninVRFCoordinator
+  RoninVRFCoordinator,
+  SLP,
+  bAXS
 }
 
 using { key, name } for DefaultContract global;
@@ -63,5 +65,7 @@ function name(
   if (defaultContract == DefaultContract.RoninValidatorSet) return "RoninValidatorSet";
   if (defaultContract == DefaultContract.RoninVRFCoordinator) return "RoninVRFCoordinator";
   if (defaultContract == DefaultContract.Profile) return "Profile";
+  if (defaultContract == DefaultContract.SLP) return "SLP";
+  if (defaultContract == DefaultContract.bAXS) return "bAXS";
   revert("DefaultContract: Unknown contract");
 }
