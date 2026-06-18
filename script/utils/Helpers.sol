@@ -95,12 +95,25 @@ bytes32 constant SAFE_TX_TYPEHASH = 0xbb8310d486368db6bd6f849402fdd73ad53d316b5a
 // Sentinel for "no SAFE_NONCE override supplied".
 uint256 constant SAFE_NONCE_UNSET = type(uint256).max;
 
-/// @dev Returns true when `account` looks like a Safe wallet (exposes the Safe-specific `getThreshold()`).
-function _isSafeWallet(
+/// @dev Canonical Safe singleton (master copy) addresses. Safe singletons are deployed deterministically, so these
+/// are identical on every chain. A Safe proxy stores its singleton at storage slot 0, which lets us confirm an
+/// address is a genuine Safe proxy on-chain (used as a fallback when the Safe Transaction Service is unavailable).
+function _isKnownSafeSingleton(
+  address singleton
+) pure returns (bool) {
+  return singleton == 0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552 // GnosisSafe v1.3.0
+    || singleton == 0x3E5c63644E683549055b9Be8653de26E0B4CD36E // GnosisSafeL2 v1.3.0
+    || singleton == 0x41675C099F32341bf84BFc5382aF534df5C7461a // Safe v1.4.1
+    || singleton == 0x29fcB43b46531BcA003ddC8FCB67FFE91900C762; // SafeL2 v1.4.1
+}
+
+/// @dev On-chain Safe detection: reads the proxy's singleton from storage slot 0 and checks it against the known
+/// Safe singletons. Used only when the Safe Transaction Service cannot confirm the address (offline / unmapped chain).
+function _isSafeProxyOnchain(
   address account
 ) view returns (bool) {
-  (bool ok, bytes memory ret) = account.staticcall(abi.encodeWithSignature("getThreshold()"));
-  return ok && ret.length >= 32 && abi.decode(ret, (uint256)) != 0;
+  address singleton = address(uint160(uint256(vm.load(account, bytes32(uint256(0))))));
+  return _isKnownSafeSingleton(singleton);
 }
 
 /// @dev Safe Transaction Service base URL for `chainId`, or "" when unknown. The `SAFE_TX_SERVICE_URL` env var,
@@ -144,16 +157,17 @@ function _tryGetSafeApiNonce(
 
 /// @dev Resolves the Safe nonce used for hash computation, highest priority first:
 ///   1. `SAFE_NONCE` env var — overwrite an existing/queued nonce (e.g. to co-sign a specific pending tx)
-///   2. Safe Transaction Service `nonce` (queue-aware)
+///   2. Safe Transaction Service `nonce` (queue-aware) — passed in via `apiOk`/`apiNonce` to reuse the single API call
 ///   3. on-chain `Safe.nonce()`
-/// `safe` is assumed to be a Safe wallet, so the on-chain fallback always succeeds.
+/// `safe` is a confirmed Safe wallet, so the on-chain fallback always succeeds.
 function _resolveSafeNonce(
-  address safe
-) returns (uint256 nonce, string memory source) {
+  address safe,
+  bool apiOk,
+  uint256 apiNonce
+) view returns (uint256 nonce, string memory source) {
   uint256 overrideNonce = vm.envOr("SAFE_NONCE", SAFE_NONCE_UNSET);
   if (overrideNonce != SAFE_NONCE_UNSET) return (overrideNonce, "overwrite (env SAFE_NONCE)");
 
-  (bool apiOk, uint256 apiNonce) = _tryGetSafeApiNonce(safe);
   if (apiOk) return (apiNonce, "safe-tx-service api");
 
   (, bytes memory ret) = safe.staticcall(abi.encodeWithSignature("nonce()"));
@@ -192,10 +206,12 @@ function computeSafeTxHashes(
 
 /// @dev Computes and logs the Safe (Gnosis Safe) EIP-712 hashes for the pending transaction so signers can
 /// independently verify them (e.g. with `axieinfinity/safe-utils`, the Safe UI, or a hardware wallet) before signing.
-/// Silently returns when `safe` is not a Safe wallet. See `_resolveSafeNonce` for the nonce priority.
+/// Safe detection trusts the Safe Transaction Service (HTTP 200), falling back to the on-chain singleton check when
+/// the service is unavailable. Silently returns when `safe` is not a Safe. See `_resolveSafeNonce` for nonce priority.
 function logSafeTxHashes(address safe, address to, uint256 value, bytes memory data) {
-  if (!_isSafeWallet(safe)) return;
-  (uint256 nonce, string memory nonceSource) = _resolveSafeNonce(safe);
+  (bool apiOk, uint256 apiNonce) = _tryGetSafeApiNonce(safe);
+  if (!apiOk && !_isSafeProxyOnchain(safe)) return; // not a Safe per the service or on-chain singleton check
+  (uint256 nonce, string memory nonceSource) = _resolveSafeNonce(safe, apiOk, apiNonce);
 
   (bytes32 domainHash, bytes32 messageHash, bytes32 safeTxHash) =
     computeSafeTxHashes(block.chainid, safe, to, value, data, nonce);
@@ -227,6 +243,8 @@ function cheatBroadcast(address from, address to, uint256 callValue, bytes memor
   );
   console.log(StdStyle.cyan("Cast Decoded Call Data:"), decodedCallData);
   console.log("--------------------------------------------------------------------");
+
+  logSafeTxHashes({ safe: from, to: to, value: callValue, data: callData });
 
   logSafeTxHashes({ safe: from, to: to, value: callValue, data: callData });
 
