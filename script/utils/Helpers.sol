@@ -246,7 +246,6 @@ function cheatBroadcast(address from, address to, uint256 callValue, bytes memor
 
   logSafeTxHashes({ safe: from, to: to, value: callValue, data: callData });
 
-
   vm.prank(from);
   (bool success, bytes memory returnOrRevertData) = to.call{ value: callValue }(callData);
   success.handleRevert(bytes4(callData), returnOrRevertData);
